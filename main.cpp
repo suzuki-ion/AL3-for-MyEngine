@@ -10,5 +10,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // ゲームの処理
     }
 
+    engine->Finalize();
     return 0;
 }

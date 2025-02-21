@@ -1,7 +1,12 @@
 #pragma once
 #include <Windows.h>
 #include <cstdint>
+#include <string>
 
+/// @brief Windowsアプリクラスの前方宣言
+class WinApp;
+
+/// @brief 自作エンジンクラス
 class Engine final {
 public:
     Engine(const Engine &) = delete;
@@ -9,29 +14,38 @@ public:
     Engine(Engine &&) = delete;
     Engine &operator=(Engine &&) = delete;
 
+    /// @brief インスタンス取得
+    /// @return エンジンクラスのインスタンス
     static Engine *GetInstance() {
         static Engine instance;
         return &instance;
     }
 
+    /// @brief エンジン初期化
     void Initialize();
+
+    /// @brief エンジン終了処理
+    void Finalize();
     
-    HWND GetWindowHandle() const { return hwnd_; }
-    int32_t GetClientWidth() const { return kClientWidth_; }
-    int32_t GetClientHeight() const { return kClientHeight_; }
+    /// @brief ウィンドウハンドル取得
+    HWND GetWindowHandle() const;
+
+    /// @brief クライアントサイズの横幅取得
+    /// @return クライアントサイズの横幅
+    int32_t GetClientWidth() const;
+    
+    /// @brief クライアントサイズの縦幅取得
+    /// @return クライアントサイズの縦幅
+    int32_t GetClientHeight() const;
+    
+    /// @brief メッセージ処理
+    /// @return メッセージ処理結果
     int ProccessMessage();
 
 private:
     Engine() = default;
     ~Engine() = default;
 
-    WNDCLASS wc_{};
-    HWND hwnd_{};
-    int32_t kClientWidth_;
-    int32_t kClientHeight_;
-    RECT wrc_;
-    MSG msg_;
-
-    // ウィンドウプロシージャ
-    static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+    /// @brief  Windowsアプリクラス
+    WinApp *winApp_ = nullptr;
 };
