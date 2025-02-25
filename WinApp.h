@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <cstdint>
 #include <string>
+#include <d3d12.h>
+#include <dxgi1_6.h>
 
 class WinApp final {
 public:
@@ -9,6 +11,7 @@ public:
     void Initialize();
 
     /// @brief ウィンドウハンドル取得
+    /// @return ウィンドウハンドル
     HWND GetWindowHandle() const { return hwnd_; }
 
     /// @brief クライアントサイズの横幅取得
@@ -25,6 +28,8 @@ public:
 
     /// @brief ログ出力
     void Log(const std::string &message);
+    /// @brief ログ出力
+    void Log(const std::wstring &message);
 
 private:
     /// @brief ウィンドウクラス
@@ -39,6 +44,25 @@ private:
     RECT wrc_;
     /// @brief メッセージ
     MSG msg_;
+
+    /// @brief DXGIファクトリー
+    IDXGIFactory7 *dxgiFactory_;
+    /// @brief Windows系のエラーコード
+    HRESULT hr_;
+
+    /// @brief 使用するアダプタ
+    IDXGIAdapter4 *useAdapter_;
+    /// @brief D3D12デバイス
+    ID3D12Device *device_;
+
+    /// @brief ウィンドウ初期化
+    void InitializeWindow();
+    /// @brief DXGI初期化
+    void InitializeDXGI();
+    /// @brief DXGIアダプター初期化
+    void InitializeDXGIAdapter();
+    /// @brief D3D12デバイス初期化
+    void InitializeD3D12Device();
 
     /// @brief ウィンドウプロシージャ
     /// @param hwnd ウィンドウハンドル
