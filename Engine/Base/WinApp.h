@@ -2,12 +2,23 @@
 #include <Windows.h>
 #include <cstdint>
 #include <string>
-#include <d3d12.h>
-#include <dxgi1_6.h>
 
+/// @brief Windowsアプリクラス
 class WinApp final {
 public:
-    /// @brief エンジン初期化
+    WinApp(const WinApp &) = delete;
+    WinApp &operator=(const WinApp &) = delete;
+    WinApp(WinApp &&) = delete;
+    WinApp &operator=(WinApp &&) = delete;
+
+    /// @brief インスタンス取得
+    /// @return Windowsアプリクラスのインスタンス
+    static WinApp *GetInstance() {
+        static WinApp instance;
+        return &instance;
+    }
+
+    /// @brief Windowsアプリ初期化
     void Initialize();
 
     /// @brief ウィンドウハンドル取得
@@ -32,6 +43,9 @@ public:
     void Log(const std::wstring &message);
 
 private:
+    WinApp() = default;
+    ~WinApp() = default;
+
     /// @brief ウィンドウクラス
     WNDCLASS wc_{};
     /// @brief ウィンドウハンドル
@@ -45,24 +59,8 @@ private:
     /// @brief メッセージ
     MSG msg_;
 
-    /// @brief DXGIファクトリー
-    IDXGIFactory7 *dxgiFactory_;
-    /// @brief Windows系のエラーコード
-    HRESULT hr_;
-
-    /// @brief 使用するアダプタ
-    IDXGIAdapter4 *useAdapter_;
-    /// @brief D3D12デバイス
-    ID3D12Device *device_;
-
     /// @brief ウィンドウ初期化
     void InitializeWindow();
-    /// @brief DXGI初期化
-    void InitializeDXGI();
-    /// @brief DXGIアダプター初期化
-    void InitializeDXGIAdapter();
-    /// @brief D3D12デバイス初期化
-    void InitializeD3D12Device();
 
     /// @brief ウィンドウプロシージャ
     /// @param hwnd ウィンドウハンドル

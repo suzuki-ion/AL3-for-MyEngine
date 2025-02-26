@@ -1,13 +1,18 @@
 #include "Engine.h"
-#include "WinApp.h"
+
+#include "Base/WinApp.h"
+#include "Base/DirectXCommon.h"
 
 void Engine::Initialize() {
-    winApp_ = new WinApp();
+    winApp_ = WinApp::GetInstance();
+    dxCommon_ = DirectXCommon::GetInstance();
+
     winApp_->Initialize();
+    dxCommon_->Initialize();
 }
 
 void Engine::Finalize() {
-    delete winApp_;
+
 }
 
 HWND Engine::GetWindowHandle() const {

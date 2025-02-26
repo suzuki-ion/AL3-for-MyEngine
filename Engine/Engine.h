@@ -5,6 +5,8 @@
 
 /// @brief Windowsアプリクラスの前方宣言
 class WinApp;
+/// @brief DirectX汎用クラスの前方宣言
+class DirectXCommon;
 
 /// @brief 自作エンジンクラス
 class Engine final {
@@ -39,7 +41,7 @@ public:
     int32_t GetClientHeight() const;
     
     /// @brief メッセージ処理
-    /// @return メッセージ処理結果
+    /// @return メッセージ処理結果。-1の場合は終了
     int ProccessMessage();
 
 private:
@@ -48,4 +50,6 @@ private:
 
     /// @brief  Windowsアプリクラス
     WinApp *winApp_ = nullptr;
+    /// @brief DirectX汎用クラス
+    DirectXCommon *dxCommon_ = nullptr;
 };

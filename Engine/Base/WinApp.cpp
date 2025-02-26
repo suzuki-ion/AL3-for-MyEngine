@@ -1,5 +1,6 @@
 #include <cassert>
 #include <format>
+
 #include "WinApp.h"
 #include "ConvertString.h"
 
@@ -8,7 +9,6 @@
 
 void WinApp::Initialize() {
     InitializeWindow();     // ウィンドウ初期化
-    InitializeDXGI();       // DXGI初期化
 
     // 初期化完了のログを出力
     Log("Complete Initialize WinApp.\n");
@@ -58,83 +58,6 @@ void WinApp::InitializeWindow() {
 
     // 初期化完了のログを出力
     Log("Complete Initialize Window.\n");
-}
-
-void WinApp::InitializeDXGI() {
-    // DXGIファクトリーの生成
-    dxgiFactory_ = nullptr;
-    // HRESULTはWindows系のエラーコードであり、
-    // 関数が成功したかどうかをSUCCEEDEDマクロで判定できる
-    hr_ = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory_));
-    // 初期化の根本的な部分でエラーが出た場合はプログラムが間違っているか、
-    // どうにもできない場合が多いのでassertにしておく
-    assert(SUCCEEDED(hr_));
-
-    // アダプタを初期化
-    InitializeDXGIAdapter();
-    // D3D12デバイスを初期化
-    InitializeD3D12Device();
-
-    // 初期化完了のログを出力
-    Log("Complete Initialize D3D12Device.\n");
-}
-
-void WinApp::InitializeDXGIAdapter() {
-    // 使用するアダプタ用の変数をnullptrで初期化しておく
-    useAdapter_ = nullptr;
-
-    // 良い順にアダプタを頼む
-    for (UINT i = 0; dxgiFactory_->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&useAdapter_)) != DXGI_ERROR_NOT_FOUND; ++i) {
-        // アダプタの情報を取得する
-        DXGI_ADAPTER_DESC3 adapterDesc{};
-        hr_ = useAdapter_->GetDesc3(&adapterDesc);
-
-        // アダプタの情報を取得できたかどうかをチェック
-        assert(SUCCEEDED(hr_));
-
-        // ソフトウェアアダプタでなければ使用
-        if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
-            // 使用するアダプタの情報をログに出力。wstringの方なので変換しておく
-            Log(std::format(L"Use Adapter : {}\n", adapterDesc.Description));
-            break;
-        }
-
-        // ソフトウェアアダプタの場合は見なかったことにする
-        useAdapter_ = nullptr;
-    }
-
-    // アダプタが見つからなかった場合はエラー
-    assert(useAdapter_ != nullptr);
-}
-
-void WinApp::InitializeD3D12Device() {
-    device_ = nullptr;
-    // 機能レベルとログ出力用の文字列
-    D3D_FEATURE_LEVEL featureLevels[] = {
-        D3D_FEATURE_LEVEL_12_2,
-        D3D_FEATURE_LEVEL_12_1,
-        D3D_FEATURE_LEVEL_12_0
-    };
-    const char *featureLevelStrings[] = {
-        "12.2",
-        "12.1",
-        "12.0"
-    };
-
-    // 高い順に生成できるか試す
-    for (size_t i = 0; i < _countof(featureLevels); ++i) {
-        // 使用してるアダプタでデバイスを生成
-        hr_ = D3D12CreateDevice(useAdapter_, featureLevels[i], IID_PPV_ARGS(&device_));
-        // 指定した機能レベルでデバイスを生成できたかをチェック
-        if (SUCCEEDED(hr_)) {
-            // 生成できたらログに出力して終了
-            Log(std::format("Feature Level : {}\n", featureLevelStrings[i]));
-            break;
-        }
-    }
-
-    // デバイスが生成できなかった場合はエラー
-    assert(device_ != nullptr);
 }
 
 int WinApp::ProccessMessage() {

@@ -1,4 +1,4 @@
-#include "Engine.h"
+#include "Engine/Engine.h"
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -6,7 +6,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     engine->Initialize();
 
     // ウィンドウのxボタンが押されるまでループ
-    while (engine->ProccessMessage() == 0) {
+    while (engine->ProccessMessage() != -1) {
         // ゲームの処理
     }
 
