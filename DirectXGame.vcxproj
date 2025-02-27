@@ -44,7 +44,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\Engine;$(IncludePath)</IncludePath>
+    <PublicIncludeDirectories>
+    </PublicIncludeDirectories>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -75,6 +76,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -86,10 +88,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Base\ConvertString.cpp" />
+    <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
+    <ClCompile Include="Engine\Base\WinApp.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Base\ConvertString.h" />
+    <ClInclude Include="Engine\Base\DirectXCommon.h" />
+    <ClInclude Include="Engine\Base\WinApp.h" />
     <ClInclude Include="Engine\Engine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

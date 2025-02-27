@@ -19,7 +19,11 @@ public:
     }
 
     /// @brief Windowsアプリ初期化
-    void Initialize();
+    /// @param title ウィンドウタイトル
+    /// @param windowStyle ウィンドウスタイル
+    /// @param width クライアントサイズの横幅
+    /// @param height クライアントサイズの縦幅
+    void Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height);
 
     /// @brief ウィンドウハンドル取得
     /// @return ウィンドウハンドル
@@ -51,16 +55,13 @@ private:
     /// @brief ウィンドウハンドル
     HWND hwnd_{};
     /// @brief クライアントサイズの横幅
-    int32_t kClientWidth_;
+    int32_t kClientWidth_ = 1280;
     /// @brief クライアントサイズの縦幅
-    int32_t kClientHeight_;
+    int32_t kClientHeight_ = 720;
     /// @brief ウィンドウサイズを表す構造体
-    RECT wrc_;
+    RECT wrc_ = {};
     /// @brief メッセージ
-    MSG msg_;
-
-    /// @brief ウィンドウ初期化
-    void InitializeWindow();
+    MSG msg_ = {};
 
     /// @brief ウィンドウプロシージャ
     /// @param hwnd ウィンドウハンドル

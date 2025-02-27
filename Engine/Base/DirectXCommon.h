@@ -2,11 +2,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-/// @brief Windowsアプリクラスの前方宣言
-class WinApp;
-
 /// @brief DirectX共通クラス
-class DirectXCommon {
+class DirectXCommon final {
 public:
     DirectXCommon(const DirectXCommon &) = delete;
     DirectXCommon &operator=(const DirectXCommon &) = delete;
@@ -21,14 +18,19 @@ public:
     }
 
     /// @brief DirectX初期化
-    void Initialize();
+    void Initialize(bool enableDebugLayer);
+
+    /// @brief 描画前処理
+    void PreDraw();
+    /// @brief 描画後処理
+    void PostDraw();
+
+    /// @brief レンダーターゲットのクリア
+    void ClearRenderTarget();
     
 private:
     DirectXCommon() = default;
     ~DirectXCommon() = default;
-
-    /// @brief Windowsアプリクラス
-    WinApp *winApp_;
     
     /// @brief DXGIファクトリー
     IDXGIFactory7 *dxgiFactory_;
@@ -36,8 +38,22 @@ private:
     IDXGIAdapter4 *useAdapter_;
     /// @brief D3D12デバイス
     ID3D12Device *device_;
+
     /// @brief コマンドキュー
     ID3D12CommandQueue *commandQueue_;
+    /// @brief コマンドアロケータ
+    ID3D12CommandAllocator *commandAllocator_;
+    /// @brief コマンドリスト
+    ID3D12GraphicsCommandList *commandList_;
+
+    /// @brief スワップチェイン
+    IDXGISwapChain4 *swapChain_;
+    /// @brief RTVのディスクリプタヒープ
+    ID3D12DescriptorHeap *rtvDescriptorHeap_;
+    /// @brief スワップチェインから取得したリソース
+    ID3D12Resource *swapChainResources_[2];
+    /// @brief RTVのディスクリプタヒープのハンドル
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle_[2];
 
     /// @brief DXGI初期化
     void InitializeDXGI();
@@ -45,6 +61,20 @@ private:
     void InitializeDXGIAdapter();
     /// @brief D3D12デバイス初期化
     void InitializeD3D12Device();
+
     /// @brief コマンドキュー初期化
     void InitializeCommandQueue();
+    /// @brief コマンドアロケータ初期化
+    void InitializeCommandAllocator();
+    /// @brief コマンドリスト初期化
+    void InitializeCommandList();
+
+    /// @brief スワップチェイン初期化
+    void InitializeSwapChain();
+    /// @brief RTVのディスクリプタヒープ初期化
+    void InitializeRTVDescriptorHeap();
+    /// @brief スワップチェインから取得したリソース初期化
+    void InitializeSwapChainResources();
+    /// @brief RTVのディスクリプタヒープのハンドル初期化
+    void InitializeRTVHandle();
 };

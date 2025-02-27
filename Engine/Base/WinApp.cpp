@@ -7,42 +7,44 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-void WinApp::Initialize() {
-    InitializeWindow();     // ウィンドウ初期化
+void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
+    // 初期化済みかどうかのフラグ
+    static bool isInitialized = false;
+    // 初期化済みで再度実行されたらエラーを出す
+    assert(!isInitialized);
 
-    // 初期化完了のログを出力
-    Log("Complete Initialize WinApp.\n");
-}
-
-void WinApp::InitializeWindow() {
+    //==================================================
+    // ウィンドウの初期化
+    //==================================================
+    
     // ウィンドウプロシージャ
     wc_.lpfnWndProc = WindowProc;
     // ウィンドウクラス名
-    wc_.lpszClassName = L"WindowClass";
+    wc_.lpszClassName = L"Window";
     // インスタンスハンドル
     wc_.hInstance = GetModuleHandle(nullptr);
     // カーソル
     wc_.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    
+
     // ウィンドウクラスを登録
     RegisterClass(&wc_);
 
     // クライアントサイズの横幅
-    kClientWidth_ = 1280;
+    kClientWidth_ = width;
     // クライアントサイズの縦幅
-    kClientHeight_ = 720;
-    
+    kClientHeight_ = height;
+
     // ウィンドウサイズを表す構造体にクライアント領域を入れる
     wrc_ = { 0, 0, kClientWidth_, kClientHeight_ };
-    
+
     // クライアント領域を元に実際のサイズにwrcを変更してもらう
     AdjustWindowRect(&wrc_, WS_OVERLAPPEDWINDOW, false);
 
     // ウィンドウハンドルを作成
     hwnd_ = CreateWindow(
         wc_.lpszClassName,      // 利用するクラス名
-        L"Window",              // タイトルバーの文字
-        WS_OVERLAPPEDWINDOW,    // よく見るウィンドウスタイル
+        title.c_str(),          // タイトルバーの文字
+        windowStyle,            // ウィンドウスタイル
         CW_USEDEFAULT,          // 表示X座標
         CW_USEDEFAULT,          // 表示Y座標
         wrc_.right - wrc_.left, // ウィンドウ横幅
@@ -57,7 +59,7 @@ void WinApp::InitializeWindow() {
     ShowWindow(hwnd_, SW_SHOW);
 
     // 初期化完了のログを出力
-    Log("Complete Initialize Window.\n");
+    Log("Complete Initialize WinApp.\n");
 }
 
 int WinApp::ProccessMessage() {
@@ -69,7 +71,6 @@ int WinApp::ProccessMessage() {
     if (PeekMessage(&msg_, nullptr, 0, 0, PM_REMOVE)) {
         TranslateMessage(&msg_);
         DispatchMessage(&msg_);
-        Log(std::format("Proccess Message : {}\n", msg_.message));
 
     } else {
         return 0;

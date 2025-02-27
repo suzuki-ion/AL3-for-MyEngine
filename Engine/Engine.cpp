@@ -1,32 +1,54 @@
+#include <cassert>
 #include "Engine.h"
-
-#include "Base/WinApp.h"
+#include "Base/ConvertString.h"
 #include "Base/DirectXCommon.h"
+#include "Base/WinApp.h"
 
-void Engine::Initialize() {
-    winApp_ = WinApp::GetInstance();
-    dxCommon_ = DirectXCommon::GetInstance();
+// 各エンジン用クラスのグローバル変数
+static WinApp *sWinApp = nullptr;
+static DirectXCommon *sDxCommon = nullptr;
 
-    winApp_->Initialize();
-    dxCommon_->Initialize();
+void Engine::Initialize(const char *title, int width, int height, bool enableDebugLayer) {
+    // エンジン初期化済みならエラー
+    assert(!sWinApp);
+    assert(!sDxCommon);
+
+    // タイトル名がそのままだと使えないので変換
+    std::wstring wTitle = ConvertString(title);
+    // Windowsアプリ初期化
+    sWinApp = WinApp::GetInstance();
+    sWinApp->Initialize(wTitle, WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_THICKFRAME),
+        width, height);
+
+    // DirectX初期化
+    sDxCommon = DirectXCommon::GetInstance();
+    sDxCommon->Initialize(enableDebugLayer);
 }
 
 void Engine::Finalize() {
 
 }
 
+void Engine::BeginFrame() {
+    sDxCommon->PreDraw();
+}
+
+void Engine::EndFrame() {
+    sDxCommon->PostDraw();
+}
+
 HWND Engine::GetWindowHandle() const {
-    return winApp_->GetWindowHandle();
+    return sWinApp->GetWindowHandle();
 }
 
 int32_t Engine::GetClientWidth() const {
-    return winApp_->GetClientWidth();
+    return sWinApp->GetClientWidth();
 }
 
 int32_t Engine::GetClientHeight() const {
-    return winApp_->GetClientHeight();
+    return sWinApp->GetClientHeight();
 }
 
 int Engine::ProccessMessage() {
-    return winApp_->ProccessMessage();
+    return sWinApp->ProccessMessage();
 }

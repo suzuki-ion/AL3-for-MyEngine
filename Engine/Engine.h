@@ -3,11 +3,6 @@
 #include <cstdint>
 #include <string>
 
-/// @brief Windowsアプリクラスの前方宣言
-class WinApp;
-/// @brief DirectX汎用クラスの前方宣言
-class DirectXCommon;
-
 /// @brief 自作エンジンクラス
 class Engine final {
 public:
@@ -24,10 +19,16 @@ public:
     }
 
     /// @brief エンジン初期化
-    void Initialize();
+    void Initialize(const char *title, int width = 1280, int height = 720, bool enableDebugLayer = true);
 
     /// @brief エンジン終了処理
     void Finalize();
+
+    /// @brief フレーム開始処理
+    void BeginFrame();
+
+    /// @brief フレーム終了処理
+    void EndFrame();
     
     /// @brief ウィンドウハンドル取得
     HWND GetWindowHandle() const;
@@ -47,9 +48,4 @@ public:
 private:
     Engine() = default;
     ~Engine() = default;
-
-    /// @brief  Windowsアプリクラス
-    WinApp *winApp_ = nullptr;
-    /// @brief DirectX汎用クラス
-    DirectXCommon *dxCommon_ = nullptr;
 };
