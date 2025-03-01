@@ -1,9 +1,9 @@
 #pragma once
+#include <wrl.h>
 #include <chrono>
 #include <cstdlib>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <wrl.h>
 #include <dxgidebug.h>
 
 #pragma comment(lib, "dxguid.lib")
@@ -24,6 +24,7 @@ public:
     }
 
     /// @brief DirectX初期化
+    /// @param enableDebugLayer デバッグレイヤーを有効にするかどうか
     void Initialize(bool enableDebugLayer);
     /// @brief DirectX終了処理
     void Finalize();
@@ -35,6 +36,14 @@ public:
 
     /// @brief レンダーターゲットのクリア
     void ClearRenderTarget();
+
+    /// @brief D3D12デバイス取得
+    /// @return D3D12デバイス
+    ID3D12Device *GetDevice() const { return device_.Get(); }
+
+    /// @brief 描画コマンドリスト取得
+    /// @return 描画コマンドリスト
+    ID3D12GraphicsCommandList *GetCommandList() const { return commandList_.Get(); }
     
 private:
     DirectXCommon() = default;
@@ -115,4 +124,7 @@ private:
 
     /// @brief フェンス初期化
     void InitializeFence();
+
+    /// @brief DXC初期化
+    void InitializeDXC();
 };

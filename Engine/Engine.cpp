@@ -4,9 +4,11 @@
 #include "Base/DirectXCommon.h"
 #include "Base/WinApp.h"
 
-// 各エンジン用クラスのグローバル変数
-static WinApp *sWinApp = nullptr;
-static DirectXCommon *sDxCommon = nullptr;
+namespace {
+    // 各エンジン用クラスのグローバル変数
+    WinApp *sWinApp = nullptr;
+    DirectXCommon *sDxCommon = nullptr;
+}
 
 void Engine::Initialize(const char *title, int width, int height, bool enableDebugLayer) {
     // エンジン初期化済みならエラー

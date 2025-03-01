@@ -1,12 +1,101 @@
 #include <Windows.h>
 #include <cassert>
 #include <format>
+#include <dxcapi.h>
 
 #include "DirectXCommon.h"
 #include "WinApp.h"
 
-// Windowsアプリクラスのグローバル変数
-static WinApp *sWinApp = nullptr;
+#pragma comment(lib, "dxcompiler.lib")
+
+namespace {
+    // Windowsアプリクラスのグローバル変数
+    WinApp *sWinApp = nullptr;
+
+    /// @brief シェーダーコンパイル用関数
+    /// @param filePath コンパイルするシェーダーファイルへのパス
+    /// @param profile コンパイルに使用するプロファイル
+    /// @param dxcUtils 初期化で生成したIDxcUtilsインターフェース
+    /// @param dxcCompiler 初期化で生成したIDxcCompiler3インターフェース
+    /// @param includeHandler インクルードファイルを扱うためのインターフェース
+    /// @return コンパイル結果
+    IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
+        IDxcUtils *dxcUtils, IDxcCompiler3 *dxcCompiler, IDxcIncludeHandler *includeHandler) {
+        // これからシェーダーをコンパイルする旨をログに出力
+        sWinApp->Log(std::format(L"Begin CompileShader, path:{}, profile:{}\n", filePath, profile));
+        
+        //==================================================
+        // 1. hlslファイルを読む
+        //==================================================
+        
+        IDxcBlobEncoding *shaderSource = nullptr;
+        HRESULT hr = dxcUtils->LoadFile(filePath.c_str(), nullptr, &shaderSource);
+        // ファイルの読み込みに失敗した場合はエラーを出す
+        assert(SUCCEEDED(hr));
+
+        // 読み込んだファイルの内容を設定する
+        DxcBuffer shaderSourceBuffer;
+        shaderSourceBuffer.Ptr = shaderSource->GetBufferPointer();
+        shaderSourceBuffer.Size = shaderSource->GetBufferSize();
+        // UTF8の文字コードであることを通知
+        shaderSourceBuffer.Encoding = DXC_CP_UTF8;
+
+        //==================================================
+        // 2. コンパイルする
+        //==================================================
+
+        LPCWSTR arguments[] = {
+            filePath.c_str(),           // コンパイル対象のhlslファイル名
+            L"-E", L"main",             // エントリーポイントの指定。基本的にmain以外にはしない
+            L"-T", profile,             // ShaderProfileの指定
+            L"-Zi", L"-Qembed_debug",   // デバッグ情報を埋め込む
+            L"-Od",                     // 最適化を外しておく
+            L"-Zpr",                    // メモリレイアウトは行優先
+        };
+        // 実際にShaderをコンパイルする
+        IDxcResult *shaderResult = nullptr;
+        hr = dxcCompiler->Compile(
+            &shaderSourceBuffer,        // 読み込んだファイル
+            arguments,                  // コンパイルオプション
+            _countof(arguments),        // コンパイルオプションの数
+            includeHandler,             // includeが含まれた諸々
+            IID_PPV_ARGS(&shaderResult) // コンパイル結果
+        );
+        // コンパイルエラーでなくdxcが起動できないなど致命的な状況
+        assert(SUCCEEDED(hr));
+
+        //==================================================
+        // 3. 警告・エラーがでていないか確認する
+        //==================================================
+
+        // 警告・エラーが出てたらログに出して止める
+        IDxcBlobUtf8 *shaderError = nullptr;
+        shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
+        if ((shaderError != nullptr) && (shaderError->GetStringLength() != 0)) {
+            // エラーがあった場合はエラーを出力して終了
+            sWinApp->Log(std::format(L"CompileShader Error: {}\n", shaderError->GetStringPointer()));
+            assert(false);
+        }
+
+        //==================================================
+        // 4. コンパイル結果を受け取って返す
+        //==================================================
+
+        // コンパイル結果から実行用のバイナリ部分を取得
+        IDxcBlob *shaderBlob = nullptr;
+        hr = shaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
+        // コンパイル結果の取得に失敗した場合はエラーを出す
+        assert(SUCCEEDED(hr));
+        // コンパイル完了のログを出力
+        sWinApp->Log(std::format(L"Compile Succeeded, path:{}, profile:{}\n", filePath, profile));
+        // もう使わないリソースを解放
+        shaderSource->Release();
+        shaderResult->Release();
+
+        // 実行用のバイナリを返す
+        return shaderBlob;
+    }
+}
 
 void DirectXCommon::Initialize(bool enableDebugLayer) {
     // 初期化済みかどうかのフラグ
@@ -374,6 +463,26 @@ void DirectXCommon::InitializeFence() {
 
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize Fence.\n");
+}
+
+void DirectXCommon::InitializeDXC() {
+    //dxcCompilerを初期化
+    IDxcUtils *dxcUtils = nullptr;
+    IDxcCompiler3 *dxcCompiler = nullptr;
+    HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+    assert(SUCCEEDED(hr));
+    hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
+    assert(SUCCEEDED(hr));
+
+    // 現時点でincludeはしないが、includeに対応するための設定を行っておく
+    IDxcIncludeHandler *includeHandler = nullptr;
+    hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
+    assert(SUCCEEDED(hr));
+
+    // シェーダーコンパイル
+
+    // 初期化完了のログを出力
+    sWinApp->Log("Complete Initialize DXC.\n");
 }
 
 DirectXCommon::D3DResourceLeakChecker::~D3DResourceLeakChecker() {
