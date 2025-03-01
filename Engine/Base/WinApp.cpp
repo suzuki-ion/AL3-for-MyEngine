@@ -62,6 +62,16 @@ void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t wid
     Log("Complete Initialize WinApp.\n");
 }
 
+void WinApp::Finalize() {
+    // ウィンドウを破棄
+    DestroyWindow(hwnd_);
+    // ウィンドウクラスを登録解除
+    UnregisterClass(wc_.lpszClassName, wc_.hInstance);
+
+    // 終了処理完了のログを出力
+    Log("Complete Finalize WinApp.\n");
+}
+
 int WinApp::ProccessMessage() {
     if (msg_.message == WM_QUIT) {
         Log("Window Quit.\n");

@@ -25,6 +25,9 @@ public:
     /// @param height クライアントサイズの縦幅
     void Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height);
 
+    /// @brief Windowsアプリ終了処理
+    void Finalize();
+
     /// @brief ウィンドウハンドル取得
     /// @return ウィンドウハンドル
     HWND GetWindowHandle() const { return hwnd_; }

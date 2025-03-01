@@ -48,4 +48,11 @@ public:
 private:
     Engine() = default;
     ~Engine() = default;
+
+    /// @brief 終了処理チェック用構造体
+    struct FinalizeChecker {
+        ~FinalizeChecker();
+    };
+    /// @brief 終了処理チェック用変数
+    FinalizeChecker finalizeCheck_;
 };

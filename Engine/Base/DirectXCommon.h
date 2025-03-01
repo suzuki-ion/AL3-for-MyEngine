@@ -1,6 +1,12 @@
 #pragma once
+#include <chrono>
+#include <cstdlib>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <wrl.h>
+#include <dxgidebug.h>
+
+#pragma comment(lib, "dxguid.lib")
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -19,6 +25,8 @@ public:
 
     /// @brief DirectX初期化
     void Initialize(bool enableDebugLayer);
+    /// @brief DirectX終了処理
+    void Finalize();
 
     /// @brief 描画前処理
     void PreDraw();
@@ -31,36 +39,56 @@ public:
 private:
     DirectXCommon() = default;
     ~DirectXCommon() = default;
+
+    /// @brief リソースリークチェック用構造体
+    struct D3DResourceLeakChecker {
+        ~D3DResourceLeakChecker();
+    };
+    /// @brief リソースリークチェック用変数
+    D3DResourceLeakChecker leakCheck_;
+
+    //--------- DXGI ---------//
     
     /// @brief DXGIファクトリー
-    IDXGIFactory7 *dxgiFactory_;
+    Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory_;
     /// @brief 使用するアダプタ
-    IDXGIAdapter4 *useAdapter_;
+    Microsoft::WRL::ComPtr<IDXGIAdapter4> useAdapter_;
     /// @brief D3D12デバイス
-    ID3D12Device *device_;
+    Microsoft::WRL::ComPtr<ID3D12Device> device_;
+
+    //--------- コマンド ---------//
 
     /// @brief コマンドキュー
-    ID3D12CommandQueue *commandQueue_;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue_;
     /// @brief コマンドアロケータ
-    ID3D12CommandAllocator *commandAllocator_;
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator_;
     /// @brief コマンドリスト
-    ID3D12GraphicsCommandList *commandList_;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
+
+    //--------- スワップチェイン ---------//
 
     /// @brief スワップチェイン
-    IDXGISwapChain4 *swapChain_;
-    /// @brief RTVのディスクリプタヒープ
-    ID3D12DescriptorHeap *rtvDescriptorHeap_;
+    Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
     /// @brief スワップチェインから取得したリソース
-    ID3D12Resource *swapChainResources_[2];
+    Microsoft::WRL::ComPtr<ID3D12Resource> swapChainResources_[2];
+
+    //--------- レンダーターゲット ---------//
+
+    /// @brief RTVのディスクリプタヒープ
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap_;
     /// @brief RTVのディスクリプタヒープのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle_[2];
 
+    //--------- フェンス ---------//
+
     /// @brief フェンス
-    ID3D12Fence *fence_;
+    Microsoft::WRL::ComPtr<ID3D12Fence> fence_;
     /// @brief フェンスの値
     UINT64 fenceValue_;
     /// @brief フェンスのイベントハンドル
     HANDLE fenceEvent_;
+
+    //--------- 各種初期化用関数 ---------//
 
     /// @brief DXGI初期化
     void InitializeDXGI();

@@ -51,6 +51,14 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     sWinApp->Log("Complete Initialize DirectX.\n");
 }
 
+void DirectXCommon::Finalize() {
+    // フェンスのイベントハンドルを閉じる
+    CloseHandle(fenceEvent_);
+
+    // 終了処理完了のログを出力
+    sWinApp->Log("Complete Finalize DirectX.\n");
+}
+
 void DirectXCommon::PreDraw() {
     // レンダーターゲットのクリア
     ClearRenderTarget();
@@ -62,11 +70,8 @@ void DirectXCommon::PreDraw() {
 }
 
 void DirectXCommon::PostDraw() {
-    // エラーチェック用の変数
-    static HRESULT hr;
-    
     // GPUにコマンドリストの実行を行わせる
-    ID3D12CommandList *commandLists[] = { commandList_ };
+    ID3D12CommandList *commandLists[] = { commandList_.Get()};
     commandQueue_->ExecuteCommandLists(1, commandLists);
     // GPUとOSに画面の交換を行うよう通知
     swapChain_->Present(1, 0);
@@ -78,7 +83,7 @@ void DirectXCommon::PostDraw() {
     // Fenceの値を更新
     fenceValue_++;
     // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
-    commandQueue_->Signal(fence_, fenceValue_);
+    commandQueue_->Signal(fence_.Get(), fenceValue_);
 
     // Fenceの値が指定したSignal値にたどり着いているか確認する
     // GetCompletedValueの初期値はFence作成時に渡した初期値
@@ -90,9 +95,9 @@ void DirectXCommon::PostDraw() {
     }
 
     // 次のフレーム用のコマンドリストを準備
-    hr = commandAllocator_->Reset();
+    HRESULT hr = commandAllocator_->Reset();
     assert(SUCCEEDED(hr));
-    hr = commandList_->Reset(commandAllocator_, nullptr);
+    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
     assert(SUCCEEDED(hr));
 }
 
@@ -111,7 +116,7 @@ void DirectXCommon::ClearRenderTarget() {
     // Noneにしておく
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     // バリアを張る対象のリソース。現在のバックバッファに対して行う
-    barrier.Transition.pResource = swapChainResources_[backBufferIndex];
+    barrier.Transition.pResource = swapChainResources_[backBufferIndex].Get();
     // 遷移前（現在）のResourceState
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     // 遷移後のResourceState
@@ -237,7 +242,7 @@ void DirectXCommon::InitializeD3D12Device() {
     // 高い順に生成できるか試す
     for (size_t i = 0; i < _countof(featureLevels); ++i) {
         // 使用してるアダプタでデバイスを生成
-        HRESULT hr = D3D12CreateDevice(useAdapter_, featureLevels[i], IID_PPV_ARGS(&device_));
+        HRESULT hr = D3D12CreateDevice(useAdapter_.Get(), featureLevels[i], IID_PPV_ARGS(&device_));
         // 指定した機能レベルでデバイスを生成できたかをチェック
         if (SUCCEEDED(hr)) {
             // 生成できたらログに出力して終了
@@ -279,7 +284,7 @@ void DirectXCommon::InitializeCommandAllocator() {
 void DirectXCommon::InitializeCommandList() {
     // コマンドリストの生成
     commandList_ = nullptr;
-    HRESULT hr = device_->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator_, nullptr, IID_PPV_ARGS(&commandList_));
+    HRESULT hr = device_->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator_.Get(), nullptr, IID_PPV_ARGS(&commandList_));
     // コマンドリストの生成が成功したかをチェック
     assert(SUCCEEDED(hr));
 }
@@ -298,7 +303,7 @@ void DirectXCommon::InitializeSwapChain() {
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;       // モニタに映したら中身を破棄
 
     // コマンドキュー、ウィンドウハンドル、設定を渡してスワップチェインを生成
-    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_, sWinApp->GetWindowHandle(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(&swapChain_));
+    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), sWinApp->GetWindowHandle(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
     // スワップチェインの生成が成功したかをチェック
     assert(SUCCEEDED(hr));
 
@@ -346,12 +351,12 @@ void DirectXCommon::InitializeRTVHandle() {
 
     // RTVの1つ目を作成。1つ目は最初のところに作る。作る場所をこちらで設定してあげる必要がある
     rtvHandle_[0] = rtvStartHandle;
-    device_->CreateRenderTargetView(swapChainResources_[0], &rtvDesc, rtvHandle_[0]);
+    device_->CreateRenderTargetView(swapChainResources_[0].Get(), &rtvDesc, rtvHandle_[0]);
 
     // 2つ目のディスクリプタハンドルを得る(自力で)
     rtvHandle_[1].ptr = rtvHandle_[0].ptr + device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     // RTVの2つ目を作成。
-    device_->CreateRenderTargetView(swapChainResources_[1], &rtvDesc, rtvHandle_[1]);
+    device_->CreateRenderTargetView(swapChainResources_[1].Get(), &rtvDesc, rtvHandle_[1]);
 }
 
 void DirectXCommon::InitializeFence() {
@@ -369,4 +374,14 @@ void DirectXCommon::InitializeFence() {
 
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize Fence.\n");
+}
+
+DirectXCommon::D3DResourceLeakChecker::~D3DResourceLeakChecker() {
+    // リソースリークチェック
+    Microsoft::WRL::ComPtr<IDXGIDebug1> debug;
+    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {
+        debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+        debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
+        debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
+    }
 }

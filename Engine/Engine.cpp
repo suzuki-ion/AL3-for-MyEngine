@@ -26,7 +26,10 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
 }
 
 void Engine::Finalize() {
-
+    sDxCommon->Finalize();
+    sWinApp->Finalize();
+    sDxCommon = nullptr;
+    sWinApp = nullptr;
 }
 
 void Engine::BeginFrame() {
@@ -51,4 +54,10 @@ int32_t Engine::GetClientHeight() const {
 
 int Engine::ProccessMessage() {
     return sWinApp->ProccessMessage();
+}
+
+Engine::FinalizeChecker::~FinalizeChecker() {
+    // エンジンが完全に終了しているかチェック
+    assert(sWinApp == nullptr);
+    assert(sDxCommon == nullptr);
 }
