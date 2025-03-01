@@ -55,6 +55,13 @@ private:
     /// @brief RTVのディスクリプタヒープのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle_[2];
 
+    /// @brief フェンス
+    ID3D12Fence *fence_;
+    /// @brief フェンスの値
+    UINT64 fenceValue_;
+    /// @brief フェンスのイベントハンドル
+    HANDLE fenceEvent_;
+
     /// @brief DXGI初期化
     void InitializeDXGI();
     /// @brief DXGIアダプター初期化
@@ -77,4 +84,7 @@ private:
     void InitializeSwapChainResources();
     /// @brief RTVのディスクリプタヒープのハンドル初期化
     void InitializeRTVHandle();
+
+    /// @brief フェンス初期化
+    void InitializeFence();
 };

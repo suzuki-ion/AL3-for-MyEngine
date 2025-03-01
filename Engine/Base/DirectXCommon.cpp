@@ -13,6 +13,7 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     static bool isInitialized = false;
     // 初期化済みならエラーを出す
     assert(!isInitialized);
+    assert(!sWinApp);
 
     // Windowsアプリクラスのインスタンスを取得
     sWinApp = WinApp::GetInstance();
@@ -44,19 +45,16 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     InitializeRTVDescriptorHeap();  // RTVのディスクリプタヒープ初期化
     InitializeSwapChainResources(); // スワップチェインから取得したリソース初期化
     InitializeRTVHandle();          // RTVのディスクリプタヒープのハンドル初期化
+    InitializeFence();              // Fence初期化
     
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize DirectX.\n");
 }
 
 void DirectXCommon::PreDraw() {
-    // これから書き込むバックバッファのindexを取得
-    UINT backBufferIndex = swapChain_->GetCurrentBackBufferIndex();
-    // 描画先のRTVを設定
-    commandList_->OMSetRenderTargets(1, &rtvHandle_[backBufferIndex], false, nullptr);
-    // 指定した色で画面全体をクリア
-    float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
-    commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor, 0, nullptr);
+    // レンダーターゲットのクリア
+    ClearRenderTarget();
+    
     // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
     HRESULT hr = commandList_->Close();
     // コマンドリストの内容を確定できたかをチェック
@@ -72,6 +70,25 @@ void DirectXCommon::PostDraw() {
     commandQueue_->ExecuteCommandLists(1, commandLists);
     // GPUとOSに画面の交換を行うよう通知
     swapChain_->Present(1, 0);
+
+    //==================================================
+    // Fenceの処理
+    //==================================================
+
+    // Fenceの値を更新
+    fenceValue_++;
+    // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
+    commandQueue_->Signal(fence_, fenceValue_);
+
+    // Fenceの値が指定したSignal値にたどり着いているか確認する
+    // GetCompletedValueの初期値はFence作成時に渡した初期値
+    if (fence_->GetCompletedValue() < fenceValue_) {
+        // 指定したSignalにたどりついていないので、たどり着くまで待つようにイベントを設定する
+        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
+        // イベントを待つ
+        WaitForSingleObject(fenceEvent_, INFINITE);
+    }
+
     // 次のフレーム用のコマンドリストを準備
     hr = commandAllocator_->Reset();
     assert(SUCCEEDED(hr));
@@ -80,7 +97,44 @@ void DirectXCommon::PostDraw() {
 }
 
 void DirectXCommon::ClearRenderTarget() {
+    // これから書き込むバックバッファのindexを取得
+    UINT backBufferIndex = swapChain_->GetCurrentBackBufferIndex();
 
+    //==================================================
+    // TransitionBarrier
+    //==================================================
+
+    // TransitionBarrierの設定
+    D3D12_RESOURCE_BARRIER barrier{};
+    // 今回のバリアはTransition
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    // Noneにしておく
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    // バリアを張る対象のリソース。現在のバックバッファに対して行う
+    barrier.Transition.pResource = swapChainResources_[backBufferIndex];
+    // 遷移前（現在）のResourceState
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    // 遷移後のResourceState
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    // TransitionBarrierを張る
+    commandList_->ResourceBarrier(1, &barrier);
+
+    //==================================================
+    // 画面クリア処理
+    //==================================================
+
+    // 描画先のRTVを設定
+    commandList_->OMSetRenderTargets(1, &rtvHandle_[backBufferIndex], false, nullptr);
+    // 指定した色で画面全体をクリア
+    float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
+    commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor, 0, nullptr);
+
+    // 画面に描く処理はすべて終わり、画面に映すので、状態を遷移
+    // 今回はRenderTargetからPresentにする
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    // TransitionBarrierを張る
+    commandList_->ResourceBarrier(1, &barrier);
 }
 
 void DirectXCommon::InitializeDXGI() {
@@ -298,4 +352,21 @@ void DirectXCommon::InitializeRTVHandle() {
     rtvHandle_[1].ptr = rtvHandle_[0].ptr + device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     // RTVの2つ目を作成。
     device_->CreateRenderTargetView(swapChainResources_[1], &rtvDesc, rtvHandle_[1]);
+}
+
+void DirectXCommon::InitializeFence() {
+    // フェンスの生成。初期値0で作る
+    fence_ = nullptr;
+    fenceValue_ = 0;
+    HRESULT hr = device_->CreateFence(fenceValue_, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_));
+    // フェンスの生成が成功したかをチェック
+    assert(SUCCEEDED(hr));
+
+    // フェンスのSignalを持つためのイベントを作成する
+    fenceEvent_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    // フェンスのイベントハンドルの生成が成功したかをチェック
+    assert(fenceEvent_ != nullptr);
+
+    // 初期化完了のログを出力
+    sWinApp->Log("Complete Initialize Fence.\n");
 }
