@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+namespace MyEngine {
+
 /// @brief Windowsアプリクラス
 class WinApp final {
 public:
@@ -74,3 +76,5 @@ private:
     /// @return メッセージ処理結果
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 };
+
+} // namespace MyEngine

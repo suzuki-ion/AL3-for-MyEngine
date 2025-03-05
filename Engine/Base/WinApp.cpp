@@ -7,6 +7,8 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+namespace MyEngine {
+
 void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
     // 初期化済みかどうかのフラグ
     static bool isInitialized = false;
@@ -109,3 +111,5 @@ LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     // 標準のメッセージ処理を行う
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
+
+} // namespace MyEngine

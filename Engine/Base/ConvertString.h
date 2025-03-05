@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+namespace MyEngine {
+
 /// @brief 文字列変換
 /// @param str 変換元文字列
 /// @return 変換後文字列
@@ -10,3 +12,5 @@ std::wstring ConvertString(const std::string &str);
 /// @param str 変換元文字列
 /// @return 変換後文字列
 std::string ConvertString(const std::wstring &str);
+
+} // namespace MyEngine

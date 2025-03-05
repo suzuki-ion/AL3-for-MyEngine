@@ -29,6 +29,9 @@ public:
 
     /// @brief フレーム終了処理
     void EndFrame();
+
+    /// @brief テスト用の描画関数
+    void DrawTest();
     
     /// @brief ウィンドウハンドル取得
     HWND GetWindowHandle() const;

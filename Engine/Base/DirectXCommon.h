@@ -8,6 +8,8 @@
 
 #pragma comment(lib, "dxguid.lib")
 
+namespace MyEngine {
+
 /// @brief DirectX共通クラス
 class DirectXCommon final {
 public:
@@ -124,7 +126,6 @@ private:
 
     /// @brief フェンス初期化
     void InitializeFence();
-
-    /// @brief DXC初期化
-    void InitializeDXC();
 };
+
+} // namespace MyEngine

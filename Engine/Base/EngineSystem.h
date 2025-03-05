@@ -1,5 +1,7 @@
 #pragma once
 
+namespace MyEngine {
+
 /// @brief エンジンのシステムクラス
 class EngineSystem {
 public:
@@ -20,3 +22,4 @@ private:
     ~EngineSystem() = default;
 };
 
+} // namespace MyEngine
