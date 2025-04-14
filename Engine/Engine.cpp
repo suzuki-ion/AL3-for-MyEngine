@@ -6,6 +6,7 @@
 #include "Base/CrashHandler.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
+#include "Math/Matrix4x4.h"
 #include "Engine.h"
 
 using namespace MyEngine;
@@ -73,6 +74,12 @@ void Engine::DrawTest() {
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
     *materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
 
+    // WVP用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
+    static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
+    Matrix4x4 *wvpData = nullptr;
+    wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData));
+    wvpData->MakeIdentity();
+
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
@@ -102,6 +109,8 @@ void Engine::DrawTest() {
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     // マテリアルCBufferの場所を指定
     commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+    // wvp用のCBufferの場所を指定
+    commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
     // 描画
     commandList->DrawInstanced(3, 1, 0, 0);
 }

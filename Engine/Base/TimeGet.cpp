@@ -12,17 +12,17 @@ std::chrono::zoned_seconds TimeGetZone() {
     return std::chrono::zoned_time{ std::chrono::current_zone(), nowSeconds };
 }
 
-std::string TimeGetString() {
+std::string TimeGetString(const std::string &format) {
     // フォーマットを使って年月日_時分秒の文字列に変換
     auto time = TimeGetZone();
-    auto timeString = std::format("%Y/%m/%d %H:%M:%S", time);
+    auto timeString = std::vformat(format, std::make_format_args(time));
     return timeString;
 }
 
-std::wstring TimeGetStringW() {
+std::wstring TimeGetStringW(const std::wstring &format) {
     // フォーマットを使って年月日_時分秒の文字列に変換
     auto time = TimeGetZone();
-    auto timeString = std::format(L"%Y/%m/%d %H:%M:%S", time);
+    auto timeString = std::vformat(format, std::make_wformat_args(time));
     return timeString;
 }
 

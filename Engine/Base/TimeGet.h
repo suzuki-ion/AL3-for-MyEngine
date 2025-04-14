@@ -11,11 +11,11 @@ std::chrono::zoned_seconds TimeGetZone();
 /// @brief PCの設定時間を文字列で取得
 /// @param format 取得する時間のフォーマット
 /// @return フォーマットに従ったPCの設定時間
-std::string TimeGetString();
+std::string TimeGetString(const std::string &format);
 
 /// @brief PCの設定時間を文字列で取得
 /// @param format 取得する時間のフォーマット
 /// @return フォーマットに従ったPCの設定時間
-std::wstring TimeGetStringW();
+std::wstring TimeGetStringW(const std::wstring &format);
 
 } // namespace MyEngine

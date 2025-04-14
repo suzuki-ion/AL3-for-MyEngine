@@ -29,7 +29,7 @@ void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t wid
     // ログファイルのパスを作成
     std::filesystem::create_directory("Logs");
     // 時刻を使ってファイル名を決定
-    std::string logFilePath = "Logs/" + TimeGetString() + ".log";
+    std::string logFilePath = "Logs/" + TimeGetString("{:%Y-%m-%d_%H-%M-%S}") + ".log";
     // ファイルを使って書き込み準備
     logStream.open(logFilePath);
 
@@ -109,13 +109,13 @@ int WinApp::ProccessMessage() {
 
 void WinApp::Log(const std::string &message) {
     // ログファイルに書き込み
-    logStream << "[ " << TimeGetString() << " ] : " << message << std::endl;
+    logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << message << std::endl;
     OutputDebugStringA(message.c_str());
 }
 
 void WinApp::Log(const std::wstring &message) {
     // ログファイルに書き込み
-    logStream << "[ " << TimeGetString() << " ] : " << ConvertString(message) << std::endl;
+    logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << ConvertString(message) << std::endl;
     // OutputDebugStringWでもいいらしいけど、よくわからんので変換で対応
     OutputDebugStringA(ConvertString(message).c_str());
 }
