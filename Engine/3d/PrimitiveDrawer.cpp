@@ -26,7 +26,7 @@ DirectXCommon *sDxCommon = nullptr;
 IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     IDxcUtils *dxcUtils, IDxcCompiler3 *dxcCompiler, IDxcIncludeHandler *includeHandler) {
     // これからシェーダーをコンパイルする旨をログに出力
-    sWinApp->Log(std::format(L"Begin CompileShader, path:{}, profile:{}\n", filePath, profile));
+    sWinApp->Log(std::format(L"Begin CompileShader, path:{}, profile:{}", filePath, profile));
 
     //==================================================
     // 1. hlslファイルを読む
@@ -77,7 +77,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
     if ((shaderError != nullptr) && (shaderError->GetStringLength() != 0)) {
         // エラーがあった場合はエラーを出力して終了
-        sWinApp->Log(std::format(L"Compile Failed, path:{}, profile:{}\n", filePath, profile));
+        sWinApp->Log(std::format(L"Compile Failed, path:{}, profile:{}", filePath, profile));
         assert(false);
     }
 
@@ -91,7 +91,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     // コンパイル結果の取得に失敗した場合はエラーを出す
     assert(SUCCEEDED(hr));
     // コンパイル完了のログを出力
-    sWinApp->Log(std::format(L"Compile Succeeded, path:{}, profile:{}\n", filePath, profile));
+    sWinApp->Log(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
     // もう使わないリソースを解放
     shaderSource->Release();
     shaderResult->Release();
@@ -117,7 +117,7 @@ void PrimitiveDrawer::Initialize() {
     InitializeMesh();
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize PrimitiveDrawer.\n");
+    sWinApp->Log("Complete Initialize PrimitiveDrawer.");
 }
 
 void PrimitiveDrawer::Finalize(){
@@ -127,7 +127,7 @@ void PrimitiveDrawer::Finalize(){
     pipelineSet_.reset();
 
     // 終了処理完了のログを出力
-    sWinApp->Log("Complete Finalize PrimitiveDrawer.\n");
+    sWinApp->Log("Complete Finalize PrimitiveDrawer.");
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateCommitedResources(UINT64 size) {
@@ -155,7 +155,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateCommitedResources(
     assert(SUCCEEDED(hr));
 
     // ログに生成したリソースのサイズを出力
-    sWinApp->Log(std::format("CreateCommitedResources, size:{}\n", size));
+    sWinApp->Log(std::format("CreateCommitedResources, size:{}", size));
     return resource;
 }
 
@@ -345,14 +345,14 @@ void PrimitiveDrawer::InitializeGraphicsPipeline() {
     pipelineSet_ = CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Graphics Pipeline.\n");
+    sWinApp->Log("Complete Initialize Graphics Pipeline.");
 }
 
 void PrimitiveDrawer::InitializeMesh() {
     mesh_ = CreateMesh(3);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Mesh.\n");
+    sWinApp->Log("Complete Initialize Mesh.");
 }
 
 } // namespace MyEngine

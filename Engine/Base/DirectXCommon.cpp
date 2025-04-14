@@ -51,7 +51,7 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     InitializeFence();              // Fence初期化
     
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DirectX.\n");
+    sWinApp->Log("Complete Initialize DirectX.");
 }
 
 void DirectXCommon::Finalize() {
@@ -59,7 +59,7 @@ void DirectXCommon::Finalize() {
     CloseHandle(fenceEvent_);
 
     // 終了処理完了のログを出力
-    sWinApp->Log("Complete Finalize DirectX.\n");
+    sWinApp->Log("Complete Finalize DirectX.");
 }
 
 void DirectXCommon::PreDraw() {
@@ -167,7 +167,7 @@ void DirectXCommon::InitializeDXGI() {
     InitializeD3D12Device();
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DXGI.\n");
+    sWinApp->Log("Complete Initialize DXGI.");
 
     // DirectX12のエラーが出た際に止まるようにする
 #ifdef _DEBUG
@@ -218,7 +218,7 @@ void DirectXCommon::InitializeDXGIAdapter() {
         // ソフトウェアアダプタでなければ使用
         if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
             // 使用するアダプタの情報をログに出力。wstringの方なので変換しておく
-            sWinApp->Log(std::format(L"Use Adapter : {}\n", adapterDesc.Description));
+            sWinApp->Log(std::format(L"Use Adapter : {}", adapterDesc.Description));
             break;
         }
 
@@ -230,7 +230,7 @@ void DirectXCommon::InitializeDXGIAdapter() {
     assert(useAdapter_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DXGI Adapter.\n");
+    sWinApp->Log("Complete Initialize DXGI Adapter.");
 }
 
 void DirectXCommon::InitializeD3D12Device() {
@@ -255,7 +255,7 @@ void DirectXCommon::InitializeD3D12Device() {
         // 指定した機能レベルでデバイスを生成できたかをチェック
         if (SUCCEEDED(hr)) {
             // 生成できたらログに出力して終了
-            sWinApp->Log(std::format("Feature Level : {}\n", featureLevelStrings[i]));
+            sWinApp->Log(std::format("Feature Level : {}", featureLevelStrings[i]));
             break;
         }
     }
@@ -264,7 +264,7 @@ void DirectXCommon::InitializeD3D12Device() {
     assert(device_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize D3D12 Device.\n");
+    sWinApp->Log("Complete Initialize D3D12 Device.");
 }
 
 void DirectXCommon::InitializeCommandQueue() {
@@ -276,7 +276,7 @@ void DirectXCommon::InitializeCommandQueue() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Command Queue.\n");
+    sWinApp->Log("Complete Initialize Command Queue.");
 }
 
 void DirectXCommon::InitializeCommandAllocator() {
@@ -287,7 +287,7 @@ void DirectXCommon::InitializeCommandAllocator() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Command Allocator.\n");
+    sWinApp->Log("Complete Initialize Command Allocator.");
 }
 
 void DirectXCommon::InitializeCommandList() {
@@ -317,7 +317,7 @@ void DirectXCommon::InitializeSwapChain() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize SwapChain.\n");
+    sWinApp->Log("Complete Initialize SwapChain.");
 }
 
 void DirectXCommon::InitializeRTVDescriptorHeap() {
@@ -333,7 +333,7 @@ void DirectXCommon::InitializeRTVDescriptorHeap() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize RTV Descriptor Heap.\n");
+    sWinApp->Log("Complete Initialize RTV Descriptor Heap.");
 }
 
 void DirectXCommon::InitializeSwapChainResources() {
@@ -346,7 +346,7 @@ void DirectXCommon::InitializeSwapChainResources() {
     }
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize SwapChain Resources.\n");
+    sWinApp->Log("Complete Initialize SwapChain Resources.");
 }
 
 void DirectXCommon::InitializeRTVHandle() {
@@ -382,7 +382,7 @@ void DirectXCommon::InitializeFence() {
     assert(fenceEvent_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Fence.\n");
+    sWinApp->Log("Complete Initialize Fence.");
 }
 
 DirectXCommon::D3DResourceLeakChecker::~D3DResourceLeakChecker() {

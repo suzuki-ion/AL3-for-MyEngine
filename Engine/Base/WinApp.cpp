@@ -86,7 +86,7 @@ void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t wid
     ShowWindow(hwnd_, SW_SHOW);
 
     // 初期化完了のログを出力
-    Log("Complete Initialize WinApp.\n");
+    Log("Complete Initialize WinApp.");
 }
 
 void WinApp::Finalize() {
@@ -96,12 +96,12 @@ void WinApp::Finalize() {
     UnregisterClass(wc_.lpszClassName, wc_.hInstance);
 
     // 終了処理完了のログを出力
-    Log("Complete Finalize WinApp.\n");
+    Log("Complete Finalize WinApp.");
 }
 
 int WinApp::ProccessMessage() {
     if (msg_.message == WM_QUIT) {
-        Log("Window Quit.\n");
+        Log("Window Quit.");
         return -1;
     }
 

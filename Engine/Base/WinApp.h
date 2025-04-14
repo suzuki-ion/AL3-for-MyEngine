@@ -19,7 +19,7 @@ public:
         static WinApp instance;
         return &instance;
     }
-
+    
     /// @brief Windowsアプリ初期化
     /// @param title ウィンドウタイトル
     /// @param windowStyle ウィンドウスタイル

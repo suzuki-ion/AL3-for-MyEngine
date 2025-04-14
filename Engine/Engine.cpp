@@ -3,6 +3,7 @@
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
 #include "Base/ConvertString.h"
+#include "Base/CrashHandler.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Engine.h"
 
@@ -21,6 +22,9 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     assert(!sDxCommon);
     assert(!sPrimitiveDrawer);
 
+    // 誰も捕捉しなかった場合に(Unhandled)、捕捉する関数を登録
+    SetUnhandledExceptionFilter(ExportDump);
+
     // タイトル名がそのままだと使えないので変換
     std::wstring wTitle = ConvertString(title);
     // Windowsアプリ初期化
@@ -36,10 +40,8 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     sPrimitiveDrawer = PrimitiveDrawer::GetInstance();
     sPrimitiveDrawer->Initialize();
 
-    // テスト描画用
-
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Engine.\n");
+    sWinApp->Log("Complete Initialize Engine.");
 }
 
 void Engine::Finalize() {

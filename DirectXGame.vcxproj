@@ -100,6 +100,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Base\CrashHandler.cpp" />
     <ClCompile Include="Engine\Base\EngineSystem.cpp" />
     <ClCompile Include="Engine\Base\ConvertString.cpp" />
     <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
@@ -109,6 +110,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Base\CrashHandler.h" />
     <ClInclude Include="Engine\Base\EngineSystem.h" />
     <ClInclude Include="Engine\Base\ConvertString.h" />
     <ClInclude Include="Engine\Base\DirectXCommon.h" />
