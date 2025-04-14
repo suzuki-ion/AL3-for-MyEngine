@@ -62,7 +62,7 @@ public:
     /// @brief リソース生成
     /// @param size サイズ
     /// @return 生成したリソース
-    Microsoft::WRL::ComPtr<ID3D12Resource> CreateCommitedResources(UINT64 size);
+    Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferResources(UINT64 size);
 
     /// @brief メッシュ生成
     /// @param vertexCount 頂点数

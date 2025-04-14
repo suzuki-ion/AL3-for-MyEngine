@@ -6,6 +6,7 @@
 
 #include "WinApp.h"
 #include "ConvertString.h"
+#include "TimeGet.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -27,16 +28,8 @@ void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t wid
 
     // ログファイルのパスを作成
     std::filesystem::create_directory("Logs");
-    // 現在時刻を取得（UTC時刻）
-    auto now = std::chrono::system_clock::now();
-    // ログファイルの名前にコンマ秒はいらないので、削って秒にする
-    auto nowSeconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
-    // 日本時間（PCの設定時間）に変換
-    std::chrono::zoned_time localTime{ std::chrono::current_zone(), nowSeconds};
-    // formatを使って年月日_時分秒の文字列に変換
-    std::string dateString = std::format("{:%Y%m%d_%H%M%S}", localTime);
     // 時刻を使ってファイル名を決定
-    std::string logFilePath = "Logs/" + dateString + ".log";
+    std::string logFilePath = "Logs/" + TimeGetString() + ".log";
     // ファイルを使って書き込み準備
     logStream.open(logFilePath);
 
@@ -116,13 +109,13 @@ int WinApp::ProccessMessage() {
 
 void WinApp::Log(const std::string &message) {
     // ログファイルに書き込み
-    logStream << message << std::endl;
+    logStream << "[ " << TimeGetString() << " ] : " << message << std::endl;
     OutputDebugStringA(message.c_str());
 }
 
 void WinApp::Log(const std::wstring &message) {
     // ログファイルに書き込み
-    logStream << ConvertString(message) << std::endl;
+    logStream << "[ " << TimeGetString() << " ] : " << ConvertString(message) << std::endl;
     // OutputDebugStringWでもいいらしいけど、よくわからんので変換で対応
     OutputDebugStringA(ConvertString(message).c_str());
 }

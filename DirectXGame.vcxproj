@@ -100,20 +100,24 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\3d\ObjectColor.cpp" />
     <ClCompile Include="Engine\Base\CrashHandler.cpp" />
     <ClCompile Include="Engine\Base\EngineSystem.cpp" />
     <ClCompile Include="Engine\Base\ConvertString.cpp" />
     <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
+    <ClCompile Include="Engine\Base\TimeGet.cpp" />
     <ClCompile Include="Engine\Base\WinApp.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\3d\ObjectColor.h" />
     <ClInclude Include="Engine\Base\CrashHandler.h" />
     <ClInclude Include="Engine\Base\EngineSystem.h" />
     <ClInclude Include="Engine\Base\ConvertString.h" />
     <ClInclude Include="Engine\Base\DirectXCommon.h" />
+    <ClInclude Include="Engine\Base\TimeGet.h" />
     <ClInclude Include="Engine\Base\WinApp.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Engine\3d\PrimitiveDrawer.h" />

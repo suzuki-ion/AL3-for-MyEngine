@@ -5,6 +5,7 @@
 #include "Base/ConvertString.h"
 #include "Base/CrashHandler.h"
 #include "3d/PrimitiveDrawer.h"
+#include "Math/Vector4.h"
 #include "Engine.h"
 
 using namespace MyEngine;
@@ -66,6 +67,12 @@ void Engine::DrawTest() {
     static auto mesh = sPrimitiveDrawer->CreateMesh(3);
     static auto pipelineSet = sPrimitiveDrawer->CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
+    // マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
+    static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
+    Vector4 *materialData = nullptr;
+    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
+    *materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
@@ -93,6 +100,8 @@ void Engine::DrawTest() {
     commandList->IASetVertexBuffers(0, 1, &mesh->vertexBufferView);     // VBVを設定
     // 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけばいい
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // マテリアルCBufferの場所を指定
+    commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
     // 描画
     commandList->DrawInstanced(3, 1, 0, 0);
 }
