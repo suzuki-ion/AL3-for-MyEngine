@@ -7,6 +7,8 @@
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Transform.h"
+#include "Math/RenderingPipeline.h"
 #include "Engine.h"
 
 using namespace MyEngine;
@@ -78,7 +80,44 @@ void Engine::DrawTest() {
     static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
     Matrix4x4 *wvpData = nullptr;
     wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData));
-    wvpData->MakeIdentity();
+    
+    // 回転用にTransform変数を作る
+    static Transform transform{
+        {1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f}
+    };
+    transform.rotate.y += 0.03f;
+    static Transform cameraTransform{
+        {1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, -5.0f}
+    };
+    Matrix4x4 worldMatrix;
+    Matrix4x4 cameraMatrix;
+    Matrix4x4 viewMatrix;
+    Matrix4x4 projectionMatrix;
+    Matrix4x4 wvpMatrix;
+    worldMatrix.MakeAffine(
+        transform.scale,
+        transform.rotate,
+        transform.translate
+    );
+    cameraMatrix.MakeAffine(
+        cameraTransform.scale,
+        cameraTransform.rotate,
+        cameraTransform.translate
+    );
+    viewMatrix = cameraMatrix.Inverse();
+    projectionMatrix = MakePerspectiveFovMatrix(
+        0.45f,
+        static_cast<float>(sWinApp->GetClientWidth()) /
+        static_cast<float>(sWinApp->GetClientHeight()),
+        0.1f, 100.0f
+    );
+    wvpMatrix = worldMatrix * (viewMatrix * projectionMatrix);
+
+    *wvpData = wvpMatrix;
 
     // ビューポート
     D3D12_VIEWPORT viewport{};
