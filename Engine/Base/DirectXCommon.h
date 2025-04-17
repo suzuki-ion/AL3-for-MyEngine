@@ -39,6 +39,13 @@ public:
     /// @brief レンダーターゲットのクリア
     void ClearRenderTarget();
 
+    /// @brief ディスクリプタヒープの作成
+    /// @param heapType シープの種類
+    /// @param numDescriptors ディスクリプタの数
+    /// @param shaderVisible シェーダーから見えるかどうか
+    /// @return ディスクリプタヒープのポインタ
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
+
     /// @brief D3D12デバイス取得
     /// @return D3D12デバイス
     ID3D12Device *GetDevice() const { return device_.Get(); }

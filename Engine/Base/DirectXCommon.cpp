@@ -151,6 +151,17 @@ void DirectXCommon::ClearRenderTarget() {
     commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor, 0, nullptr);
 }
 
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+    D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+    descriptorHeapDesc.Type = heapType;
+    descriptorHeapDesc.NumDescriptors = numDescriptors;
+    descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    HRESULT hr = device_->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
+    assert(SUCCEEDED(hr));
+    return descriptorHeap;
+}
+
 void DirectXCommon::InitializeDXGI() {
     // DXGIファクトリーの生成
     dxgiFactory_ = nullptr;
@@ -322,16 +333,8 @@ void DirectXCommon::InitializeSwapChain() {
 
 void DirectXCommon::InitializeRTVDescriptorHeap() {
     // レンダーターゲットビューのディスクリプタヒープの生成
-    rtvDescriptorHeap_ = nullptr;
-
-    D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc{};
-    rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;    // レンダーターゲットビュー用
-    rtvDescriptorHeapDesc.NumDescriptors = 2;                       // レンダーターゲットビューの数。ダブルバッファ用に2つ。多くても別に構わない
-    HRESULT hr = device_->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap_));
-
-    // レンダーターゲットビューのディスクリプタヒープの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
-
+    rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
+    
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize RTV Descriptor Heap.");
 }
