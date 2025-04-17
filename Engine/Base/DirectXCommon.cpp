@@ -8,6 +8,7 @@
 namespace MyEngine {
 
 namespace {
+// 各エンジン用クラスのグローバル変数
 WinApp *sWinApp = nullptr;
 } // namespace
 
@@ -313,17 +314,16 @@ void DirectXCommon::InitializeSwapChain() {
     // スワップチェインの生成
     swapChain_ = nullptr;
     
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-    swapChainDesc.Width = sWinApp->GetClientWidth();                // 画面の幅。ウィンドウのクライアント領域と同じにする
-    swapChainDesc.Height = sWinApp->GetClientHeight();              // 画面の高さ。ウィンドウのクライアント領域と同じにする
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;              // 色の形式。8bitのRGBA
-    swapChainDesc.SampleDesc.Count = 1;                             // マルチサンプルしない
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;    // レンダーターゲットとして使用
-    swapChainDesc.BufferCount = 2;                                  // バッファ数。ダブルバッファ
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;       // モニタに映したら中身を破棄
+    swapChainDesc_.Width = sWinApp->GetClientWidth();               // 画面の幅。ウィンドウのクライアント領域と同じにする
+    swapChainDesc_.Height = sWinApp->GetClientHeight();             // 画面の高さ。ウィンドウのクライアント領域と同じにする
+    swapChainDesc_.Format = DXGI_FORMAT_R8G8B8A8_UNORM;             // 色の形式。8bitのRGBA
+    swapChainDesc_.SampleDesc.Count = 1;                            // マルチサンプルしない
+    swapChainDesc_.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;   // レンダーターゲットとして使用
+    swapChainDesc_.BufferCount = 2;                                 // バッファ数。ダブルバッファ
+    swapChainDesc_.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;      // モニタに映したら中身を破棄
 
     // コマンドキュー、ウィンドウハンドル、設定を渡してスワップチェインを生成
-    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), sWinApp->GetWindowHandle(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
+    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), sWinApp->GetWindowHandle(), &swapChainDesc_, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
     // スワップチェインの生成が成功したかをチェック
     assert(SUCCEEDED(hr));
 
@@ -333,6 +333,7 @@ void DirectXCommon::InitializeSwapChain() {
 
 void DirectXCommon::InitializeRTVDescriptorHeap() {
     // レンダーターゲットビューのディスクリプタヒープの生成
+    rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
     rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
     
     // 初期化完了のログを出力
@@ -353,22 +354,20 @@ void DirectXCommon::InitializeSwapChainResources() {
 }
 
 void DirectXCommon::InitializeRTVHandle() {
-    // RTVの設定
-    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;       // 出力結果をSRGBに変換して書き込む
-    rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;  // 2Dテクスチャとして書き込む
+    rtvDesc_.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;       // 出力結果をSRGBに変換して書き込む
+    rtvDesc_.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;  // 2Dテクスチャとして書き込む
 
     // ディスクリプタの先頭を取得
     D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart();
 
     // RTVの1つ目を作成。1つ目は最初のところに作る。作る場所をこちらで設定してあげる必要がある
     rtvHandle_[0] = rtvStartHandle;
-    device_->CreateRenderTargetView(swapChainResources_[0].Get(), &rtvDesc, rtvHandle_[0]);
+    device_->CreateRenderTargetView(swapChainResources_[0].Get(), &rtvDesc_, rtvHandle_[0]);
 
     // 2つ目のディスクリプタハンドルを得る(自力で)
     rtvHandle_[1].ptr = rtvHandle_[0].ptr + device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     // RTVの2つ目を作成。
-    device_->CreateRenderTargetView(swapChainResources_[1].Get(), &rtvDesc, rtvHandle_[1]);
+    device_->CreateRenderTargetView(swapChainResources_[1].Get(), &rtvDesc_, rtvHandle_[1]);
 }
 
 void DirectXCommon::InitializeFence() {

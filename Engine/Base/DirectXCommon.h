@@ -53,6 +53,14 @@ public:
     /// @brief 描画コマンドリスト取得
     /// @return 描画コマンドリスト
     ID3D12GraphicsCommandList *GetCommandList() const { return commandList_.Get(); }
+
+    /// @brief スワップチェインの設定取得
+    /// @return スワップチェインの設定
+    DXGI_SWAP_CHAIN_DESC1 GetSwapChainDesc() const { return swapChainDesc_; }
+
+    /// @brief RTVの設定取得
+    /// @return RTVの設定
+    D3D12_RENDER_TARGET_VIEW_DESC GetRTVDesc() const { return rtvDesc_; }
     
 private:
     DirectXCommon() = default;
@@ -85,6 +93,8 @@ private:
 
     //--------- スワップチェイン ---------//
 
+    /// @brief スワップチェインの設定
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc_;
     /// @brief スワップチェイン
     Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
     /// @brief スワップチェインから取得したリソース
@@ -92,6 +102,8 @@ private:
 
     //--------- レンダーターゲット ---------//
 
+    /// @brief RTVの設定
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc_;
     /// @brief RTVのディスクリプタヒープ
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap_;
     /// @brief RTVのディスクリプタヒープのハンドル

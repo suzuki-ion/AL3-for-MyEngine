@@ -4,6 +4,7 @@
 #include "Base/DirectXCommon.h"
 #include "Base/ConvertString.h"
 #include "Base/CrashHandler.h"
+#include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
@@ -18,13 +19,15 @@ namespace {
     WinApp *sWinApp = nullptr;
     DirectXCommon *sDxCommon = nullptr;
     PrimitiveDrawer *sPrimitiveDrawer = nullptr;
-}
+    ImGuiManager *sImGuiManager = nullptr;
+} // namespace
 
 void Engine::Initialize(const char *title, int width, int height, bool enableDebugLayer) {
     // エンジン初期化済みならエラー
     assert(!sWinApp);
     assert(!sDxCommon);
     assert(!sPrimitiveDrawer);
+    assert(!sImGuiManager);
 
     // 誰も捕捉しなかった場合に(Unhandled)、捕捉する関数を登録
     SetUnhandledExceptionFilter(ExportDump);
@@ -44,14 +47,20 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     sPrimitiveDrawer = PrimitiveDrawer::GetInstance();
     sPrimitiveDrawer->Initialize();
 
+    // ImGui初期化
+    sImGuiManager = ImGuiManager::GetInstance();
+    sImGuiManager->Initialize();
+
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize Engine.");
 }
 
 void Engine::Finalize() {
+    sImGuiManager->Finalize();
     sPrimitiveDrawer->Finalize();
     sDxCommon->Finalize();
     sWinApp->Finalize();
+    sImGuiManager = nullptr;
     sPrimitiveDrawer = nullptr;
     sDxCommon = nullptr;
     sWinApp = nullptr;
@@ -59,9 +68,11 @@ void Engine::Finalize() {
 
 void Engine::BeginFrame() {
     sDxCommon->PreDraw();
+    sImGuiManager->BeginFrame();
 }
 
 void Engine::EndFrame() {
+    sImGuiManager->EndFrame();
     sDxCommon->PostDraw();
 }
 
@@ -152,6 +163,9 @@ void Engine::DrawTest() {
     commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
     // 描画
     commandList->DrawInstanced(3, 1, 0, 0);
+
+    // ImGuiの開発用UIの描画
+    ImGui::ShowDemoWindow();
 }
 
 HWND Engine::GetWindowHandle() const {

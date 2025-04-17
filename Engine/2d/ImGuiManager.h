@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <wrl.h>
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace MyEngine {
 
 class ImGuiManager final {
@@ -25,9 +27,18 @@ public:
     /// @brief ImGui終了処理
     void Finalize();
 
+    /// @brief ImGuiのフレーム開始処理
+    void BeginFrame();
+
+    /// @brief ImGuiのフレーム終了処理
+    void EndFrame();
+
 private:
     ImGuiManager() = default;
     ~ImGuiManager() = default;
+
+    /// @brief ImGui用のSRV用ディスクリプタヒープ
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
 };
 
 } // namespace MyEngine

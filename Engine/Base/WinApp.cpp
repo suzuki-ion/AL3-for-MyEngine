@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <chrono>
+#include <2d/ImGuiManager.h>
 
 #include "WinApp.h"
 #include "ConvertString.h"
@@ -13,8 +14,10 @@
 
 namespace MyEngine {
 
+namespace {
 // ログ出力用のストリーム
 std::ofstream logStream;
+} // namespace
 
 void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
     // 初期化済みかどうかのフラグ
@@ -110,17 +113,21 @@ int WinApp::ProccessMessage() {
 void WinApp::Log(const std::string &message) {
     // ログファイルに書き込み
     logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << message << std::endl;
-    OutputDebugStringA(message.c_str());
+    OutputDebugStringA((message + '\n').c_str());
 }
 
 void WinApp::Log(const std::wstring &message) {
     // ログファイルに書き込み
     logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << ConvertString(message) << std::endl;
     // OutputDebugStringWでもいいらしいけど、よくわからんので変換で対応
-    OutputDebugStringA(ConvertString(message).c_str());
+    OutputDebugStringA(ConvertString(message + L'\n').c_str());
 }
 
 LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+        return true;
+    }
+    
     // メッセージに応じてゲーム固有の処理を行う
     switch (msg) {
         // ウィンドウが破棄された時
