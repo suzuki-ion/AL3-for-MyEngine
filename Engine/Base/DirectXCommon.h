@@ -39,6 +39,13 @@ public:
     /// @brief レンダーターゲットのクリア
     void ClearRenderTarget();
 
+    /// @brief バリアを張る
+    /// @param barrier バリアの設定
+    void SetBarrier(D3D12_RESOURCE_BARRIER &barrier);
+
+    /// @brief コマンドの実行
+    void CommandExecute();
+
     /// @brief ディスクリプタヒープの作成
     /// @param heapType ヒープの種類
     /// @param numDescriptors ディスクリプタの数
@@ -49,6 +56,10 @@ public:
     /// @brief D3D12デバイス取得
     /// @return D3D12デバイス
     ID3D12Device *GetDevice() const { return device_.Get(); }
+
+    /// @brief コマンドキュー取得
+    /// @return コマンドキュー
+    ID3D12CommandQueue *GetCommandQueue() const { return commandQueue_.Get(); }
 
     /// @brief 描画コマンドリスト取得
     /// @return 描画コマンドリスト
@@ -61,7 +72,11 @@ public:
     /// @brief RTVの設定取得
     /// @return RTVの設定
     D3D12_RENDER_TARGET_VIEW_DESC GetRTVDesc() const { return rtvDesc_; }
-    
+
+    /// @brief 現在のBarrierState取得
+    /// @return 現在のBarrierState
+    D3D12_RESOURCE_STATES GetCurrentBarrierState() const { return currentBarrierState_; }
+
 private:
     DirectXCommon() = default;
     ~DirectXCommon() = default;
@@ -117,6 +132,11 @@ private:
     UINT64 fenceValue_;
     /// @brief フェンスのイベントハンドル
     HANDLE fenceEvent_;
+
+    //--------- バリア ---------//
+
+    /// @brief 現在のBarrierState
+    D3D12_RESOURCE_STATES currentBarrierState_;
 
     //--------- 各種初期化用関数 ---------//
 

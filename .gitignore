@@ -5,6 +5,8 @@
 
 # exclusion files
 *.dmp
+*.log
+*.vb
 
 # exclusion directory
 Dumps/

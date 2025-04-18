@@ -1,4 +1,5 @@
 #include <cassert>
+#include <vector>
 
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"

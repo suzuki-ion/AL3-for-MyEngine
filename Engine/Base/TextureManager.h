@@ -1,10 +1,10 @@
 #pragma once
-
-#include <DirectXTex.h>
 #include <cstdint>
+#include <vector>
 #include <string>
-#include <d3d12.h>
+#include <d3dx12.h>
 #include <wrl.h>
+#include <DirectXTex.h>
 
 namespace MyEngine {
 
@@ -61,6 +61,8 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU_;
     /// @brief テクスチャリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> textureResource_;
+    /// @brief 中間リソース
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> intermediateResources_;
 
     /// @brief テクスチャのリソースを作成
     /// @param metadata テクスチャのメタデータ
@@ -69,7 +71,8 @@ private:
     /// @brief TextureResourceにデータをアップロードする
     /// @param texture テクスチャリソース
     /// @param mipImages ミップマップ画像
-    void UploadTextureData(ID3D12Resource *texture, const DirectX::ScratchImage &mipImages);
+    /// @return アップロードしたリソース
+    [[nodiscard]] Microsoft::WRL::ComPtr<ID3D12Resource> UploadTextureData(ID3D12Resource *texture, const DirectX::ScratchImage &mipImages);
 };
 
 } // namespace MyEngine

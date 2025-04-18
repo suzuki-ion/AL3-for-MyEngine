@@ -50,7 +50,7 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     InitializeSwapChainResources(); // スワップチェインから取得したリソース初期化
     InitializeRTVHandle();          // RTVのディスクリプタヒープのハンドル初期化
     InitializeFence();              // Fence初期化
-    
+
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize DirectX.");
 }
@@ -67,20 +67,14 @@ void DirectXCommon::PreDraw() {
     // これから書き込むバックバッファのindexを取得
     UINT backBufferIndex = swapChain_->GetCurrentBackBufferIndex();
 
-    // TransitionBarrierの設定
-    D3D12_RESOURCE_BARRIER barrier{};
-    // 今回のバリアはTransition
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    // Noneにしておく
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    // バリアを張る対象のリソース。現在のバックバッファに対して行う
-    barrier.Transition.pResource = swapChainResources_[backBufferIndex].Get();
-    // 遷移前（現在）のResourceState
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    // 遷移後のResourceState
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
     // TransitionBarrierを張る
-    commandList_->ResourceBarrier(1, &barrier);
+    D3D12_RESOURCE_BARRIER barrier{};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = swapChainResources_[backBufferIndex].Get();
+    barrier.Transition.StateBefore = currentBarrierState_;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    SetBarrier(barrier);
 
     // レンダーターゲットのクリア
     ClearRenderTarget();
@@ -96,45 +90,12 @@ void DirectXCommon::PostDraw() {
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.Transition.pResource = swapChainResources_[backBufferIndex].Get();
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    barrier.Transition.StateBefore = currentBarrierState_;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    // TransitionBarrierを張る
-    commandList_->ResourceBarrier(1, &barrier);
+    SetBarrier(barrier);
 
-    // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
-    HRESULT hr = commandList_->Close();
-    // コマンドリストの内容を確定できたかをチェック
-    assert(SUCCEEDED(hr));
-
-    // GPUにコマンドリストの実行を行わせる
-    ID3D12CommandList *commandLists[] = { commandList_.Get()};
-    commandQueue_->ExecuteCommandLists(1, commandLists);
-    // GPUとOSに画面の交換を行うよう通知
-    swapChain_->Present(1, 0);
-
-    //==================================================
-    // Fenceの処理
-    //==================================================
-
-    // Fenceの値を更新
-    fenceValue_++;
-    // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
-    commandQueue_->Signal(fence_.Get(), fenceValue_);
-
-    // Fenceの値が指定したSignal値にたどり着いているか確認する
-    // GetCompletedValueの初期値はFence作成時に渡した初期値
-    if (fence_->GetCompletedValue() < fenceValue_) {
-        // 指定したSignalにたどりついていないので、たどり着くまで待つようにイベントを設定する
-        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
-        // イベントを待つ
-        WaitForSingleObject(fenceEvent_, INFINITE);
-    }
-
-    // 次のフレーム用のコマンドリストを準備
-    hr = commandAllocator_->Reset();
-    assert(SUCCEEDED(hr));
-    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
-    assert(SUCCEEDED(hr));
+    // コマンドの実行
+    CommandExecute();
 }
 
 void DirectXCommon::ClearRenderTarget() {
@@ -150,6 +111,14 @@ void DirectXCommon::ClearRenderTarget() {
     // 指定した色で画面全体をクリア
     float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
     commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor, 0, nullptr);
+}
+
+void DirectXCommon::SetBarrier(D3D12_RESOURCE_BARRIER &barrier) {
+    // バリアを張る
+    commandList_->ResourceBarrier(1, &barrier);
+    
+    // Barrierの状態を更新
+    currentBarrierState_ = barrier.Transition.StateAfter;
 }
 
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
@@ -385,6 +354,43 @@ void DirectXCommon::InitializeFence() {
 
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize Fence.");
+}
+
+void DirectXCommon::CommandExecute() {
+    // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
+    HRESULT hr = commandList_->Close();
+    // コマンドリストの内容を確定できたかをチェック
+    assert(SUCCEEDED(hr));
+
+    // GPUにコマンドリストの実行を行わせる
+    ID3D12CommandList *commandLists[] = { commandList_.Get() };
+    commandQueue_->ExecuteCommandLists(1, commandLists);
+    // GPUとOSに画面の交換を行うよう通知
+    swapChain_->Present(1, 0);
+
+    //==================================================
+    // Fenceの処理
+    //==================================================
+
+    // Fenceの値を更新
+    fenceValue_++;
+    // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
+    commandQueue_->Signal(fence_.Get(), fenceValue_);
+
+    // Fenceの値が指定したSignal値にたどり着いているか確認する
+    // GetCompletedValueの初期値はFence作成時に渡した初期値
+    if (fence_->GetCompletedValue() < fenceValue_) {
+        // 指定したSignalにたどりついていないので、たどり着くまで待つようにイベントを設定する
+        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
+        // イベントを待つ
+        WaitForSingleObject(fenceEvent_, INFINITE);
+    }
+
+    // 次のフレーム用のコマンドリストを準備
+    hr = commandAllocator_->Reset();
+    assert(SUCCEEDED(hr));
+    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
+    assert(SUCCEEDED(hr));
 }
 
 DirectXCommon::D3DResourceLeakChecker::~D3DResourceLeakChecker() {
