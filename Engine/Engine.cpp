@@ -2,8 +2,10 @@
 
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
+#include "Base/TextureManager.h"
 #include "Base/ConvertString.h"
 #include "Base/CrashHandler.h"
+#include "Base/VertexData.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -19,6 +21,7 @@ namespace {
     WinApp *sWinApp = nullptr;
     DirectXCommon *sDxCommon = nullptr;
     PrimitiveDrawer *sPrimitiveDrawer = nullptr;
+    TextureManager *sTextureManager = nullptr;
     ImGuiManager *sImGuiManager = nullptr;
 } // namespace
 
@@ -27,7 +30,11 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     assert(!sWinApp);
     assert(!sDxCommon);
     assert(!sPrimitiveDrawer);
+    assert(!sTextureManager);
     assert(!sImGuiManager);
+
+    // COMの初期化
+    CoInitializeEx(0, COINIT_MULTITHREADED);
 
     // 誰も捕捉しなかった場合に(Unhandled)、捕捉する関数を登録
     SetUnhandledExceptionFilter(ExportDump);
@@ -51,24 +58,36 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     sImGuiManager = ImGuiManager::GetInstance();
     sImGuiManager->Initialize();
 
+    // テクスチャ管理クラス初期化
+    sTextureManager = TextureManager::GetInstance();
+    sTextureManager->Initialize();
+    // テスト用にテクスチャを読み込む
+    sTextureManager->Load("Resources/uvChecker.png");
+
     // 初期化完了のログを出力
     sWinApp->Log("Complete Initialize Engine.");
 }
 
 void Engine::Finalize() {
+    sTextureManager->Finalize();
     sImGuiManager->Finalize();
     sPrimitiveDrawer->Finalize();
     sDxCommon->Finalize();
     sWinApp->Finalize();
+    sTextureManager = nullptr;
     sImGuiManager = nullptr;
     sPrimitiveDrawer = nullptr;
     sDxCommon = nullptr;
     sWinApp = nullptr;
+    CoUninitialize();
 }
 
 void Engine::BeginFrame() {
     sDxCommon->PreDraw();
     sImGuiManager->BeginFrame();
+
+    ID3D12DescriptorHeap *descriptorHeaps[] = { sImGuiManager->GetSRVDescriptorHeap() };
+    sDxCommon->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
 }
 
 void Engine::EndFrame() {
@@ -85,7 +104,6 @@ void Engine::DrawTest() {
     static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
     Vector4 *materialData = nullptr;
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    *materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
 
     // WVP用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
     static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
@@ -98,7 +116,7 @@ void Engine::DrawTest() {
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 0.0f}
     };
-    transform.rotate.y += 0.03f;
+    //transform.rotate.y += 0.01f;
     static Transform cameraTransform{
         {1.0f, 1.0f, 1.0f},
         {0.0f, 0.0f, 0.0f},
@@ -148,6 +166,24 @@ void Engine::DrawTest() {
     scissorRect.top = 0;
     scissorRect.bottom = sWinApp->GetClientHeight();
 
+    // ImGuiで三角形をいじれるようにする
+    VertexData *vertexData = nullptr;
+    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
+    // 左下
+    ImGui::DragFloat3("LeftBottom", &vertexData[0].position.x);
+    // テクスチャ座標
+    ImGui::DragFloat2("LeftBottom.TexCoord", &vertexData[0].texCoord.x);
+    // 上
+    ImGui::DragFloat3("Top", &vertexData[1].position.x);
+    // テクスチャ座標
+    ImGui::DragFloat2("Top.TexCoord", &vertexData[1].texCoord.x);
+    // 右下
+    ImGui::DragFloat3("RightBottom", &vertexData[2].position.x);
+    // テクスチャ座標
+    ImGui::DragFloat2("RightBottom.TexCoord", &vertexData[2].texCoord.x);
+    // 色
+    ImGui::DragFloat4("MaterialColor", &materialData->x, 0.01f, 0.0f, 1.0f);
+
     // コマンドを積む
     commandList->RSSetViewports(1, &viewport);          // ビューポートを設定
     commandList->RSSetScissorRects(1, &scissorRect);    // シザー矩形を設定
@@ -161,11 +197,10 @@ void Engine::DrawTest() {
     commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
     // wvp用のCBufferの場所を指定
     commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    commandList->SetGraphicsRootDescriptorTable(2, sTextureManager->GetTextureSrvHandleGPU());
     // 描画
     commandList->DrawInstanced(3, 1, 0, 0);
-
-    // ImGuiの開発用UIの描画
-    ImGui::ShowDemoWindow();
 }
 
 HWND Engine::GetWindowHandle() const {

@@ -61,9 +61,6 @@ void ImGuiManager::BeginFrame() {
 void ImGuiManager::EndFrame() {
     // ImGuiのフレーム終了処理
     ImGui::Render();
-    // ImGuiの描画処理
-    ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap_.Get() };
-    sDxCommon->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), sDxCommon->GetCommandList());
 }
 

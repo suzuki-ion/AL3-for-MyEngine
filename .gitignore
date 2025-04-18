@@ -8,6 +8,7 @@
 
 # exclusion directory
 Dumps/
+Logs/
 
 # User-specific files
 *.rsuser

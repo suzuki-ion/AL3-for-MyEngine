@@ -1,7 +1,6 @@
 #pragma once
 #include "Vector3.h"
 #include "Matrix4x4.h"
-#include "AffineMatrix.h"
 
 namespace MyEngine {
 
@@ -42,18 +41,6 @@ namespace MyEngine {
 /// @param maxDepth 最大深度
 /// @return ビューポート行列
 [[nodiscard]] Matrix4x4 MakeViewportMatrix(
-    const float left,
-    const float top,
-    const float width,
-    const float height,
-    const float minDepth,
-    const float maxDepth) noexcept;
-
-[[nodiscard]] Matrix4x4 MakeRenderingPipelineMatrix(
-    const float fovY,
-    const float aspectRatio,
-    const float nearClip,
-    const float farClip,
     const float left,
     const float top,
     const float width,

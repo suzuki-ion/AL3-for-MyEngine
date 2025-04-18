@@ -40,7 +40,7 @@ public:
     void ClearRenderTarget();
 
     /// @brief ディスクリプタヒープの作成
-    /// @param heapType シープの種類
+    /// @param heapType ヒープの種類
     /// @param numDescriptors ディスクリプタの数
     /// @param shaderVisible シェーダーから見えるかどうか
     /// @return ディスクリプタヒープのポインタ

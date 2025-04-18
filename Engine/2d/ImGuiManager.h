@@ -33,11 +33,17 @@ public:
     /// @brief ImGuiのフレーム終了処理
     void EndFrame();
 
+    /// @brief SRVディスクリプタヒープ取得
+    /// @return SRVディスクリプタヒープ
+    ID3D12DescriptorHeap *GetSRVDescriptorHeap() const {
+        return srvDescriptorHeap_.Get();
+    }
+
 private:
     ImGuiManager() = default;
     ~ImGuiManager() = default;
 
-    /// @brief ImGui用のSRV用ディスクリプタヒープ
+    /// @brief SRVディスクリプタヒープ
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
 };
 
