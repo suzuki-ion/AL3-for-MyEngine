@@ -7,6 +7,7 @@
 #include "Base/ConvertString.h"
 #include "Base/CrashHandler.h"
 #include "Base/VertexData.h"
+#include "Base/ConvertColor.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -98,11 +99,12 @@ void Engine::EndFrame() {
 
 void Engine::DrawTest() {
     static auto *commandList = sDxCommon->GetCommandList();
-    static auto mesh = sPrimitiveDrawer->CreateMesh(3);
+    static auto mesh = sPrimitiveDrawer->CreateMesh(6);
     static auto pipelineSet = sPrimitiveDrawer->CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
     // マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
     static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
+    static Vector4 color = { 255.0f, 255.0f, 255.0f, 255.0f };
     Vector4 *materialData = nullptr;
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
 
@@ -117,7 +119,7 @@ void Engine::DrawTest() {
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 0.0f}
     };
-    //transform.rotate.y += 0.01f;
+    transform.rotate.y += 0.005f;
     static Transform cameraTransform{
         {1.0f, 1.0f, 1.0f},
         {0.0f, 0.0f, 0.0f},
@@ -128,6 +130,18 @@ void Engine::DrawTest() {
     Matrix4x4 viewMatrix;
     Matrix4x4 projectionMatrix;
     Matrix4x4 wvpMatrix;
+
+    // ImGuiで三角形をいじれるようにする
+    ImGui::Begin("Triangle");
+    ImGui::DragFloat3("Translate", &transform.translate.x, 0.1f);
+    ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f);
+    ImGui::DragFloat3("Scale", &transform.scale.x, 0.01f);
+    ImGui::DragFloat4("MaterialColor", &color.x, 1.0f, 0.0f, 255.0f);
+    ImGui::End();
+
+    // 色をマテリアルに反映
+    *materialData = ConvertColor(color);
+
     worldMatrix.MakeAffine(
         transform.scale,
         transform.rotate,
@@ -167,24 +181,6 @@ void Engine::DrawTest() {
     scissorRect.top = 0;
     scissorRect.bottom = sWinApp->GetClientHeight();
 
-    // ImGuiで三角形をいじれるようにする
-    VertexData *vertexData = nullptr;
-    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
-    // 左下
-    ImGui::DragFloat3("LeftBottom", &vertexData[0].position.x);
-    // テクスチャ座標
-    ImGui::DragFloat2("LeftBottom.TexCoord", &vertexData[0].texCoord.x);
-    // 上
-    ImGui::DragFloat3("Top", &vertexData[1].position.x);
-    // テクスチャ座標
-    ImGui::DragFloat2("Top.TexCoord", &vertexData[1].texCoord.x);
-    // 右下
-    ImGui::DragFloat3("RightBottom", &vertexData[2].position.x);
-    // テクスチャ座標
-    ImGui::DragFloat2("RightBottom.TexCoord", &vertexData[2].texCoord.x);
-    // 色
-    ImGui::DragFloat4("MaterialColor", &materialData->x, 0.01f, 0.0f, 1.0f);
-
     // コマンドを積む
     commandList->RSSetViewports(1, &viewport);          // ビューポートを設定
     commandList->RSSetScissorRects(1, &scissorRect);    // シザー矩形を設定
@@ -201,7 +197,7 @@ void Engine::DrawTest() {
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
     commandList->SetGraphicsRootDescriptorTable(2, sTextureManager->GetTextureSrvHandleGPU());
     // 描画
-    commandList->DrawInstanced(3, 1, 0, 0);
+    commandList->DrawInstanced(6, 1, 0, 0);
 }
 
 HWND Engine::GetWindowHandle() const {

@@ -75,12 +75,6 @@ public:
     /// @return パイプラインセット
     std::unique_ptr<PipeLineSet> CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType);
 
-    /// @brief 3D線分の描画
-    /// @param p1 始点座標
-    /// @param p2 終点座標
-    /// @param color 色(RGBA)
-    void DrawLine3D(const Vector3 &p1, const Vector3 &p2, const Vector4 &color);
-
     /// @brief リセット
     void Reset();
 

@@ -8,11 +8,6 @@
 
 namespace MyEngine {
 
-/// @brief テクスチャの読み込み
-/// @param filePath 読み込むテクスチャのファイル名
-/// @return テクスチャのハンドル
-DirectX::ScratchImage LoadTexture(const std::string &filePath);
-
 /// @brief テクスチャ管理クラス
 class TextureManager {
 public:

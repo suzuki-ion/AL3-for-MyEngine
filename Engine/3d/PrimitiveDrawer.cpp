@@ -122,10 +122,6 @@ void PrimitiveDrawer::Initialize() {
 }
 
 void PrimitiveDrawer::Finalize(){
-    // メッシュの解放
-    mesh_.reset();
-    // パイプラインの解放
-    pipelineSet_.reset();
 
     // 終了処理完了のログを出力
     sWinApp->Log("Complete Finalize PrimitiveDrawer.");
@@ -182,6 +178,9 @@ std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCo
     VertexData *vertexData = nullptr;
     // 書き込むためのアドレスを取得
     vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
+    
+    //--------- 三角形1 ---------//
+    
     // 左下
     vertexData[0].position = { -0.5f, -0.5f, 0.0f, 1.0f };
     vertexData[0].texCoord = { 0.0f, 1.0f };
@@ -191,6 +190,18 @@ std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCo
     // 右下
     vertexData[2].position = { 0.5f, -0.5f, 0.0f, 1.0f };
     vertexData[2].texCoord = { 1.0f, 1.0f };
+
+    //--------- 三角形2 ---------//
+
+    // 左上
+    vertexData[3].position = { -0.5f, -0.5f, 0.5f, 1.0f };
+    vertexData[3].texCoord = { 0.0f, 1.0f };
+    // 右上
+    vertexData[4].position = { 0.0f, 0.0f, 0.0f, 1.0f };
+    vertexData[4].texCoord = { 0.5f, 0.0f };
+    // 右下
+    vertexData[5].position = { 0.5f, -0.5f, -0.5f, 1.0f };
+    vertexData[5].texCoord = { 1.0f, 1.0f };
 
     // ビューポート
     D3D12_VIEWPORT viewport{};
@@ -348,6 +359,15 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
         dxcUtils.Get(), dxcCompiler.Get(), includeHandler);
 
     //==================================================
+    // DepthStencilStateの設定
+    //==================================================
+
+    D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+    depthStencilDesc.DepthEnable = true;                            // Depthの機能を有効化する
+    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;   // 深度値を書き込む
+    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;  // 比較関数はLessEqual。つまり、近ければ描画される
+
+    //==================================================
     // PSOを生成する
     //==================================================
 
@@ -368,6 +388,9 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
     // どのように画面に色を打ち込むかの設定
     graphicsPipelineStateDesc.SampleDesc.Count = 1;
     graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+    // 深度バッファの設定
+    graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
+    graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     // 生成
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
     hr = sDxCommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,

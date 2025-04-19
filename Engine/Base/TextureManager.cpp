@@ -8,13 +8,16 @@
 namespace MyEngine {
 
 namespace {
+
 // 各エンジン用クラスのグローバル変数
 WinApp *sWinApp = nullptr;
 DirectXCommon *sDxCommon = nullptr;
 ImGuiManager *sImGuiManager = nullptr;
 PrimitiveDrawer *sPrimitiveDrawer = nullptr;
-} // namespace
 
+/// @brief テクスチャファイルを読み込んで扱えるようにする
+/// @param filePath テクスチャファイルのパス
+/// @return 読み込んだテクスチャのScratchImage
 DirectX::ScratchImage LoadTexture(const std::string &filePath) {
     // テクスチャファイルを読み込んで扱えるようにする
     DirectX::ScratchImage image{};
@@ -42,6 +45,8 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
     // ミップマップ付きのデータを返す
     return mipImages;
 }
+
+} // namespace
 
 void TextureManager::Initialize() {
     // 各エンジン用クラスのインスタンスを取得

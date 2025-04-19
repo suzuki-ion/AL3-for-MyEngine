@@ -51,7 +51,7 @@ public:
     /// @param numDescriptors ディスクリプタの数
     /// @param shaderVisible シェーダーから見えるかどうか
     /// @return ディスクリプタヒープのポインタ
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
+    [[nodiscard]] Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
 
     /// @brief D3D12デバイス取得
     /// @return D3D12デバイス
@@ -133,6 +133,15 @@ private:
     /// @brief フェンスのイベントハンドル
     HANDLE fenceEvent_;
 
+    //--------- 深度バッファ ---------//
+
+    /// @brief 深度バッファのリソースのハンドル
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
+    /// @brief 深度バッファのリソース
+    Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource_;
+    /// @brief DSVのディスクリプタヒープ
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap_;
+
     //--------- バリア ---------//
 
     /// @brief 現在のBarrierState
@@ -165,6 +174,9 @@ private:
 
     /// @brief フェンス初期化
     void InitializeFence();
+
+    /// @brief 深度バッファ初期化
+    void InitializeDepthStencil();
 };
 
 } // namespace MyEngine
