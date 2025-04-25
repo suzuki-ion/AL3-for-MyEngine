@@ -6,7 +6,8 @@
 #include <wrl.h>
 #include <memory>
 
-#include "Common/VertexPosColor.h"
+#include "Common/Mesh.h"
+#include "Common/PipeLineSet.h"
 
 namespace MyEngine {
 
@@ -17,17 +18,7 @@ class DirectXCommon;
 /// @brief プリミティブ描画クラス
 class PrimitiveDrawer final {
 public:
-    
-
-    
-
-    
-
-    /// @brief PrimitiveDrawer初期化
-    void Initialize();
-
-    /// @brief PrimitiveDrawer終了処理
-    void Finalize();
+    PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon);
 
     /// @brief リソース生成
     /// @param size サイズ
@@ -45,24 +36,11 @@ public:
     /// @return パイプラインセット
     std::unique_ptr<PipeLineSet> CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType);
 
-    /// @brief リセット
-    void Reset();
-
 private:
     /// @brief WinAppインスタンス
     WinApp *winApp_ = nullptr;
     /// @brief DirectXCommonインスタンス
     DirectXCommon *dxCommon_ = nullptr;
-
-    /// @brief メッシュ
-    std::unique_ptr<Mesh> mesh_;
-    /// @brief パイプラインセット
-    std::unique_ptr<PipeLineSet> pipelineSet_;
-
-    /// @brief グラフィックパイプライン初期化
-    void InitializeGraphicsPipeline();
-    /// @brief メッシュ初期化
-    void InitializeMesh();
 };
 
 } // namespace MyEngine

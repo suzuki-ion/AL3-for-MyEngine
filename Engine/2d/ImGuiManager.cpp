@@ -1,7 +1,8 @@
 #include "ImGuiManager.h"
+#include "Common/Logs.h"
+#include "Base/WinApp.h"
+#include "Base/DirectXCommon.h"
 
-#include <Base/WinApp.h>
-#include <Base/DirectXCommon.h>
 #include <imgui_impl_dx12.h>
 #include <imgui_impl_win32.h>
 
@@ -13,18 +14,19 @@ WinApp *sWinApp = nullptr;
 DirectXCommon *sDxCommon = nullptr;
 } // namespace
 
-void ImGuiManager::Initialize() {
-    // 初期化済みかどうかのフラグ
-    static bool isInitialized = false;
-    // 初期化済みならエラーを出す
-    assert(!isInitialized);
-    // 初期化済みフラグを立てる
-    isInitialized = true;
-
-    // WinAppのインスタンスを取得
-    sWinApp = WinApp::GetInstance();
-    // DirectXCommonのインスタンスを取得
-    sDxCommon = DirectXCommon::GetInstance();
+ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
+    // nullチェック
+    if (winApp == nullptr) {
+        Log("winApp is null.", true);
+        return;
+    }
+    if (dxCommon == nullptr) {
+        Log("dxCommon is null.", true);
+        return;
+    }
+    // 引数をメンバ変数に格納
+    winApp_ = winApp;
+    dxCommon_ = dxCommon;
 
     // srvDescriptorHeapの初期化
     srvDescriptorHeap_ = sDxCommon->CreateDescriptorHeap(
@@ -45,17 +47,17 @@ void ImGuiManager::Initialize() {
         srvDescriptorHeap_->GetGPUDescriptorHandleForHeapStart()
     );
 
-    // ImGui初期化完了のログを出力
-    Log("Complete Initialize ImGui.");
+    // 初期化完了のログを出力
+    Log("Initialized.");
 }
 
-void ImGuiManager::Finalize() {
+ImGuiManager::~ImGuiManager() {
     // ImGuiの終了処理
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
-    // ImGui終了処理完了のログを出力
-    Log("Complete Finalize ImGui.");
+    // 終了処理完了のログを出力
+    Log("Finalize.");
 }
 
 void ImGuiManager::BeginFrame() {

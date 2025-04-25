@@ -16,13 +16,8 @@ class WinApp;
 /// @brief DirectX共通クラス
 class DirectXCommon final {
 public:
-    DirectXCommon() noexcept = default;
-
-    /// @brief DirectX初期化
-    /// @param enableDebugLayer デバッグレイヤーを有効にするかどうか
-    void Initialize(bool enableDebugLayer, WinApp *winApp);
-    /// @brief DirectX終了処理
-    void Finalize();
+    DirectXCommon(bool enableDebugLayer, WinApp *winApp);
+    ~DirectXCommon();
 
     /// @brief 描画前処理
     void PreDraw();
@@ -71,9 +66,6 @@ public:
     D3D12_RESOURCE_STATES GetCurrentBarrierState() const { return currentBarrierState_; }
 
 private:
-    DirectXCommon() = default;
-    ~DirectXCommon() = default;
-
     /// @brief リソースリークチェック用構造体
     struct D3DResourceLeakChecker {
         ~D3DResourceLeakChecker();

@@ -5,7 +5,8 @@
 #include <dxcapi.h>
 
 #include "PrimitiveDrawer.h"
-#include "Base/VertexData.h"
+#include "Common/VertexData.h"
+#include "Common/Logs.h"
 
 #pragma comment(lib, "dxcompiler.lib")
 
@@ -99,31 +100,23 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
 
 } // namespace
 
-void PrimitiveDrawer::Initialize() {
-    // 初期化済みかどうかのフラグ
-    static bool isInitialized = false;
-    // 初期化済みならエラーを出す
-    assert(!isInitialized);
-    // 初期化済みフラグを立てる
-    isInitialized = true;
+PrimitiveDrawer::PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon) {
+    // nullチェック
+    if (winApp == nullptr) {
+        Log("winApp is null.", true);
+        assert(false);
+    }
+    if (dxCommon == nullptr) {
+        Log("dxCommon is null.", true);
+        assert(false);
+    }
 
-    // インスタンス取得
-    sWinApp = WinApp::GetInstance();
-    sDxCommon = DirectXCommon::GetInstance();
-
-    // グラフィックパイプラインの初期化
-    InitializeGraphicsPipeline();
-    // メッシュの初期化
-    InitializeMesh();
+    // 引数をメンバ変数に格納
+    winApp_ = winApp;
+    dxCommon_ = dxCommon;
 
     // 初期化完了のログを出力
-    Log("Complete Initialize PrimitiveDrawer.");
-}
-
-void PrimitiveDrawer::Finalize(){
-
-    // 終了処理完了のログを出力
-    Log("Complete Finalize PrimitiveDrawer.");
+    Log("Initialized.");
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size) {
@@ -144,7 +137,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
     resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     // リソースの生成
     Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-    HRESULT hr = sDxCommon->GetDevice()->CreateCommittedResource(
+    HRESULT hr = dxCommon_->GetDevice()->CreateCommittedResource(
         &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
     // リソースの生成が成功したかをチェック
@@ -155,7 +148,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
     return resource;
 }
 
-std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount) {
+std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount) {
     // 頂点バッファの生成
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer =
         CreateBufferResources(sizeof(VertexData) * vertexCount);
@@ -205,8 +198,8 @@ std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCo
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = static_cast<float>(sWinApp->GetClientWidth());
-    viewport.Height = static_cast<float>(sWinApp->GetClientHeight());
+    viewport.Width = static_cast<float>(winApp_->GetClientWidth());
+    viewport.Height = static_cast<float>(winApp_->GetClientHeight());
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
@@ -216,9 +209,9 @@ std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCo
     D3D12_RECT scissorRect{};
     // 基本的にビューポートと同じ矩形が構成されるようにする
     scissorRect.left = 0;
-    scissorRect.right = sWinApp->GetClientWidth();
+    scissorRect.right = winApp_->GetClientWidth();
     scissorRect.top = 0;
-    scissorRect.bottom = sWinApp->GetClientHeight();
+    scissorRect.bottom = winApp_->GetClientHeight();
 
     // メッシュを返す
     auto mesh = std::make_unique<Mesh>();
@@ -227,7 +220,7 @@ std::unique_ptr<PrimitiveDrawer::Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCo
     return mesh;
 }
 
-std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType) {
+std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType) {
     //==================================================
     // ルートシグネチャの生成
     //==================================================
@@ -288,7 +281,7 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
 
     // バイナリを元に生成
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-    hr = sDxCommon->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(),
+    hr = dxCommon_->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(),
         signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
     assert(SUCCEEDED(hr));
 
@@ -392,7 +385,7 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
     graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     // 生成
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
-    hr = sDxCommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
+    hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
         IID_PPV_ARGS(&pipelineState));
     assert(SUCCEEDED(hr));
 
@@ -404,25 +397,6 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
     pipelineSet->rootSignature = rootSignature;
     pipelineSet->pipelineState = pipelineState;
     return pipelineSet;
-}
-
-void PrimitiveDrawer::Reset() {
-
-}
-
-void PrimitiveDrawer::InitializeGraphicsPipeline() {
-    // パイプラインの生成。今回は三角形を描画するためのパイプラインを生成する
-    pipelineSet_ = CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-
-    // 初期化完了のログを出力
-    Log("Complete Initialize Graphics Pipeline.");
-}
-
-void PrimitiveDrawer::InitializeMesh() {
-    mesh_ = CreateMesh(3);
-
-    // 初期化完了のログを出力
-    Log("Complete Initialize Mesh.");
 }
 
 } // namespace MyEngine

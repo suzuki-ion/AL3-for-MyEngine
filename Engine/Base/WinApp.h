@@ -8,17 +8,8 @@ namespace MyEngine {
 /// @brief Windowsアプリクラス
 class WinApp final {
 public:
-    WinApp() noexcept = default;
-
-    /// @brief Windowsアプリ初期化
-    /// @param title ウィンドウタイトル
-    /// @param windowStyle ウィンドウスタイル
-    /// @param width クライアントサイズの横幅
-    /// @param height クライアントサイズの縦幅
-    void Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height);
-
-    /// @brief Windowsアプリ終了処理
-    void Finalize();
+    WinApp(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height);
+    ~WinApp();
 
     /// @brief ウィンドウハンドル取得
     /// @return ウィンドウハンドル

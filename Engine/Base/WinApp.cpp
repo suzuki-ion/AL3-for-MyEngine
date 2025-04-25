@@ -4,25 +4,14 @@
 #include <2d/ImGuiManager.h>
 
 #include "WinApp.h"
-#include "Common/ConvertString.h"
-#include "Common/TimeGet.h"
+#include "Common/Logs.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
 namespace MyEngine {
 
-namespace {
-} // namespace
-
-void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
-    // 初期化済みかどうかのフラグ
-    static bool isInitialized = false;
-    // 初期化済みならエラーを出す
-    assert(!isInitialized);
-    // 初期化済みフラグを立てる
-    isInitialized = true;
-
+WinApp::WinApp(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
     //==================================================
     // ウィンドウの初期化
     //==================================================
@@ -69,17 +58,17 @@ void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t wid
     ShowWindow(hwnd_, SW_SHOW);
 
     // 初期化完了のログを出力
-    Log("Complete Initialize WinApp.");
+    Log("Initialized.");
 }
 
-void WinApp::Finalize() {
+WinApp::~WinApp() {
     // ウィンドウを破棄
     DestroyWindow(hwnd_);
     // ウィンドウクラスを登録解除
     UnregisterClass(wc_.lpszClassName, wc_.hInstance);
 
     // 終了処理完了のログを出力
-    Log("Complete Finalize WinApp.");
+    Log("Finalize.");
 }
 
 int WinApp::ProccessMessage() {

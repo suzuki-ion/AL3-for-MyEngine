@@ -3,17 +3,12 @@
 #include "DirectXCommon.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
-#include "ConvertString.h"
+#include "Common/Logs.h"
+#include "Common/ConvertString.h"
 
 namespace MyEngine {
 
 namespace {
-
-// 各エンジン用クラスのグローバル変数
-WinApp *sWinApp = nullptr;
-DirectXCommon *sDxCommon = nullptr;
-ImGuiManager *sImGuiManager = nullptr;
-PrimitiveDrawer *sPrimitiveDrawer = nullptr;
 
 /// @brief テクスチャファイルを読み込んで扱えるようにする
 /// @param filePath テクスチャファイルのパス
@@ -48,18 +43,32 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
 
 } // namespace
 
-void TextureManager::Initialize() {
-    // 各エンジン用クラスのインスタンスを取得
-    sWinApp = WinApp::GetInstance();
-    sDxCommon = DirectXCommon::GetInstance();
-    sImGuiManager = ImGuiManager::GetInstance();
-    sPrimitiveDrawer = PrimitiveDrawer::GetInstance();
+TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager) {
+    // nullチェック
+    if (winApp == nullptr) {
+        Log("winApp is null.", true);
+        assert(false);
+    }
+    if (dxCommon == nullptr) {
+        Log("dxCommon is null.", true);
+        assert(false);
+    }
+    if (primitiveDrawer == nullptr) {
+        Log("primitiveDrawer is null.", true);
+        assert(false);
+    }
+    if (imguiManager == nullptr) {
+        Log("imguiManager is null.", true);
+        assert(false);
+    }
+    // 引数をメンバ変数に格納
+    winApp_ = winApp;
+    dxCommon_ = dxCommon;
+    primitiveDrawer_ = primitiveDrawer;
+    imguiManager_ = imguiManager;
 
     // 初期化完了のログを出力
-    Log("Complete Initialize TextureManager.");
-}
-
-void TextureManager::Finalize() {
+    Log("Initialized.");
 }
 
 uint32_t TextureManager::Load(const std::string &filePath) {
@@ -73,7 +82,7 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     // テクスチャデータをアップロード
     intermediateResources_.push_back(UploadTextureData(textureResource_.Get(), mipImages));
     // コマンドを実行
-    sDxCommon->CommandExecute();
+    dxCommon_->CommandExecute();
 
     // metadataを基にSRVの設定
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -84,18 +93,18 @@ uint32_t TextureManager::Load(const std::string &filePath) {
 
     // SRVを作成するDescriptorHeapの場所を決める
     textureSrvHandleCPU_=
-        sImGuiManager->GetSRVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+        imguiManager_->GetSRVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
     textureSrvHandleGPU_ =
-        sImGuiManager->GetSRVDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+        imguiManager_->GetSRVDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
 
     // 先頭はImGuiが使っているのでその次を使う
     textureSrvHandleCPU_.ptr +=
-        sDxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     textureSrvHandleGPU_.ptr +=
-        sDxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // SRVの生成
-    sDxCommon->GetDevice()->CreateShaderResourceView(
+    dxCommon_->GetDevice()->CreateShaderResourceView(
         textureResource_.Get(),
         &srvDesc,
         textureSrvHandleCPU_
@@ -109,7 +118,7 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    sDxCommon->SetBarrier(barrier);
+    dxCommon_->SetBarrier(barrier);
 
     // 読み込んだテクスチャのログを出力
     Log(std::format("Load Texture: {}", filePath));
@@ -143,7 +152,7 @@ void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata)
     // Resourceを生成する
     //==================================================
 
-    HRESULT hr = sDxCommon->GetDevice()->CreateCommittedResource(
+    HRESULT hr = dxCommon_->GetDevice()->CreateCommittedResource(
         &heapProperties,                    // Heapの設定
         D3D12_HEAP_FLAG_NONE,               // Heapの特殊な設定
         &resourceDesc,                      // Resourceの設定
@@ -157,7 +166,7 @@ void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata)
 Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(ID3D12Resource *texture, const DirectX::ScratchImage &mipImages) {
     std::vector<D3D12_SUBRESOURCE_DATA> subresources;
     DirectX::PrepareUpload(
-        sDxCommon->GetDevice(),
+        dxCommon_->GetDevice(),
         mipImages.GetImages(),
         mipImages.GetImageCount(),
         mipImages.GetMetadata(),
@@ -169,10 +178,10 @@ Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(ID3D12R
         UINT(subresources.size())
     );
     Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource =
-        sPrimitiveDrawer->CreateBufferResources(intermediateSize);
+        primitiveDrawer_->CreateBufferResources(intermediateSize);
     // データ転送をコマンドに積む
     UpdateSubresources(
-        sDxCommon->GetCommandList(),
+        dxCommon_->GetCommandList(),
         texture,
         intermediateResource.Get(),
         0,
@@ -189,7 +198,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(ID3D12R
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-    sDxCommon->SetBarrier(barrier);
+    dxCommon_->SetBarrier(barrier);
 
     return intermediateResource;
 }

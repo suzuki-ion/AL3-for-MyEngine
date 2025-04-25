@@ -59,38 +59,37 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     // タイトル名がそのままだと使えないので変換
     std::wstring wTitle = ConvertString(title);
     // Windowsアプリ初期化
-    sWinApp = std::make_unique<WinApp>();
-    sWinApp->Initialize(wTitle, WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_THICKFRAME),
-        width, height);
+    sWinApp = std::make_unique<WinApp>(
+        wTitle,
+        WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_THICKFRAME),
+        width,
+        height
+    );
 
     // DirectX初期化
-    sDxCommon = std::make_unique<DirectXCommon>();
-    sDxCommon->Initialize(enableDebugLayer, sWinApp.get());
+    sDxCommon = std::make_unique<DirectXCommon>(enableDebugLayer, sWinApp.get());
 
     // プリミティブ描画クラス初期化
-    sPrimitiveDrawer = std::make_unique<PrimitiveDrawer>();
-    sPrimitiveDrawer->Initialize();
+    sPrimitiveDrawer = std::make_unique<PrimitiveDrawer>(sWinApp.get(), sDxCommon.get());
 
     // ImGui初期化
-    sImGuiManager = std::make_unique<ImGuiManager>();
-    sImGuiManager->Initialize();
+    sImGuiManager = std::make_unique<ImGuiManager>(sWinApp.get(), sDxCommon.get());
 
     // テクスチャ管理クラス初期化
-    sTextureManager = std::make_unique<TextureManager>();
-    sTextureManager->Initialize();
+    sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get(), sPrimitiveDrawer.get(), sImGuiManager.get());
     // テクスチャを読み込む
     sTextureManager->Load("Resources/uvChecker.png");
 
     // 初期化完了のログを出力
-    Log("Complete Initialize Engine.");
+    Log("Initialized.");
 }
 
 void Engine::Finalize() {
-    sTextureManager->Finalize();
-    sImGuiManager->Finalize();
-    sPrimitiveDrawer->Finalize();
-    sDxCommon->Finalize();
-    sWinApp->Finalize();
+    sTextureManager.reset();
+    sImGuiManager.reset();
+    sPrimitiveDrawer.reset();
+    sDxCommon.reset();
+    sWinApp.reset();
     CoUninitialize();
 }
 

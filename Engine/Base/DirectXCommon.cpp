@@ -4,6 +4,7 @@
 
 #include "DirectXCommon.h"
 #include "WinApp.h"
+#include "Common/Logs.h"
 
 namespace MyEngine {
 
@@ -62,14 +63,12 @@ namespace {
 
 } // namespace
 
-void DirectXCommon::Initialize(bool enableDebugLayer, WinApp *winApp) {
-    // 初期化済みかどうかのフラグ
-    static bool isInitialized = false;
-    // 初期化済みならエラーを出す
-    assert(!isInitialized);
-    // 初期化済みフラグを立てる
-    isInitialized = true;
-
+DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
+    // nullチェック
+    if (winApp == nullptr) {
+        Log("winApp is null.", true);
+        return;
+    }
     // WinAppクラスへのポインタを設定
     winApp_ = winApp;
 
@@ -107,7 +106,7 @@ void DirectXCommon::Initialize(bool enableDebugLayer, WinApp *winApp) {
     Log("Complete Initialize DirectX.");
 }
 
-void DirectXCommon::Finalize() {
+DirectXCommon::~DirectXCommon() {
     // フェンスのイベントハンドルを閉じる
     CloseHandle(fenceEvent_);
 

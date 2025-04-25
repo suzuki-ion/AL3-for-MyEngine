@@ -8,35 +8,16 @@
 
 namespace MyEngine {
 
+// 前方宣言
+class WinApp;
+class DirectXCommon;
+class PrimitiveDrawer;
+class ImGuiManager;
+
 /// @brief テクスチャ管理クラス
 class TextureManager {
 public:
-    TextureManager(const TextureManager &) = delete;
-    TextureManager &operator=(const TextureManager &) = delete;
-    TextureManager(TextureManager &&) = delete;
-    TextureManager &operator=(TextureManager &&) = delete;
-    
-    struct Texture {
-        /// @brief テクスチャリソース
-        Microsoft::WRL::ComPtr<ID3D12Resource> resource;
-        /// @brief SRVハンドル(CPU)
-        D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU;
-        /// @brief SRVハンドル(GPU)
-        D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU;
-    };
-
-    /// @brief インスタンス取得
-    /// @return TextureManagerクラスのインスタンス
-    static TextureManager *GetInstance() {
-        static TextureManager instance;
-        return &instance;
-    }
-    
-    /// @brief テクスチャ初期化
-    void Initialize();
-
-    /// @brief テクスチャ終了処理
-    void Finalize();
+    TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager);
 
     /// @brief テクスチャの読み込み
     /// @param filePath 読み込むテクスチャのファイル名
@@ -56,8 +37,14 @@ public:
     }
 
 private:
-    TextureManager() = default;
-    ~TextureManager() = default;
+    /// @brief WinAppインスタンス
+    WinApp *winApp_ = nullptr;
+    /// @brief DirectXCommonインスタンス
+    DirectXCommon *dxCommon_ = nullptr;
+    /// @brief PrimitiveDrawerインスタンス
+    PrimitiveDrawer *primitiveDrawer_ = nullptr;
+    /// @brief ImGuiManagerインスタンス
+    ImGuiManager *imguiManager_ = nullptr;
 
     /// @brief テクスチャリソースのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU_;
