@@ -46,19 +46,19 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
 TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager) {
     // nullチェック
     if (winApp == nullptr) {
-        Log("winApp is null.", true);
+        Log("winApp is null.", kLogLevelFlagError);
         assert(false);
     }
     if (dxCommon == nullptr) {
-        Log("dxCommon is null.", true);
+        Log("dxCommon is null.", kLogLevelFlagError);
         assert(false);
     }
     if (primitiveDrawer == nullptr) {
-        Log("primitiveDrawer is null.", true);
+        Log("primitiveDrawer is null.", kLogLevelFlagError);
         assert(false);
     }
     if (imguiManager == nullptr) {
-        Log("imguiManager is null.", true);
+        Log("imguiManager is null.", kLogLevelFlagError);
         assert(false);
     }
     // 引数をメンバ変数に格納
@@ -69,11 +69,13 @@ TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, Primitiv
 
     // 初期化完了のログを出力
     Log("TextureManager Initialized.");
+    LogNewLine();
 }
 
 TextureManager::~TextureManager() {
     // 終了処理完了のログを出力
     Log("TextureManager Finalized.");
+    LogNewLine();
 }
 
 uint32_t TextureManager::Load(const std::string &filePath) {

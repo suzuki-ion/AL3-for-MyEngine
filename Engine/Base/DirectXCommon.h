@@ -4,9 +4,6 @@
 #include <cstdlib>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <dxgidebug.h>
-
-#pragma comment(lib, "dxguid.lib")
 
 namespace MyEngine {
 
@@ -66,13 +63,6 @@ public:
     D3D12_RESOURCE_STATES GetCurrentBarrierState() const { return currentBarrierState_; }
 
 private:
-    /// @brief リソースリークチェック用構造体
-    struct D3DResourceLeakChecker {
-        ~D3DResourceLeakChecker();
-    };
-    /// @brief リソースリークチェック用変数
-    D3DResourceLeakChecker leakCheck_;
-
     //--------- WinApp ---------//
 
     /// @brief WinAppクラス(外部から持ってくる)

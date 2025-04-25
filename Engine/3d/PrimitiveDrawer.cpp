@@ -103,11 +103,11 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
 PrimitiveDrawer::PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon) {
     // nullチェック
     if (winApp == nullptr) {
-        Log("winApp is null.", true);
+        Log("winApp is null.", kLogLevelFlagError);
         assert(false);
     }
     if (dxCommon == nullptr) {
-        Log("dxCommon is null.", true);
+        Log("dxCommon is null.", kLogLevelFlagError);
         assert(false);
     }
 
@@ -117,11 +117,13 @@ PrimitiveDrawer::PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon) {
 
     // 初期化完了のログを出力
     Log("PrimitiveDrawer Initialized.");
+    LogNewLine();
 }
 
 PrimitiveDrawer::~PrimitiveDrawer() {
     // 終了処理完了のログを出力
     Log("PrimitiveDrawer Finalized.");
+    LogNewLine();
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size) {

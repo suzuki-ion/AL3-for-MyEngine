@@ -105,6 +105,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Engine\Base\Drawer.cpp" />
     <ClCompile Include="Engine\2d\ImGuiManager.cpp" />
+    <ClCompile Include="Engine\Base\ResourceLeakChecker.cpp" />
     <ClCompile Include="Engine\Common\ConvertColor.cpp" />
     <ClCompile Include="Engine\Base\CrashHandler.cpp" />
     <ClCompile Include="Engine\Common\ConvertString.cpp" />
@@ -130,6 +131,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClInclude Include="Engine\Base\Drawer.h" />
     <ClInclude Include="Engine\2d\ImGuiManager.h" />
+    <ClInclude Include="Engine\Base\ResourceLeakChecker.h" />
     <ClInclude Include="Engine\Common\ConvertColor.h" />
     <ClInclude Include="Engine\Base\CrashHandler.h" />
     <ClInclude Include="Engine\Common\ConvertString.h" />

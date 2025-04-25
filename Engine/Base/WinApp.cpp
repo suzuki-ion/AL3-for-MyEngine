@@ -59,6 +59,7 @@ WinApp::WinApp(const std::wstring &title, UINT windowStyle, int32_t width, int32
 
     // 初期化完了のログを出力
     Log("WinApp Initialized.");
+    LogNewLine();
 }
 
 WinApp::~WinApp() {
@@ -69,11 +70,13 @@ WinApp::~WinApp() {
 
     // 終了処理完了のログを出力
     Log("WinApp Finalized.");
+    LogNewLine();
 }
 
 int WinApp::ProccessMessage() {
     if (msg_.message == WM_QUIT) {
         Log("Window Quit.");
+        LogNewLine();
         return -1;
     }
 

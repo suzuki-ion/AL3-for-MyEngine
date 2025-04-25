@@ -10,6 +10,7 @@
 #include "Base/DirectXCommon.h"
 #include "Base/TextureManager.h"
 #include "Base/CrashHandler.h"
+#include "Base/ResourceLeakChecker.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -27,6 +28,8 @@ struct FinalizeChecker {
 };
 /// @brief 終了処理チェック用変数
 FinalizeChecker finalizeCheck_;
+/// @brief リソースリークチェック用変数
+D3DResourceLeakChecker leakCheck_;
 
 // 各エンジン用クラスのグローバル変数
 std::unique_ptr<WinApp> sWinApp;
@@ -40,16 +43,7 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     const std::filesystem::path &projectDir) {
     // ログの初期化
     InitializeLog("Logs", projectDir.string());
-
-    // 初期化済みかどうかのフラグ
-    static bool isInitialized = false;
-    // 初期化済みならエラーを出す
-    if (isInitialized) {
-        Log("Engine is already initialized.", true);
-        return;
-    }
-    // 初期化済みフラグを立てる
-    isInitialized = true;
+    LogInsertPartition("\n================ Engine Initialize ===============\n");
 
     // COMの初期化
     CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -83,9 +77,11 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
 
     // 初期化完了のログを出力
     Log("Engine Initialized.");
+    LogInsertPartition("\n============ Engine Initialize Finish ============\n");
 }
 
 Engine::~Engine() {
+    LogInsertPartition("\n================= Engine Finalize ================\n");
     sTextureManager.reset();
     sImGuiManager.reset();
     sPrimitiveDrawer.reset();
@@ -94,6 +90,7 @@ Engine::~Engine() {
     CoUninitialize();
     // 終了処理完了のログを出力
     Log("Engine Finalized.");
+    LogInsertPartition("\n============= Engine Finalize Finish =============\n");
 }
 
 void Engine::BeginFrame() {

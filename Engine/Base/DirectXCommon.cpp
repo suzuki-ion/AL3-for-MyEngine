@@ -65,9 +65,9 @@ namespace {
 
 DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
     // nullチェック
-    if (winApp == nullptr) {
-        Log("winApp is null.", true);
-        return;
+    if (!winApp) {
+        Log("winApp is null.", kLogLevelFlagError);
+        assert(false);
     }
     // WinAppクラスへのポインタを設定
     winApp_ = winApp;
@@ -104,6 +104,7 @@ DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
 
     // 初期化完了のログを出力
     Log("DirectXCommon Initialized.");
+    LogNewLine();
 }
 
 DirectXCommon::~DirectXCommon() {
@@ -113,6 +114,7 @@ DirectXCommon::~DirectXCommon() {
 
     // 終了処理完了のログを出力
     Log("DirectXCommon Finalized.");
+    LogNewLine();
 }
 
 void DirectXCommon::PreDraw() {
@@ -491,16 +493,6 @@ void DirectXCommon::CommandExecute() {
     assert(SUCCEEDED(hr));
     hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
     assert(SUCCEEDED(hr));
-}
-
-DirectXCommon::D3DResourceLeakChecker::~D3DResourceLeakChecker() {
-    // リソースリークチェック
-    Microsoft::WRL::ComPtr<IDXGIDebug1> debug;
-    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {
-        debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-        debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
-        debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
-    }
 }
 
 } // namespace MyEngine

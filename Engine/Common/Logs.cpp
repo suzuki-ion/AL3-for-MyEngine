@@ -26,10 +26,10 @@ std::string GetRelativePath(const std::string &fullPath) {
 
 /// @brief ログ出力用のテキストを作成
 /// @param message ログメッセージ
-/// @param isError エラーログかどうか
+/// @param logLevelFlags ログレベルフラグ
 /// @param location ソースロケーション
 /// @return ログ出力用のテキスト
-std::string CreateLogText(const std::string &message, bool isError, const std::source_location &location) {
+std::string CreateLogText(const std::string &message, LogLevelFlags logLevelFlags, const std::source_location &location) {
     std::string logText;
     logText += TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ]\n\t");
     logText += "[ ";
@@ -39,9 +39,15 @@ std::string CreateLogText(const std::string &message, bool isError, const std::s
     logText += location.function_name();
     logText += "\" Line:";
     logText += std::to_string(location.line());
-    logText += " ]\n\t\t";
-    if (isError) {
-        logText += "[ERROR]:";
+    logText += " ]\n\t";
+    if (logLevelFlags & kLogLevelFlagInfo) {
+        logText += "[INFO] : ";
+    } else if (logLevelFlags & kLogLevelFlagWarning) {
+        logText += "[--- WARNING ---] : ";
+    } else if (logLevelFlags & kLogLevelFlagError) {
+        logText += "[!!!--- ERROR ---!!!] : ";
+    } else {
+        logText += "[NO LEVEL LOG] : ";
     }
     logText += message;
     return logText;
@@ -59,24 +65,38 @@ void InitializeLog(const std::string &filePath, const std::string &projectDir) {
     std::string logFilePath = filePath + '/' + TimeGetString("{:%Y-%m-%d_%H-%M-%S}") + ".log";
     // ファイルを使って書き込み準備
     logStream.open(logFilePath);
+
+    // 初期化完了のログとプロジェクトのルートディレクトリをログに出力
+    logStream << "Log initialized." << std::endl;
+    logStream << "Project Directory: \"" << projectDir << "\"" << std::endl;
 }
 
-void Log(const std::string &message, bool isError, const std::source_location &location) {
+void Log(const std::string &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
     // ログテキストを作成
-    std::string logText = CreateLogText(message, isError, location);
+    std::string logText = CreateLogText(message, logLevelFlags, location);
     // ログファイルに書き込み
     logStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
 }
 
-void Log(const std::wstring &message, bool isError, const std::source_location &location) {
+void Log(const std::wstring &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
     // ログテキストを作成
-    std::string logText = CreateLogText(ConvertString(message), isError, location);
+    std::string logText = CreateLogText(ConvertString(message), logLevelFlags, location);
     // ログファイルに書き込み
     logStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
+}
+
+void LogNewLine() {
+    logStream << std::endl;
+    OutputDebugStringA("\n");
+}
+
+void LogInsertPartition(const std::string &partition) {
+    logStream << partition << std::endl;
+    OutputDebugStringA((partition + "\n").c_str());
 }
 
 } // namespace MyEngine

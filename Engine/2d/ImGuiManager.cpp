@@ -11,12 +11,12 @@ namespace MyEngine {
 ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
     // nullチェック
     if (winApp == nullptr) {
-        Log("winApp is null.", true);
-        return;
+        Log("winApp is null.", kLogLevelFlagError);
+        assert(false);
     }
     if (dxCommon == nullptr) {
-        Log("dxCommon is null.", true);
-        return;
+        Log("dxCommon is null.", kLogLevelFlagError);
+        assert(false);
     }
     // 引数をメンバ変数に格納
     winApp_ = winApp;
@@ -43,6 +43,7 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
 
     // 初期化完了のログを出力
     Log("ImGuiManager Initialized.");
+    LogNewLine();
 }
 
 ImGuiManager::~ImGuiManager() {
@@ -52,6 +53,7 @@ ImGuiManager::~ImGuiManager() {
     ImGui::DestroyContext();
     // 終了処理完了のログを出力
     Log("ImGuiManager Finalized.");
+    LogNewLine();
 }
 
 void ImGuiManager::BeginFrame() {

@@ -36,5 +36,4 @@ public:
     int ProccessMessage();
 
 private:
-    
 };
