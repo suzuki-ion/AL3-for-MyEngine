@@ -2,21 +2,14 @@
 #include <Windows.h>
 #include <cstdint>
 #include <string>
+#include <filesystem>
 
 /// @brief 自作エンジンクラス
 class Engine final {
 public:
-    Engine() = default;
-    
-    /// @brief エンジン初期化
-    /// @param title ウィンドウタイトル
-    /// @param width ウィンドウ横幅
-    /// @param height ウィンドウ縦幅
-    /// @param enableDebugLayer デバッグレイヤーを有効にするかどうか
-    void Initialize(const char *title, int width = 1280, int height = 720, bool enableDebugLayer = true);
-
-    /// @brief エンジン終了処理
-    void Finalize();
+    Engine(const char *title, int width = 1280, int height = 720, bool enableDebugLayer = true,
+        const std::filesystem::path &projectDir = std::filesystem::current_path());
+    ~Engine();
 
     /// @brief フレーム開始処理
     void BeginFrame();

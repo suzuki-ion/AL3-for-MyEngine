@@ -18,6 +18,7 @@ class ImGuiManager;
 class TextureManager {
 public:
     TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager);
+    ~TextureManager();
 
     /// @brief テクスチャの読み込み
     /// @param filePath 読み込むテクスチャのファイル名

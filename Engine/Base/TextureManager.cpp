@@ -68,7 +68,12 @@ TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, Primitiv
     imguiManager_ = imguiManager;
 
     // 初期化完了のログを出力
-    Log("Initialized.");
+    Log("TextureManager Initialized.");
+}
+
+TextureManager::~TextureManager() {
+    // 終了処理完了のログを出力
+    Log("TextureManager Finalized.");
 }
 
 uint32_t TextureManager::Load(const std::string &filePath) {

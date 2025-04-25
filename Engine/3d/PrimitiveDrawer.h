@@ -19,6 +19,7 @@ class DirectXCommon;
 class PrimitiveDrawer final {
 public:
     PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon);
+    ~PrimitiveDrawer();
 
     /// @brief リソース生成
     /// @param size サイズ

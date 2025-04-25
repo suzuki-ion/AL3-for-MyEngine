@@ -103,15 +103,16 @@ DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
     InitializeDepthStencil();       // 深度バッファ初期化
 
     // 初期化完了のログを出力
-    Log("Complete Initialize DirectX.");
+    Log("DirectXCommon Initialized.");
 }
 
 DirectXCommon::~DirectXCommon() {
     // フェンスのイベントハンドルを閉じる
     CloseHandle(fenceEvent_);
+    winApp_ = nullptr;
 
     // 終了処理完了のログを出力
-    Log("Complete Finalize DirectX.");
+    Log("DirectXCommon Finalized.");
 }
 
 void DirectXCommon::PreDraw() {

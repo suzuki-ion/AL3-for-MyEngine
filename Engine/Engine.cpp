@@ -36,9 +36,10 @@ std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
 } // namespace
 
-void Engine::Initialize(const char *title, int width, int height, bool enableDebugLayer) {
+Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
+    const std::filesystem::path &projectDir) {
     // ログの初期化
-    InitializeLog("Logs");
+    InitializeLog("Logs", projectDir.string());
 
     // 初期化済みかどうかのフラグ
     static bool isInitialized = false;
@@ -81,16 +82,18 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     sTextureManager->Load("Resources/uvChecker.png");
 
     // 初期化完了のログを出力
-    Log("Initialized.");
+    Log("Engine Initialized.");
 }
 
-void Engine::Finalize() {
+Engine::~Engine() {
     sTextureManager.reset();
     sImGuiManager.reset();
     sPrimitiveDrawer.reset();
     sDxCommon.reset();
     sWinApp.reset();
     CoUninitialize();
+    // 終了処理完了のログを出力
+    Log("Engine Finalized.");
 }
 
 void Engine::BeginFrame() {

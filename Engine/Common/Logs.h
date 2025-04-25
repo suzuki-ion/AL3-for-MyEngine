@@ -6,7 +6,8 @@ namespace MyEngine {
 
 /// @brief ログ初期化
 /// @param filePath ログファイルを保存するフォルダへのパス
-void InitializeLog(const std::string &filePath);
+/// @param projectDir プロジェクトのルートディレクトリへのパス
+void InitializeLog(const std::string &filePath, const std::string &projectDir);
 
 /// @brief ログ出力
 /// @param message ログメッセージ

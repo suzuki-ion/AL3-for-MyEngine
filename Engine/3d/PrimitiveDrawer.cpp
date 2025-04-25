@@ -1,12 +1,12 @@
-#include <Base/WinApp.h>
-#include <Base/DirectXCommon.h>
-#include <cassert>
-#include <format>
-#include <dxcapi.h>
-
 #include "PrimitiveDrawer.h"
 #include "Common/VertexData.h"
 #include "Common/Logs.h"
+#include "Base/WinApp.h"
+#include "Base/DirectXCommon.h"
+
+#include <cassert>
+#include <format>
+#include <dxcapi.h>
 
 #pragma comment(lib, "dxcompiler.lib")
 
@@ -116,7 +116,12 @@ PrimitiveDrawer::PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon) {
     dxCommon_ = dxCommon;
 
     // 初期化完了のログを出力
-    Log("Initialized.");
+    Log("PrimitiveDrawer Initialized.");
+}
+
+PrimitiveDrawer::~PrimitiveDrawer() {
+    // 終了処理完了のログを出力
+    Log("PrimitiveDrawer Finalized.");
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size) {

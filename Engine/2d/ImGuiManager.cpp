@@ -8,12 +8,6 @@
 
 namespace MyEngine {
 
-namespace {
-// 各エンジン用クラスのグローバル変数
-WinApp *sWinApp = nullptr;
-DirectXCommon *sDxCommon = nullptr;
-} // namespace
-
 ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
     // nullチェック
     if (winApp == nullptr) {
@@ -29,7 +23,7 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
     dxCommon_ = dxCommon;
 
     // srvDescriptorHeapの初期化
-    srvDescriptorHeap_ = sDxCommon->CreateDescriptorHeap(
+    srvDescriptorHeap_ = dxCommon_->CreateDescriptorHeap(
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true
     );
 
@@ -37,18 +31,18 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
-    ImGui_ImplWin32_Init(sWinApp->GetWindowHandle());
+    ImGui_ImplWin32_Init(winApp_->GetWindowHandle());
     ImGui_ImplDX12_Init(
-        sDxCommon->GetDevice(),
-        sDxCommon->GetSwapChainDesc().BufferCount,
-        sDxCommon->GetRTVDesc().Format,
+        dxCommon_->GetDevice(),
+        dxCommon_->GetSwapChainDesc().BufferCount,
+        dxCommon_->GetRTVDesc().Format,
         srvDescriptorHeap_.Get(),
         srvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart(),
         srvDescriptorHeap_->GetGPUDescriptorHandleForHeapStart()
     );
 
     // 初期化完了のログを出力
-    Log("Initialized.");
+    Log("ImGuiManager Initialized.");
 }
 
 ImGuiManager::~ImGuiManager() {
@@ -57,7 +51,7 @@ ImGuiManager::~ImGuiManager() {
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     // 終了処理完了のログを出力
-    Log("Finalize.");
+    Log("ImGuiManager Finalized.");
 }
 
 void ImGuiManager::BeginFrame() {
@@ -70,7 +64,7 @@ void ImGuiManager::BeginFrame() {
 void ImGuiManager::EndFrame() {
     // ImGuiのフレーム終了処理
     ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), sDxCommon->GetCommandList());
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
 }
 
 } // namespace MyEngine
