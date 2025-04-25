@@ -56,7 +56,7 @@ void TextureManager::Initialize() {
     sPrimitiveDrawer = PrimitiveDrawer::GetInstance();
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize TextureManager.");
+    Log("Complete Initialize TextureManager.");
 }
 
 void TextureManager::Finalize() {
@@ -112,10 +112,10 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     sDxCommon->SetBarrier(barrier);
 
     // 読み込んだテクスチャのログを出力
-    sWinApp->Log(std::format("Load Texture: {}", filePath));
+    Log(std::format("Load Texture: {}", filePath));
 
     // テクスチャのハンドルを返す
-    return 0;
+    return static_cast<uint32_t>(intermediateResources_.size() - 1);
 }
 
 void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata) {

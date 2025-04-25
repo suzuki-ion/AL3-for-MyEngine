@@ -13,10 +13,6 @@ namespace MyEngine {
 
 namespace {
 
-// 各エンジン用クラスのグローバル変数
-WinApp *sWinApp = nullptr;
-DirectXCommon *sDxCommon = nullptr;
-
 /// @brief シェーダーコンパイル用関数
 /// @param filePath コンパイルするシェーダーファイルへのパス
 /// @param profile コンパイルに使用するプロファイル
@@ -27,7 +23,7 @@ DirectXCommon *sDxCommon = nullptr;
 IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     IDxcUtils *dxcUtils, IDxcCompiler3 *dxcCompiler, IDxcIncludeHandler *includeHandler) {
     // これからシェーダーをコンパイルする旨をログに出力
-    sWinApp->Log(std::format(L"Begin CompileShader, path:{}, profile:{}", filePath, profile));
+    Log(std::format(L"Begin CompileShader, path:{}, profile:{}", filePath, profile));
 
     //==================================================
     // 1. hlslファイルを読む
@@ -78,7 +74,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
     if ((shaderError != nullptr) && (shaderError->GetStringLength() != 0)) {
         // エラーがあった場合はエラーを出力して終了
-        sWinApp->Log(std::format(L"Compile Failed, path:{}, profile:{}", filePath, profile));
+        Log(std::format(L"Compile Failed, path:{}, profile:{}", filePath, profile));
         assert(false);
     }
 
@@ -92,7 +88,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     // コンパイル結果の取得に失敗した場合はエラーを出す
     assert(SUCCEEDED(hr));
     // コンパイル完了のログを出力
-    sWinApp->Log(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
+    Log(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
     // もう使わないリソースを解放
     shaderSource->Release();
     shaderResult->Release();
@@ -104,9 +100,12 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
 } // namespace
 
 void PrimitiveDrawer::Initialize() {
-    // 初期化済みならエラー
-    assert(!sWinApp);
-    assert(!sDxCommon);
+    // 初期化済みかどうかのフラグ
+    static bool isInitialized = false;
+    // 初期化済みならエラーを出す
+    assert(!isInitialized);
+    // 初期化済みフラグを立てる
+    isInitialized = true;
 
     // インスタンス取得
     sWinApp = WinApp::GetInstance();
@@ -118,13 +117,13 @@ void PrimitiveDrawer::Initialize() {
     InitializeMesh();
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize PrimitiveDrawer.");
+    Log("Complete Initialize PrimitiveDrawer.");
 }
 
 void PrimitiveDrawer::Finalize(){
 
     // 終了処理完了のログを出力
-    sWinApp->Log("Complete Finalize PrimitiveDrawer.");
+    Log("Complete Finalize PrimitiveDrawer.");
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size) {
@@ -152,7 +151,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
     assert(SUCCEEDED(hr));
 
     // ログに生成したリソースのサイズを出力
-    sWinApp->Log(std::format("CreateBufferResources, size:{}", size));
+    Log(std::format("CreateBufferResources, size:{}", size));
     return resource;
 }
 
@@ -283,7 +282,7 @@ std::unique_ptr<PrimitiveDrawer::PipeLineSet> PrimitiveDrawer::CreateGraphicsPip
     HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature,
         D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
     if (FAILED(hr)) {
-        sWinApp->Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
+        Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
         assert(false);
     }
 
@@ -416,14 +415,14 @@ void PrimitiveDrawer::InitializeGraphicsPipeline() {
     pipelineSet_ = CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Graphics Pipeline.");
+    Log("Complete Initialize Graphics Pipeline.");
 }
 
 void PrimitiveDrawer::InitializeMesh() {
     mesh_ = CreateMesh(3);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Mesh.");
+    Log("Complete Initialize Mesh.");
 }
 
 } // namespace MyEngine

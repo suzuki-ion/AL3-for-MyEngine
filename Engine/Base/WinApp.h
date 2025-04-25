@@ -8,18 +8,8 @@ namespace MyEngine {
 /// @brief Windowsアプリクラス
 class WinApp final {
 public:
-    WinApp(const WinApp &) = delete;
-    WinApp &operator=(const WinApp &) = delete;
-    WinApp(WinApp &&) = delete;
-    WinApp &operator=(WinApp &&) = delete;
+    WinApp() noexcept = default;
 
-    /// @brief インスタンス取得
-    /// @return Windowsアプリクラスのインスタンス
-    static WinApp *GetInstance() {
-        static WinApp instance;
-        return &instance;
-    }
-    
     /// @brief Windowsアプリ初期化
     /// @param title ウィンドウタイトル
     /// @param windowStyle ウィンドウスタイル
@@ -46,15 +36,7 @@ public:
     /// @return メッセージ処理結果
     int ProccessMessage();
 
-    /// @brief ログ出力
-    void Log(const std::string &message);
-    /// @brief ログ出力
-    void Log(const std::wstring &message);
-
 private:
-    WinApp() = default;
-    ~WinApp() = default;
-
     /// @brief ウィンドウクラス
     WNDCLASS wc_{};
     /// @brief ウィンドウハンドル

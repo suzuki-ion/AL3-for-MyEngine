@@ -14,6 +14,13 @@ DirectXCommon *sDxCommon = nullptr;
 } // namespace
 
 void ImGuiManager::Initialize() {
+    // 初期化済みかどうかのフラグ
+    static bool isInitialized = false;
+    // 初期化済みならエラーを出す
+    assert(!isInitialized);
+    // 初期化済みフラグを立てる
+    isInitialized = true;
+
     // WinAppのインスタンスを取得
     sWinApp = WinApp::GetInstance();
     // DirectXCommonのインスタンスを取得
@@ -39,7 +46,7 @@ void ImGuiManager::Initialize() {
     );
 
     // ImGui初期化完了のログを出力
-    sWinApp->Log("Complete Initialize ImGui.");
+    Log("Complete Initialize ImGui.");
 }
 
 void ImGuiManager::Finalize() {
@@ -48,7 +55,7 @@ void ImGuiManager::Finalize() {
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     // ImGui終了処理完了のログを出力
-    sWinApp->Log("Complete Finalize ImGui.");
+    Log("Complete Finalize ImGui.");
 }
 
 void ImGuiManager::BeginFrame() {

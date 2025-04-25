@@ -103,13 +103,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Base\Drawer.cpp" />
     <ClCompile Include="Engine\2d\ImGuiManager.cpp" />
-    <ClCompile Include="Engine\Base\ConvertColor.cpp" />
+    <ClCompile Include="Engine\Common\ConvertColor.cpp" />
     <ClCompile Include="Engine\Base\CrashHandler.cpp" />
-    <ClCompile Include="Engine\Base\ConvertString.cpp" />
+    <ClCompile Include="Engine\Common\ConvertString.cpp" />
     <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
     <ClCompile Include="Engine\Base\TextureManager.cpp" />
-    <ClCompile Include="Engine\Base\TimeGet.cpp" />
+    <ClCompile Include="Engine\Common\Logs.cpp" />
+    <ClCompile Include="Engine\Common\TimeGet.cpp" />
     <ClCompile Include="Engine\Base\WinApp.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
@@ -126,15 +128,21 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Base\Drawer.h" />
     <ClInclude Include="Engine\2d\ImGuiManager.h" />
-    <ClInclude Include="Engine\Base\ConvertColor.h" />
+    <ClInclude Include="Engine\Common\ConvertColor.h" />
     <ClInclude Include="Engine\Base\CrashHandler.h" />
-    <ClInclude Include="Engine\Base\ConvertString.h" />
+    <ClInclude Include="Engine\Common\ConvertString.h" />
     <ClInclude Include="Engine\Base\DirectXCommon.h" />
     <ClInclude Include="Engine\Base\TextureManager.h" />
-    <ClInclude Include="Engine\Base\TimeGet.h" />
-    <ClInclude Include="Engine\Base\VertexData.h" />
+    <ClInclude Include="Engine\Common\Logs.h" />
+    <ClInclude Include="Engine\Common\TimeGet.h" />
+    <ClInclude Include="Engine\Common\VertexData.h" />
     <ClInclude Include="Engine\Base\WinApp.h" />
+    <ClInclude Include="Engine\Common\Mesh.h" />
+    <ClInclude Include="Engine\Common\Object.h" />
+    <ClInclude Include="Engine\Common\PipeLineSet.h" />
+    <ClInclude Include="Engine\Common\VertexPosColor.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Engine\3d\PrimitiveDrawer.h" />
     <ClInclude Include="Engine\Math\Matrix4x4.h" />

@@ -1,13 +1,15 @@
 #include <cassert>
 #include <vector>
+#include <memory>
 
+#include "Common/ConvertString.h"
+#include "Common/VertexData.h"
+#include "Common/ConvertColor.h"
+#include "Common/Logs.h"
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
 #include "Base/TextureManager.h"
-#include "Base/ConvertString.h"
 #include "Base/CrashHandler.h"
-#include "Base/VertexData.h"
-#include "Base/ConvertColor.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -19,21 +21,34 @@
 using namespace MyEngine;
 
 namespace {
-    // 各エンジン用クラスのグローバル変数
-    WinApp *sWinApp = nullptr;
-    DirectXCommon *sDxCommon = nullptr;
-    PrimitiveDrawer *sPrimitiveDrawer = nullptr;
-    TextureManager *sTextureManager = nullptr;
-    ImGuiManager *sImGuiManager = nullptr;
+/// @brief 終了処理チェック用構造体
+struct FinalizeChecker {
+    ~FinalizeChecker();
+};
+/// @brief 終了処理チェック用変数
+FinalizeChecker finalizeCheck_;
+
+// 各エンジン用クラスのグローバル変数
+std::unique_ptr<WinApp> sWinApp;
+std::unique_ptr<DirectXCommon> sDxCommon;
+std::unique_ptr<PrimitiveDrawer> sPrimitiveDrawer;
+std::unique_ptr<TextureManager> sTextureManager;
+std::unique_ptr<ImGuiManager> sImGuiManager;
 } // namespace
 
 void Engine::Initialize(const char *title, int width, int height, bool enableDebugLayer) {
-    // エンジン初期化済みならエラー
-    assert(!sWinApp);
-    assert(!sDxCommon);
-    assert(!sPrimitiveDrawer);
-    assert(!sTextureManager);
-    assert(!sImGuiManager);
+    // ログの初期化
+    InitializeLog("Logs");
+
+    // 初期化済みかどうかのフラグ
+    static bool isInitialized = false;
+    // 初期化済みならエラーを出す
+    if (isInitialized) {
+        Log("Engine is already initialized.", true);
+        return;
+    }
+    // 初期化済みフラグを立てる
+    isInitialized = true;
 
     // COMの初期化
     CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -44,30 +59,30 @@ void Engine::Initialize(const char *title, int width, int height, bool enableDeb
     // タイトル名がそのままだと使えないので変換
     std::wstring wTitle = ConvertString(title);
     // Windowsアプリ初期化
-    sWinApp = WinApp::GetInstance();
+    sWinApp = std::make_unique<WinApp>();
     sWinApp->Initialize(wTitle, WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_THICKFRAME),
         width, height);
 
     // DirectX初期化
-    sDxCommon = DirectXCommon::GetInstance();
-    sDxCommon->Initialize(enableDebugLayer);
+    sDxCommon = std::make_unique<DirectXCommon>();
+    sDxCommon->Initialize(enableDebugLayer, sWinApp.get());
 
     // プリミティブ描画クラス初期化
-    sPrimitiveDrawer = PrimitiveDrawer::GetInstance();
+    sPrimitiveDrawer = std::make_unique<PrimitiveDrawer>();
     sPrimitiveDrawer->Initialize();
 
     // ImGui初期化
-    sImGuiManager = ImGuiManager::GetInstance();
+    sImGuiManager = std::make_unique<ImGuiManager>();
     sImGuiManager->Initialize();
 
     // テクスチャ管理クラス初期化
-    sTextureManager = TextureManager::GetInstance();
+    sTextureManager = std::make_unique<TextureManager>();
     sTextureManager->Initialize();
-    // テスト用にテクスチャを読み込む
+    // テクスチャを読み込む
     sTextureManager->Load("Resources/uvChecker.png");
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Engine.");
+    Log("Complete Initialize Engine.");
 }
 
 void Engine::Finalize() {
@@ -76,11 +91,6 @@ void Engine::Finalize() {
     sPrimitiveDrawer->Finalize();
     sDxCommon->Finalize();
     sWinApp->Finalize();
-    sTextureManager = nullptr;
-    sImGuiManager = nullptr;
-    sPrimitiveDrawer = nullptr;
-    sDxCommon = nullptr;
-    sWinApp = nullptr;
     CoUninitialize();
 }
 
@@ -112,14 +122,13 @@ void Engine::DrawTest() {
     static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
     Matrix4x4 *wvpData = nullptr;
     wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData));
-    
+
     // 回転用にTransform変数を作る
     static Transform transform{
         {1.0f, 1.0f, 1.0f},
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 0.0f}
     };
-    transform.rotate.y += 0.005f;
     static Transform cameraTransform{
         {1.0f, 1.0f, 1.0f},
         {0.0f, 0.0f, 0.0f},
@@ -216,9 +225,13 @@ int Engine::ProccessMessage() {
     return sWinApp->ProccessMessage();
 }
 
-Engine::FinalizeChecker::~FinalizeChecker() {
+FinalizeChecker::~FinalizeChecker() {
     // エンジンが完全に終了しているかチェック
-    assert(sWinApp == nullptr);
-    assert(sDxCommon == nullptr);
-    assert(sPrimitiveDrawer == nullptr);
+    assert(!sWinApp);
+    assert(!sDxCommon);
+    assert(!sPrimitiveDrawer);
+    assert(!sTextureManager);
+    assert(!sImGuiManager);
+    // 初期化完了のログを出力
+    Log("Complete Finalize Engine.");
 }

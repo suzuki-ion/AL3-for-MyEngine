@@ -6,52 +6,22 @@
 #include <wrl.h>
 #include <memory>
 
+#include "Common/VertexPosColor.h"
+
 namespace MyEngine {
+
+// 前方宣言
+class WinApp;
+class DirectXCommon;
 
 /// @brief プリミティブ描画クラス
 class PrimitiveDrawer final {
 public:
-    PrimitiveDrawer(const PrimitiveDrawer &) = delete;
-    PrimitiveDrawer &operator=(const PrimitiveDrawer &) = delete;
-    PrimitiveDrawer(PrimitiveDrawer &&) = delete;
-    PrimitiveDrawer &operator=(PrimitiveDrawer &&) = delete;
+    
 
-    /// @brief インスタンス取得
-    /// @return PrimitiveDrawerクラスのインスタンス
-    static PrimitiveDrawer *GetInstance() {
-        static PrimitiveDrawer instance;
-        return &instance;
-    }
+    
 
-    // 頂点データ構造体
-    struct VertexPosColor {
-        Vector3 pos;    // xyz座標 
-        Vector4 color;  // RGBA
-    };
-
-    // パイプラインセット
-    struct PipeLineSet {
-        // ルートシグネチャ
-        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        // パイプラインステート
-        Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
-    };
-
-    // メッシュ
-    struct Mesh {
-        // 頂点バッファ
-        Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer;
-        // インデックスバッファ
-        Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer;
-        // 頂点バッファビュー
-        D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-        // インデックスバッファビュー
-        D3D12_INDEX_BUFFER_VIEW indexBufferView{};
-        // 頂点バッファマップ
-        VertexPosColor *vertexBufferMap = nullptr;
-        // インデックスバッファマップ
-        UINT16 *indexBufferMap = nullptr;
-    };
+    
 
     /// @brief PrimitiveDrawer初期化
     void Initialize();
@@ -79,8 +49,10 @@ public:
     void Reset();
 
 private:
-    PrimitiveDrawer() = default;
-    ~PrimitiveDrawer() = default;
+    /// @brief WinAppインスタンス
+    WinApp *winApp_ = nullptr;
+    /// @brief DirectXCommonインスタンス
+    DirectXCommon *dxCommon_ = nullptr;
 
     /// @brief メッシュ
     std::unique_ptr<Mesh> mesh_;

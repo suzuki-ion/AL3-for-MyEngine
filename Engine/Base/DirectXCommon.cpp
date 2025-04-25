@@ -9,9 +9,6 @@ namespace MyEngine {
 
 namespace {
 
-// 各エンジン用クラスのグローバル変数
-WinApp *sWinApp = nullptr;
-
 /// @brief 深度バッファ用のテクスチャリソースを生成する
 /// @param width テクスチャの幅
 /// @param height テクスチャの高さ
@@ -65,15 +62,16 @@ WinApp *sWinApp = nullptr;
 
 } // namespace
 
-void DirectXCommon::Initialize(bool enableDebugLayer) {
+void DirectXCommon::Initialize(bool enableDebugLayer, WinApp *winApp) {
     // 初期化済みかどうかのフラグ
     static bool isInitialized = false;
     // 初期化済みならエラーを出す
     assert(!isInitialized);
-    assert(!sWinApp);
+    // 初期化済みフラグを立てる
+    isInitialized = true;
 
-    // Windowsアプリクラスのインスタンスを取得
-    sWinApp = WinApp::GetInstance();
+    // WinAppクラスへのポインタを設定
+    winApp_ = winApp;
 
 #ifdef _DEBUG
     ID3D12Debug1 *debugController = nullptr;
@@ -106,7 +104,7 @@ void DirectXCommon::Initialize(bool enableDebugLayer) {
     InitializeDepthStencil();       // 深度バッファ初期化
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DirectX.");
+    Log("Complete Initialize DirectX.");
 }
 
 void DirectXCommon::Finalize() {
@@ -114,7 +112,7 @@ void DirectXCommon::Finalize() {
     CloseHandle(fenceEvent_);
 
     // 終了処理完了のログを出力
-    sWinApp->Log("Complete Finalize DirectX.");
+    Log("Complete Finalize DirectX.");
 }
 
 void DirectXCommon::PreDraw() {
@@ -220,7 +218,7 @@ void DirectXCommon::InitializeDXGI() {
     InitializeD3D12Device();
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DXGI.");
+    Log("Complete Initialize DXGI.");
 
     // DirectX12のエラーが出た際に止まるようにする
 #ifdef _DEBUG
@@ -271,7 +269,7 @@ void DirectXCommon::InitializeDXGIAdapter() {
         // ソフトウェアアダプタでなければ使用
         if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
             // 使用するアダプタの情報をログに出力。wstringの方なので変換しておく
-            sWinApp->Log(std::format(L"Use Adapter : {}", adapterDesc.Description));
+            Log(std::format(L"Use Adapter : {}", adapterDesc.Description));
             break;
         }
 
@@ -283,7 +281,7 @@ void DirectXCommon::InitializeDXGIAdapter() {
     assert(useAdapter_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize DXGI Adapter.");
+    Log("Complete Initialize DXGI Adapter.");
 }
 
 void DirectXCommon::InitializeD3D12Device() {
@@ -308,7 +306,7 @@ void DirectXCommon::InitializeD3D12Device() {
         // 指定した機能レベルでデバイスを生成できたかをチェック
         if (SUCCEEDED(hr)) {
             // 生成できたらログに出力して終了
-            sWinApp->Log(std::format("Feature Level : {}", featureLevelStrings[i]));
+            Log(std::format("Feature Level : {}", featureLevelStrings[i]));
             break;
         }
     }
@@ -317,7 +315,7 @@ void DirectXCommon::InitializeD3D12Device() {
     assert(device_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize D3D12 Device.");
+    Log("Complete Initialize D3D12 Device.");
 }
 
 void DirectXCommon::InitializeCommandQueue() {
@@ -329,7 +327,7 @@ void DirectXCommon::InitializeCommandQueue() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Command Queue.");
+    Log("Complete Initialize Command Queue.");
 }
 
 void DirectXCommon::InitializeCommandAllocator() {
@@ -340,7 +338,7 @@ void DirectXCommon::InitializeCommandAllocator() {
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Command Allocator.");
+    Log("Complete Initialize Command Allocator.");
 }
 
 void DirectXCommon::InitializeCommandList() {
@@ -355,8 +353,8 @@ void DirectXCommon::InitializeSwapChain() {
     // スワップチェインの生成
     swapChain_ = nullptr;
     
-    swapChainDesc_.Width = sWinApp->GetClientWidth();               // 画面の幅。ウィンドウのクライアント領域と同じにする
-    swapChainDesc_.Height = sWinApp->GetClientHeight();             // 画面の高さ。ウィンドウのクライアント領域と同じにする
+    swapChainDesc_.Width = winApp_->GetClientWidth();               // 画面の幅。ウィンドウのクライアント領域と同じにする
+    swapChainDesc_.Height = winApp_->GetClientHeight();             // 画面の高さ。ウィンドウのクライアント領域と同じにする
     swapChainDesc_.Format = DXGI_FORMAT_R8G8B8A8_UNORM;             // 色の形式。8bitのRGBA
     swapChainDesc_.SampleDesc.Count = 1;                            // マルチサンプルしない
     swapChainDesc_.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;   // レンダーターゲットとして使用
@@ -364,12 +362,12 @@ void DirectXCommon::InitializeSwapChain() {
     swapChainDesc_.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;      // モニタに映したら中身を破棄
 
     // コマンドキュー、ウィンドウハンドル、設定を渡してスワップチェインを生成
-    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), sWinApp->GetWindowHandle(), &swapChainDesc_, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
+    HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winApp_->GetWindowHandle(), &swapChainDesc_, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
     // スワップチェインの生成が成功したかをチェック
     assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize SwapChain.");
+    Log("Complete Initialize SwapChain.");
 }
 
 void DirectXCommon::InitializeRTVDescriptorHeap() {
@@ -378,7 +376,7 @@ void DirectXCommon::InitializeRTVDescriptorHeap() {
     rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
     
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize RTV Descriptor Heap.");
+    Log("Complete Initialize RTV Descriptor Heap.");
 }
 
 void DirectXCommon::InitializeSwapChainResources() {
@@ -391,7 +389,7 @@ void DirectXCommon::InitializeSwapChainResources() {
     }
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize SwapChain Resources.");
+    Log("Complete Initialize SwapChain Resources.");
 }
 
 void DirectXCommon::InitializeRTVHandle() {
@@ -425,15 +423,15 @@ void DirectXCommon::InitializeFence() {
     assert(fenceEvent_ != nullptr);
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Fence.");
+    Log("Complete Initialize Fence.");
 }
 
 void DirectXCommon::InitializeDepthStencil() {
     // 深度バッファ用のテクスチャリソースを作成
     depthStencilResource_ = CreateDepthStencilTextureResource(
         device_.Get(),
-        sWinApp->GetClientWidth(),
-        sWinApp->GetClientHeight()
+        winApp_->GetClientWidth(),
+        winApp_->GetClientHeight()
     );
 
     // DSV用のヒープでディスクリプタの数は1。DSVはShader内で触るものではないので、ShaderVisibleはfalse
@@ -455,7 +453,7 @@ void DirectXCommon::InitializeDepthStencil() {
     );
 
     // 初期化完了のログを出力
-    sWinApp->Log("Complete Initialize Depth Stencil.");
+    Log("Complete Initialize Depth Stencil.");
 }
 
 void DirectXCommon::CommandExecute() {

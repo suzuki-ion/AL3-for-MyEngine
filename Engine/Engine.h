@@ -6,19 +6,13 @@
 /// @brief 自作エンジンクラス
 class Engine final {
 public:
-    Engine(const Engine &) = delete;
-    Engine &operator=(const Engine &) = delete;
-    Engine(Engine &&) = delete;
-    Engine &operator=(Engine &&) = delete;
-
-    /// @brief インスタンス取得
-    /// @return エンジンクラスのインスタンス
-    static Engine *GetInstance() {
-        static Engine instance;
-        return &instance;
-    }
-
+    Engine() = default;
+    
     /// @brief エンジン初期化
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ横幅
+    /// @param height ウィンドウ縦幅
+    /// @param enableDebugLayer デバッグレイヤーを有効にするかどうか
     void Initialize(const char *title, int width = 1280, int height = 720, bool enableDebugLayer = true);
 
     /// @brief エンジン終了処理
@@ -30,9 +24,9 @@ public:
     /// @brief フレーム終了処理
     void EndFrame();
 
-    /// @brief テスト用の描画関数
+    /// @brief テスト描画
     void DrawTest();
-    
+
     /// @brief ウィンドウハンドル取得
     HWND GetWindowHandle() const;
 
@@ -49,13 +43,5 @@ public:
     int ProccessMessage();
 
 private:
-    Engine() = default;
-    ~Engine() = default;
-
-    /// @brief 終了処理チェック用構造体
-    struct FinalizeChecker {
-        ~FinalizeChecker();
-    };
-    /// @brief 終了処理チェック用変数
-    FinalizeChecker finalizeCheck_;
+    
 };

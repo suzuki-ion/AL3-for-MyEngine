@@ -10,24 +10,17 @@
 
 namespace MyEngine {
 
+// 前方宣言
+class WinApp;
+
 /// @brief DirectX共通クラス
 class DirectXCommon final {
 public:
-    DirectXCommon(const DirectXCommon &) = delete;
-    DirectXCommon &operator=(const DirectXCommon &) = delete;
-    DirectXCommon(DirectXCommon &&) = delete;
-    DirectXCommon &operator=(DirectXCommon &&) = delete;
-
-    /// @brief インスタンス取得
-    /// @return DirectXCommonクラスのインスタンス
-    static DirectXCommon *GetInstance() {
-        static DirectXCommon instance;
-        return &instance;
-    }
+    DirectXCommon() noexcept = default;
 
     /// @brief DirectX初期化
     /// @param enableDebugLayer デバッグレイヤーを有効にするかどうか
-    void Initialize(bool enableDebugLayer);
+    void Initialize(bool enableDebugLayer, WinApp *winApp);
     /// @brief DirectX終了処理
     void Finalize();
 
@@ -87,6 +80,11 @@ private:
     };
     /// @brief リソースリークチェック用変数
     D3DResourceLeakChecker leakCheck_;
+
+    //--------- WinApp ---------//
+
+    /// @brief WinAppクラス(外部から持ってくる)
+    WinApp *winApp_ = nullptr;
 
     //--------- DXGI ---------//
     

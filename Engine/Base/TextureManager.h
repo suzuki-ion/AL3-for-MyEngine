@@ -16,6 +16,15 @@ public:
     TextureManager(TextureManager &&) = delete;
     TextureManager &operator=(TextureManager &&) = delete;
     
+    struct Texture {
+        /// @brief テクスチャリソース
+        Microsoft::WRL::ComPtr<ID3D12Resource> resource;
+        /// @brief SRVハンドル(CPU)
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU;
+        /// @brief SRVハンドル(GPU)
+        D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU;
+    };
+
     /// @brief インスタンス取得
     /// @return TextureManagerクラスのインスタンス
     static TextureManager *GetInstance() {

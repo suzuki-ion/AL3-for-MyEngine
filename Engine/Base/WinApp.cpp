@@ -1,13 +1,11 @@
 #include <cassert>
 #include <format>
-#include <filesystem>
-#include <fstream>
 #include <chrono>
 #include <2d/ImGuiManager.h>
 
 #include "WinApp.h"
-#include "ConvertString.h"
-#include "TimeGet.h"
+#include "Common/ConvertString.h"
+#include "Common/TimeGet.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -15,26 +13,15 @@
 namespace MyEngine {
 
 namespace {
-// ログ出力用のストリーム
-std::ofstream logStream;
 } // namespace
 
 void WinApp::Initialize(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
     // 初期化済みかどうかのフラグ
     static bool isInitialized = false;
-    // 初期化済みで再度実行されたらエラーを出す
+    // 初期化済みならエラーを出す
     assert(!isInitialized);
-
-    //==================================================
-    // ログファイルの準備
-    //==================================================
-
-    // ログファイルのパスを作成
-    std::filesystem::create_directory("Logs");
-    // 時刻を使ってファイル名を決定
-    std::string logFilePath = "Logs/" + TimeGetString("{:%Y-%m-%d_%H-%M-%S}") + ".log";
-    // ファイルを使って書き込み準備
-    logStream.open(logFilePath);
+    // 初期化済みフラグを立てる
+    isInitialized = true;
 
     //==================================================
     // ウィンドウの初期化
@@ -108,19 +95,6 @@ int WinApp::ProccessMessage() {
     } else {
         return 0;
     }
-}
-
-void WinApp::Log(const std::string &message) {
-    // ログファイルに書き込み
-    logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << message << std::endl;
-    OutputDebugStringA((message + '\n').c_str());
-}
-
-void WinApp::Log(const std::wstring &message) {
-    // ログファイルに書き込み
-    logStream << TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ] : ") << ConvertString(message) << std::endl;
-    // OutputDebugStringWでもいいらしいけど、よくわからんので変換で対応
-    OutputDebugStringA(ConvertString(message + L'\n').c_str());
 }
 
 LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
