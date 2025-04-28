@@ -106,49 +106,42 @@ void Engine::EndFrame() {
     sDxCommon->PostDraw();
 }
 
-void Engine::DrawTest() {
+void Engine::DrawTest(const VertexData(&vertexData1)[3], const VertexData(&vertexData2)[3], const Transform &transform, const Vector4 &color) {
     static auto *commandList = sDxCommon->GetCommandList();
     static auto mesh = sPrimitiveDrawer->CreateMesh(6);
     static auto pipelineSet = sPrimitiveDrawer->CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
+    // 頂点設定用
+    static VertexData *vertexData;
+    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
+    vertexData[0] = vertexData1[0];
+    vertexData[1] = vertexData1[1];
+    vertexData[2] = vertexData1[2];
+    vertexData[3] = vertexData2[0];
+    vertexData[4] = vertexData2[1];
+    vertexData[5] = vertexData2[2];
+
     // マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
     static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
-    static Vector4 color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    Vector4 *materialData = nullptr;
+    static Vector4 *materialData = nullptr;
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
+    *materialData = ConvertColor(color);
 
     // WVP用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
     static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
-    Matrix4x4 *wvpData = nullptr;
+    static Matrix4x4 *wvpData = nullptr;
     wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData));
 
-    // 回転用にTransform変数を作る
-    static Transform transform{
-        {1.0f, 1.0f, 1.0f},
-        {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f, 0.0f}
-    };
     static Transform cameraTransform{
         {1.0f, 1.0f, 1.0f},
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, -5.0f}
     };
-    Matrix4x4 worldMatrix;
-    Matrix4x4 cameraMatrix;
-    Matrix4x4 viewMatrix;
-    Matrix4x4 projectionMatrix;
-    Matrix4x4 wvpMatrix;
-
-    // ImGuiで三角形をいじれるようにする
-    ImGui::Begin("Triangle");
-    ImGui::DragFloat3("Translate", &transform.translate.x, 0.1f);
-    ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f);
-    ImGui::DragFloat3("Scale", &transform.scale.x, 0.01f);
-    ImGui::DragFloat4("MaterialColor", &color.x, 1.0f, 0.0f, 255.0f);
-    ImGui::End();
-
-    // 色をマテリアルに反映
-    *materialData = ConvertColor(color);
+    static Matrix4x4 worldMatrix;
+    static Matrix4x4 cameraMatrix;
+    static Matrix4x4 viewMatrix;
+    static Matrix4x4 projectionMatrix;
+    static Matrix4x4 wvpMatrix;
 
     worldMatrix.MakeAffine(
         transform.scale,
@@ -204,6 +197,65 @@ void Engine::DrawTest() {
     commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
     commandList->SetGraphicsRootDescriptorTable(2, sTextureManager->GetTextureSrvHandleGPU());
+    // 描画
+    commandList->DrawInstanced(6, 1, 0, 0);
+}
+
+void Engine::DrawSpriteTest(const MyEngine::VertexData(&vertexData)[4], const MyEngine::Transform &transform, const MyEngine::Vector4 &color) {
+    static auto *commandList = sDxCommon->GetCommandList();
+    static auto mesh = sPrimitiveDrawer->CreateMesh(6);
+
+    // 頂点設定用
+    static VertexData *vertexDataSprite;
+    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
+    // 4頂点を2つの三角形に分けて描画する
+    vertexDataSprite[0] = vertexData[2];
+    vertexDataSprite[1] = vertexData[0];
+    vertexDataSprite[2] = vertexData[3];
+    vertexDataSprite[3] = vertexData[0];
+    vertexDataSprite[4] = vertexData[1];
+    vertexDataSprite[5] = vertexData[3];
+
+    // マテリアル用のリソース
+    static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
+    static Vector4 *materialData = nullptr;
+    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
+    *materialData = ConvertColor(color);
+
+    // Sprite用のTransformMatrix用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
+    static auto transformMatrixResourceSprite = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
+    static Matrix4x4 *transformMatrixDataSprite = nullptr;
+    transformMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&transformMatrixDataSprite));
+    transformMatrixDataSprite->MakeIdentity();
+
+    static Matrix4x4 worldMatrix;
+    static Matrix4x4 viewMatrix;
+    static Matrix4x4 projectionMatrix;
+    static Matrix4x4 wvpMatrix;
+
+    worldMatrix.MakeAffine(
+        transform.scale,
+        transform.rotate,
+        transform.translate
+    );
+    viewMatrix.MakeIdentity();
+    projectionMatrix = MakeOrthographicMatrix(
+        0.0f,
+        0.0f,
+        static_cast<float>(sWinApp->GetClientWidth()),
+        static_cast<float>(sWinApp->GetClientHeight()),
+        0.0f,
+        100.0f
+    );
+    wvpMatrix = worldMatrix * (viewMatrix * projectionMatrix);
+    *transformMatrixDataSprite = wvpMatrix;
+
+    // Spriteの描画。変更が必要なものだけ変更する
+    commandList->IASetVertexBuffers(0, 1, &mesh->vertexBufferView);
+    // マテリアルCBufferの場所を指定
+    commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+    // TransformMatrixCBufferの場所を指定
+    commandList->SetGraphicsRootConstantBufferView(1, transformMatrixResourceSprite->GetGPUVirtualAddress());
     // 描画
     commandList->DrawInstanced(6, 1, 0, 0);
 }

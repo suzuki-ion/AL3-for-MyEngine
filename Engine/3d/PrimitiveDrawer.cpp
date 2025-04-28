@@ -173,53 +173,6 @@ std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount) {
     // 1頂点あたりのサイズ
     vertexBufferView.StrideInBytes = sizeof(VertexData);
 
-    // 頂点リソースにデータを書き込む
-    VertexData *vertexData = nullptr;
-    // 書き込むためのアドレスを取得
-    vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
-    
-    //--------- 三角形1 ---------//
-    
-    // 左下
-    vertexData[0].position = { -0.5f, -0.5f, 0.0f, 1.0f };
-    vertexData[0].texCoord = { 0.0f, 1.0f };
-    // 上
-    vertexData[1].position = { 0.0f, 0.5f, 0.0f, 1.0f };
-    vertexData[1].texCoord = { 0.5f, 0.0f };
-    // 右下
-    vertexData[2].position = { 0.5f, -0.5f, 0.0f, 1.0f };
-    vertexData[2].texCoord = { 1.0f, 1.0f };
-
-    //--------- 三角形2 ---------//
-
-    // 左上
-    vertexData[3].position = { -0.5f, -0.5f, 0.5f, 1.0f };
-    vertexData[3].texCoord = { 0.0f, 1.0f };
-    // 右上
-    vertexData[4].position = { 0.0f, 0.0f, 0.0f, 1.0f };
-    vertexData[4].texCoord = { 0.5f, 0.0f };
-    // 右下
-    vertexData[5].position = { 0.5f, -0.5f, -0.5f, 1.0f };
-    vertexData[5].texCoord = { 1.0f, 1.0f };
-
-    // ビューポート
-    D3D12_VIEWPORT viewport{};
-    // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = static_cast<float>(winApp_->GetClientWidth());
-    viewport.Height = static_cast<float>(winApp_->GetClientHeight());
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    // シザー矩形
-    D3D12_RECT scissorRect{};
-    // 基本的にビューポートと同じ矩形が構成されるようにする
-    scissorRect.left = 0;
-    scissorRect.right = winApp_->GetClientWidth();
-    scissorRect.top = 0;
-    scissorRect.bottom = winApp_->GetClientHeight();
-
     // メッシュを返す
     auto mesh = std::make_unique<Mesh>();
     mesh->vertexBuffer = vertexBuffer;

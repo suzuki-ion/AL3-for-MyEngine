@@ -75,8 +75,8 @@ WinApp::~WinApp() {
 
 int WinApp::ProccessMessage() {
     if (msg_.message == WM_QUIT) {
-        Log("Window Quit.");
         LogNewLine();
+        Log("Window Quit.");
         return -1;
     }
 

@@ -4,6 +4,10 @@
 #include <string>
 #include <filesystem>
 
+#include "Common/VertexData.h"
+#include "Math/Transform.h"
+#include "Math/Vector4.h"
+
 /// @brief 自作エンジンクラス
 class Engine final {
 public:
@@ -18,7 +22,22 @@ public:
     void EndFrame();
 
     /// @brief テスト描画
-    void DrawTest();
+    /// @param vertexData 三角形1に使う描画に使う頂点データ
+    /// @param vertexData2 三角形2に使う描画に使う頂点データ
+    /// @param color 色
+    void DrawTest(
+        const MyEngine::VertexData (&vertexData1)[3],
+        const MyEngine::VertexData (&vertexData2)[3],
+        const MyEngine::Transform &transform,
+        const MyEngine::Vector4 &color
+    );
+
+    /// @brief スプライトのテスト描画
+    void DrawSpriteTest(
+        const MyEngine::VertexData(&vertexData)[4],
+        const MyEngine::Transform &transform,
+        const MyEngine::Vector4 &color
+    );
 
     /// @brief ウィンドウハンドル取得
     HWND GetWindowHandle() const;
