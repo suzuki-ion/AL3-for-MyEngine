@@ -32,24 +32,39 @@ std::string GetRelativePath(const std::string &fullPath) {
 std::string CreateLogText(const std::string &message, LogLevelFlags logLevelFlags, const std::source_location &location) {
     std::string logText;
     logText += TimeGetString("[ {:%Y/%m/%d %H:%M:%S} ]\n\t");
-    logText += "[ ";
-    logText += "File:\"";
+
+    //--------- File ---------//
+    
+    logText += "File: \"";
     logText += GetRelativePath(location.file_name());
-    logText += "\" Function:\"";
+    logText += "\"\n\t";
+    
+    //--------- Function ---------//
+
+    logText += "Function: \"";
     logText += location.function_name();
-    logText += "\" Line:";
+    logText += "\"\n\t";
+    
+    //--------- Line ---------//
+    
+    logText += "Line: ";
     logText += std::to_string(location.line());
-    logText += " ]\n\t";
+    logText += "\n\t";
+
+    //--------- Message ---------//
+
+    logText += "Message: ";
     if (logLevelFlags & kLogLevelFlagInfo) {
-        logText += "[INFO] : ";
+        logText += "[INFO] ";
     } else if (logLevelFlags & kLogLevelFlagWarning) {
-        logText += "[--- WARNING ---] : ";
+        logText += "[--- WARNING ---] ";
     } else if (logLevelFlags & kLogLevelFlagError) {
-        logText += "[!!!--- ERROR ---!!!] : ";
+        logText += "[!!!--- ERROR ---!!!] ";
     } else {
-        logText += "[NO LEVEL LOG] : ";
+        logText += "[NO LEVEL LOG] ";
     }
     logText += message;
+
     return logText;
 }
 
