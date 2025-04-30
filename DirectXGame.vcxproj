@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -115,6 +115,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\Common\TimeGet.cpp" />
     <ClCompile Include="Engine\Base\WinApp.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
+    <ClCompile Include="Engine\Math\AffineMatrix.cpp" />
+    <ClCompile Include="Engine\Math\Camera.cpp" />
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Engine\Math\RenderingPipeline.cpp" />
     <ClCompile Include="Engine\Math\Vector3.cpp" />
@@ -143,17 +145,23 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Common\VertexData.h" />
     <ClInclude Include="Engine\Base\WinApp.h" />
     <ClInclude Include="Engine\Common\Mesh.h" />
-    <ClInclude Include="Engine\Common\Object.h" />
+    <ClInclude Include="Engine\Objects\Object.h" />
     <ClInclude Include="Engine\Common\PipeLineSet.h" />
     <ClInclude Include="Engine\Common\VertexPosColor.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Engine\3d\PrimitiveDrawer.h" />
+    <ClInclude Include="Engine\Math\AffineMatrix.h" />
+    <ClInclude Include="Engine\Math\Camera.h" />
     <ClInclude Include="Engine\Math\Matrix4x4.h" />
     <ClInclude Include="Engine\Math\RenderingPipeline.h" />
+    <ClInclude Include="Engine\Math\Sphere.h" />
     <ClInclude Include="Engine\Math\Transform.h" />
     <ClInclude Include="Engine\Math\Vector2.h" />
     <ClInclude Include="Engine\Math\Vector3.h" />
     <ClInclude Include="Engine\Math\Vector4.h" />
+    <ClInclude Include="Engine\Objects\Sphere.h" />
+    <ClInclude Include="Engine\Objects\Sprite.h" />
+    <ClInclude Include="Engine\Objects\Triangle.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />

@@ -11,6 +11,7 @@
 #include "Base/TextureManager.h"
 #include "Base/CrashHandler.h"
 #include "Base/ResourceLeakChecker.h"
+#include "Base/Drawer.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -37,6 +38,7 @@ std::unique_ptr<DirectXCommon> sDxCommon;
 std::unique_ptr<PrimitiveDrawer> sPrimitiveDrawer;
 std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
+std::unique_ptr<Drawer> sDrawer;
 } // namespace
 
 Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
@@ -75,6 +77,9 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     // テクスチャを読み込む
     sTextureManager->Load("Resources/uvChecker.png");
 
+    // 描画用クラス初期化
+    sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sPrimitiveDrawer.get(), sImGuiManager.get(), sTextureManager.get());
+
     // 初期化完了のログを出力
     Log("Engine Initialized.");
     LogInsertPartition("\n============ Engine Initialize Finish ============\n");
@@ -94,170 +99,11 @@ Engine::~Engine() {
 }
 
 void Engine::BeginFrame() {
-    sDxCommon->PreDraw();
-    sImGuiManager->BeginFrame();
-
-    ID3D12DescriptorHeap *descriptorHeaps[] = { sImGuiManager->GetSRVDescriptorHeap() };
-    sDxCommon->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
+    sDrawer->PreDraw();
 }
 
 void Engine::EndFrame() {
-    sImGuiManager->EndFrame();
-    sDxCommon->PostDraw();
-}
-
-void Engine::DrawTest(const VertexData(&vertexData1)[3], const VertexData(&vertexData2)[3], const Transform &transform, const Vector4 &color) {
-    static auto *commandList = sDxCommon->GetCommandList();
-    static auto mesh = sPrimitiveDrawer->CreateMesh(6);
-    static auto pipelineSet = sPrimitiveDrawer->CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-
-    // 頂点設定用
-    static VertexData *vertexData;
-    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData));
-    vertexData[0] = vertexData1[0];
-    vertexData[1] = vertexData1[1];
-    vertexData[2] = vertexData1[2];
-    vertexData[3] = vertexData2[0];
-    vertexData[4] = vertexData2[1];
-    vertexData[5] = vertexData2[2];
-
-    // マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
-    static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
-    static Vector4 *materialData = nullptr;
-    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    *materialData = ConvertColor(color);
-
-    // WVP用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
-    static auto wvpResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
-    static Matrix4x4 *wvpData = nullptr;
-    wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData));
-
-    static Transform cameraTransform{
-        {1.0f, 1.0f, 1.0f},
-        {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f, -5.0f}
-    };
-    static Matrix4x4 worldMatrix;
-    static Matrix4x4 cameraMatrix;
-    static Matrix4x4 viewMatrix;
-    static Matrix4x4 projectionMatrix;
-    static Matrix4x4 wvpMatrix;
-
-    worldMatrix.MakeAffine(
-        transform.scale,
-        transform.rotate,
-        transform.translate
-    );
-    cameraMatrix.MakeAffine(
-        cameraTransform.scale,
-        cameraTransform.rotate,
-        cameraTransform.translate
-    );
-    viewMatrix = cameraMatrix.Inverse();
-    projectionMatrix = MakePerspectiveFovMatrix(
-        0.45f,
-        static_cast<float>(sWinApp->GetClientWidth()) /
-        static_cast<float>(sWinApp->GetClientHeight()),
-        0.1f, 100.0f
-    );
-    wvpMatrix = worldMatrix * (viewMatrix * projectionMatrix);
-
-    *wvpData = wvpMatrix;
-
-    // ビューポート
-    D3D12_VIEWPORT viewport{};
-    // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = static_cast<float>(sWinApp->GetClientWidth());
-    viewport.Height = static_cast<float>(sWinApp->GetClientHeight());
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    // シザー矩形
-    D3D12_RECT scissorRect{};
-    // 基本的にビューポートと同じ矩形が構成されるようにする
-    scissorRect.left = 0;
-    scissorRect.right = sWinApp->GetClientWidth();
-    scissorRect.top = 0;
-    scissorRect.bottom = sWinApp->GetClientHeight();
-
-    // コマンドを積む
-    commandList->RSSetViewports(1, &viewport);          // ビューポートを設定
-    commandList->RSSetScissorRects(1, &scissorRect);    // シザー矩形を設定
-    // ルートシグネチャを設定。PSOに設定しているけど別途設定が必要
-    commandList->SetGraphicsRootSignature(pipelineSet->rootSignature.Get());
-    commandList->SetPipelineState(pipelineSet->pipelineState.Get());    // PSOを設定
-    commandList->IASetVertexBuffers(0, 1, &mesh->vertexBufferView);     // VBVを設定
-    // 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけばいい
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    // マテリアルCBufferの場所を指定
-    commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-    // wvp用のCBufferの場所を指定
-    commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    commandList->SetGraphicsRootDescriptorTable(2, sTextureManager->GetTextureSrvHandleGPU());
-    // 描画
-    commandList->DrawInstanced(6, 1, 0, 0);
-}
-
-void Engine::DrawSpriteTest(const MyEngine::VertexData(&vertexData)[4], const MyEngine::Transform &transform, const MyEngine::Vector4 &color) {
-    static auto *commandList = sDxCommon->GetCommandList();
-    static auto mesh = sPrimitiveDrawer->CreateMesh(6);
-
-    // 頂点設定用
-    static VertexData *vertexDataSprite;
-    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
-    // 4頂点を2つの三角形に分けて描画する
-    vertexDataSprite[0] = vertexData[2];
-    vertexDataSprite[1] = vertexData[0];
-    vertexDataSprite[2] = vertexData[3];
-    vertexDataSprite[3] = vertexData[0];
-    vertexDataSprite[4] = vertexData[1];
-    vertexDataSprite[5] = vertexData[3];
-
-    // マテリアル用のリソース
-    static auto materialResource = sPrimitiveDrawer->CreateBufferResources(sizeof(Vector4));
-    static Vector4 *materialData = nullptr;
-    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    *materialData = ConvertColor(color);
-
-    // Sprite用のTransformMatrix用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
-    static auto transformMatrixResourceSprite = sPrimitiveDrawer->CreateBufferResources(sizeof(Matrix4x4));
-    static Matrix4x4 *transformMatrixDataSprite = nullptr;
-    transformMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&transformMatrixDataSprite));
-    transformMatrixDataSprite->MakeIdentity();
-
-    static Matrix4x4 worldMatrix;
-    static Matrix4x4 viewMatrix;
-    static Matrix4x4 projectionMatrix;
-    static Matrix4x4 wvpMatrix;
-
-    worldMatrix.MakeAffine(
-        transform.scale,
-        transform.rotate,
-        transform.translate
-    );
-    viewMatrix.MakeIdentity();
-    projectionMatrix = MakeOrthographicMatrix(
-        0.0f,
-        0.0f,
-        static_cast<float>(sWinApp->GetClientWidth()),
-        static_cast<float>(sWinApp->GetClientHeight()),
-        0.0f,
-        100.0f
-    );
-    wvpMatrix = worldMatrix * (viewMatrix * projectionMatrix);
-    *transformMatrixDataSprite = wvpMatrix;
-
-    // Spriteの描画。変更が必要なものだけ変更する
-    commandList->IASetVertexBuffers(0, 1, &mesh->vertexBufferView);
-    // マテリアルCBufferの場所を指定
-    commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-    // TransformMatrixCBufferの場所を指定
-    commandList->SetGraphicsRootConstantBufferView(1, transformMatrixResourceSprite->GetGPUVirtualAddress());
-    // 描画
-    commandList->DrawInstanced(6, 1, 0, 0);
+    sDrawer->PostDraw();
 }
 
 HWND Engine::GetWindowHandle() const {
@@ -270,6 +116,10 @@ int32_t Engine::GetClientWidth() const {
 
 int32_t Engine::GetClientHeight() const {
     return sWinApp->GetClientHeight();
+}
+
+MyEngine::Drawer *Engine::GetDrawer() const {
+    return sDrawer.get();
 }
 
 int Engine::ProccessMessage() {

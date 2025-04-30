@@ -438,7 +438,7 @@ void Matrix4x4::MakeAffine(const Vector3 &scale, const Vector3 &rotate, const Ve
     mZ.MakeRotateZ(rotate.z);
     mT.MakeTranslate(translate);
     mS.MakeScale(scale);
-    *this =  mS * (mX * mY * mZ) * mT;
+    *this = mS * (mX * mY * mZ) * mT;
 }
 
 } // namespace MyEngine

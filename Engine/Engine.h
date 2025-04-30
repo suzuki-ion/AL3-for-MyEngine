@@ -8,6 +8,8 @@
 #include "Math/Transform.h"
 #include "Math/Vector4.h"
 
+#include "Base/Drawer.h"
+
 /// @brief 自作エンジンクラス
 class Engine final {
 public:
@@ -21,24 +23,6 @@ public:
     /// @brief フレーム終了処理
     void EndFrame();
 
-    /// @brief テスト描画
-    /// @param vertexData 三角形1に使う描画に使う頂点データ
-    /// @param vertexData2 三角形2に使う描画に使う頂点データ
-    /// @param color 色
-    void DrawTest(
-        const MyEngine::VertexData (&vertexData1)[3],
-        const MyEngine::VertexData (&vertexData2)[3],
-        const MyEngine::Transform &transform,
-        const MyEngine::Vector4 &color
-    );
-
-    /// @brief スプライトのテスト描画
-    void DrawSpriteTest(
-        const MyEngine::VertexData(&vertexData)[4],
-        const MyEngine::Transform &transform,
-        const MyEngine::Vector4 &color
-    );
-
     /// @brief ウィンドウハンドル取得
     HWND GetWindowHandle() const;
 
@@ -49,6 +33,10 @@ public:
     /// @brief クライアントサイズの縦幅取得
     /// @return クライアントサイズの縦幅
     int32_t GetClientHeight() const;
+
+    /// @brief 描画用クラスのポインタ取得
+    /// @return 描画用クラスのポインタ
+    MyEngine::Drawer *GetDrawer() const;
     
     /// @brief メッセージ処理
     /// @return メッセージ処理結果。-1の場合は終了
