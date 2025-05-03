@@ -6,62 +6,10 @@
 #include "WinApp.h"
 #include "Common/Logs.h"
 
+#include "Common/Descriptors/DSV.h"
+#include "Common/Descriptors/RTV.h"
+
 namespace MyEngine {
-
-namespace {
-
-/// @brief 深度バッファ用のテクスチャリソースを生成する
-/// @param width テクスチャの幅
-/// @param height テクスチャの高さ
-[[nodiscard]] Microsoft::WRL::ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(ID3D12Device *device, int32_t width, int32_t height) {
-    //==================================================
-    // Resourceの設定
-    //==================================================
-
-    D3D12_RESOURCE_DESC resourceDesc{};
-    resourceDesc.Width = width;                                     // Textureの幅
-    resourceDesc.Height = height;                                   // Textureの高さ
-    resourceDesc.MipLevels = 1;                                     // mipmapの数
-    resourceDesc.DepthOrArraySize = 1;                              // 奥行き or 配列Textureの配列数
-    resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;            // DepthStencilとして利用可能なフォーマット
-    resourceDesc.SampleDesc.Count = 1;                              // サンプリングカウント数。1固定
-    resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;    // 2次元
-    resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;   // DepthStencilとして使う通知
-
-    //==================================================
-    // 利用するHeapの設定
-    //==================================================
-
-    D3D12_HEAP_PROPERTIES heapProperties{};
-    heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    //==================================================
-    // 深度値のクリア最適化設定
-    //==================================================
-
-    D3D12_CLEAR_VALUE depthClearValue{};
-    depthClearValue.DepthStencil.Depth = 1.0f;              // 1.0f（最大値）でクリア
-    depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // フォーマット。Resourceと合わせる
-
-    //==================================================
-    // Resourceの生成
-    //==================================================
-
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-    HRESULT hr = device->CreateCommittedResource(
-        &heapProperties,                    // Heapの設定
-        D3D12_HEAP_FLAG_NONE,               // Heapの特殊な設定
-        &resourceDesc,                      // Resourceの設定
-        D3D12_RESOURCE_STATE_DEPTH_WRITE,   // 深度値を書き込む状態にしておく
-        &depthClearValue,                   // Clear最適値
-        IID_PPV_ARGS(&resource)             // 作成するResourceポインタへのポインタ
-    );
-    assert(SUCCEEDED(hr));
-
-    return resource;
-}
-
-} // namespace
 
 DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
     // nullチェック
@@ -96,11 +44,12 @@ DirectXCommon::DirectXCommon(bool enableDebugLayer, WinApp *winApp) {
     InitializeCommandAllocator();   // コマンドアロケータ初期化
     InitializeCommandList();        // コマンドリスト初期化
     InitializeSwapChain();          // スワップチェイン初期化
-    InitializeRTVDescriptorHeap();  // RTVのディスクリプタヒープ初期化
+    InitializeRTV();                // RTVの初期化
+    InitializeDSV();                // DSVの初期化
     InitializeSwapChainResources(); // スワップチェインから取得したリソース初期化
     InitializeRTVHandle();          // RTVのディスクリプタヒープのハンドル初期化
+    InitializeDSVHandle();          // DSVのディスクリプタヒープのハンドル初期化
     InitializeFence();              // Fence初期化
-    InitializeDepthStencil();       // 深度バッファ初期化
 
     // 初期化完了のログを出力
     Log("DirectXCommon Initialized.");
@@ -134,7 +83,6 @@ void DirectXCommon::PreDraw() {
     ClearRenderTarget();
 
     // 描画先のRTVとDSVを設定
-    dsvHandle_ = dsvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart();
     commandList_->OMSetRenderTargets(
         1,
         &rtvHandle_[swapChain_->GetCurrentBackBufferIndex()],
@@ -372,13 +320,20 @@ void DirectXCommon::InitializeSwapChain() {
     Log("Complete Initialize SwapChain.");
 }
 
-void DirectXCommon::InitializeRTVDescriptorHeap() {
-    // レンダーターゲットビューのディスクリプタヒープの生成
-    rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-    rtvDescriptorHeap_ = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-    
+void DirectXCommon::InitializeRTV() {
+    // レンダーターゲットビューの初期化
+    RTV::Initialize(this);
+
     // 初期化完了のログを出力
-    Log("Complete Initialize RTV Descriptor Heap.");
+    Log("Complete Initialize RTV.");
+}
+
+void DirectXCommon::InitializeDSV() {
+    // 深度ステンシルビューの初期化
+    DSV::Initialize(winApp_, this);
+
+    // 初期化完了のログを出力
+    Log("Complete Initialize DSV.");
 }
 
 void DirectXCommon::InitializeSwapChainResources() {
@@ -398,17 +353,21 @@ void DirectXCommon::InitializeRTVHandle() {
     rtvDesc_.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;       // 出力結果をSRGBに変換して書き込む
     rtvDesc_.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;  // 2Dテクスチャとして書き込む
 
-    // ディスクリプタの先頭を取得
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart();
-
     // RTVの1つ目を作成。1つ目は最初のところに作る。作る場所をこちらで設定してあげる必要がある
-    rtvHandle_[0] = rtvStartHandle;
+    rtvHandle_[0] = RTV::GetCPUDescriptorHandle();
     device_->CreateRenderTargetView(swapChainResources_[0].Get(), &rtvDesc_, rtvHandle_[0]);
 
-    // 2つ目のディスクリプタハンドルを得る(自力で)
-    rtvHandle_[1].ptr = rtvHandle_[0].ptr + device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    // 2つ目のディスクリプタハンドルを得る
+    rtvHandle_[1] = RTV::GetCPUDescriptorHandle();
     // RTVの2つ目を作成。
     device_->CreateRenderTargetView(swapChainResources_[1].Get(), &rtvDesc_, rtvHandle_[1]);
+}
+
+void DirectXCommon::InitializeDSVHandle() {
+    dsvHandle_ = DSV::GetCPUDescriptorHandle();
+
+    // 初期化完了のログを出力
+    Log("Complete Initialize DSV Handle.");
 }
 
 void DirectXCommon::InitializeFence() {
@@ -426,36 +385,6 @@ void DirectXCommon::InitializeFence() {
 
     // 初期化完了のログを出力
     Log("Complete Initialize Fence.");
-}
-
-void DirectXCommon::InitializeDepthStencil() {
-    // 深度バッファ用のテクスチャリソースを作成
-    depthStencilResource_ = CreateDepthStencilTextureResource(
-        device_.Get(),
-        winApp_->GetClientWidth(),
-        winApp_->GetClientHeight()
-    );
-
-    // DSV用のヒープでディスクリプタの数は1。DSVはShader内で触るものではないので、ShaderVisibleはfalse
-    dsvDescriptorHeap_ = CreateDescriptorHeap(
-        D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        1,
-        false
-    );
-
-    // DSVの設定
-    D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-    dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;         // Format。基本的にはResourceと合わせる
-    dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;  // 2Dテクスチャ
-    // DSVHeapの先頭にDSVを作成
-    device_->CreateDepthStencilView(
-        depthStencilResource_.Get(),
-        &dsvDesc,
-        dsvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart()
-    );
-
-    // 初期化完了のログを出力
-    Log("Complete Initialize Depth Stencil.");
 }
 
 void DirectXCommon::CommandExecute() {

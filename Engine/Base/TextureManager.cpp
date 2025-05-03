@@ -5,6 +5,7 @@
 #include "3d/PrimitiveDrawer.h"
 #include "Common/Logs.h"
 #include "Common/ConvertString.h"
+#include "Common/Descriptors/SRV.h"
 
 namespace MyEngine {
 
@@ -43,7 +44,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
 
 } // namespace
 
-TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager) {
+TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon) {
     // nullチェック
     if (winApp == nullptr) {
         Log("winApp is null.", kLogLevelFlagError);
@@ -53,19 +54,9 @@ TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon, Primitiv
         Log("dxCommon is null.", kLogLevelFlagError);
         assert(false);
     }
-    if (primitiveDrawer == nullptr) {
-        Log("primitiveDrawer is null.", kLogLevelFlagError);
-        assert(false);
-    }
-    if (imguiManager == nullptr) {
-        Log("imguiManager is null.", kLogLevelFlagError);
-        assert(false);
-    }
     // 引数をメンバ変数に格納
     winApp_ = winApp;
     dxCommon_ = dxCommon;
-    primitiveDrawer_ = primitiveDrawer;
-    imguiManager_ = imguiManager;
 
     // 初期化完了のログを出力
     Log("TextureManager Initialized.");
@@ -99,16 +90,12 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     srvDesc.Texture2D.MipLevels = UINT(metadata.mipLevels);
 
     // SRVを作成するDescriptorHeapの場所を決める
-    textureSrvHandleCPU_=
-        imguiManager_->GetSRVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
-    textureSrvHandleGPU_ =
-        imguiManager_->GetSRVDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+    textureSrvHandleCPU_ = SRV::GetCPUDescriptorHandle();
+    textureSrvHandleGPU_ = SRV::GetGPUDescriptorHandle();
 
     // 先頭はImGuiが使っているのでその次を使う
-    textureSrvHandleCPU_.ptr +=
-        dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    textureSrvHandleGPU_.ptr +=
-        dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    textureSrvHandleCPU_ = SRV::GetCPUDescriptorHandle();
+    textureSrvHandleGPU_ = SRV::GetGPUDescriptorHandle();
 
     // SRVの生成
     dxCommon_->GetDevice()->CreateShaderResourceView(
@@ -185,7 +172,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(ID3D12R
         UINT(subresources.size())
     );
     Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource =
-        primitiveDrawer_->CreateBufferResources(intermediateSize);
+        PrimitiveDrawer::CreateBufferResources(intermediateSize);
     // データ転送をコマンドに積む
     UpdateSubresources(
         dxCommon_->GetCommandList(),

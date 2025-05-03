@@ -4,6 +4,7 @@
 
 #include "Common/VertexData.h"
 #include "Common/Mesh.h"
+#include "Common/PipeLineSet.h"
 #include "Math/Transform.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
@@ -13,12 +14,13 @@ namespace MyEngine {
 // 前方宣言
 class WinApp;
 class DirectXCommon;
-class PrimitiveDrawer;
 class ImGuiManager;
 class TextureManager;
+
 struct Triangle;
 struct Sprite;
 struct Sphere;
+struct BillBoard;
 
 /// @brief 描画用クラス
 class Drawer {
@@ -28,7 +30,7 @@ public:
     /// @param dxCommon DirectXCommonインスタンス
     /// @param primitiveDrawer PrimitiveDrawerインスタンス
     /// @param imguiManager ImGuiManagerインスタンス
-    Drawer(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager, TextureManager *textureManager);
+    Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager, TextureManager *textureManager);
 
     /// @brief デストラクタ
     ~Drawer();
@@ -51,13 +53,15 @@ public:
     /// @param sphere 描画する球体へのポインタ
     void Draw(Sphere *sphere);
 
+    /// @brief ビルボードを描画する
+    /// @param billboard 描画するビルボードへのポインタ
+    void Draw(BillBoard *billboard);
+
 private:
     /// @brief WinAppインスタンス
     WinApp *winApp_ = nullptr;
     /// @brief DirectXCommonインスタンス
     DirectXCommon *dxCommon_ = nullptr;
-    /// @brief PrimitiveDrawerインスタンス
-    PrimitiveDrawer *primitiveDrawer_ = nullptr;
     /// @brief ImGuiManagerインスタンス
     ImGuiManager *imguiManager_ = nullptr;
     /// @brief TextureManagerインスタンス

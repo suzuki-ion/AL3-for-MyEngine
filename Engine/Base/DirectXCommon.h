@@ -97,10 +97,8 @@ private:
 
     //--------- レンダーターゲット ---------//
 
-    /// @brief RTVの設定
+    /// @brief レンダーターゲットビューの設定
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc_;
-    /// @brief RTVのディスクリプタヒープ
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap_;
     /// @brief RTVのディスクリプタヒープのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle_[2];
 
@@ -117,10 +115,6 @@ private:
 
     /// @brief 深度バッファのリソースのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
-    /// @brief 深度バッファのリソース
-    Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource_;
-    /// @brief DSVのディスクリプタヒープ
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap_;
 
     //--------- バリア ---------//
 
@@ -145,18 +139,19 @@ private:
 
     /// @brief スワップチェイン初期化
     void InitializeSwapChain();
-    /// @brief RTVのディスクリプタヒープ初期化
-    void InitializeRTVDescriptorHeap();
+    /// @brief RTVの初期化
+    void InitializeRTV();
+    /// @brief DSVの初期化
+    void InitializeDSV();
     /// @brief スワップチェインから取得したリソース初期化
     void InitializeSwapChainResources();
     /// @brief RTVのディスクリプタヒープのハンドル初期化
     void InitializeRTVHandle();
+    /// @brief DSVのディスクリプタヒープのハンドル初期化
+    void InitializeDSVHandle();
 
     /// @brief フェンス初期化
     void InitializeFence();
-
-    /// @brief 深度バッファ初期化
-    void InitializeDepthStencil();
 };
 
 } // namespace MyEngine

@@ -6,6 +6,7 @@
 #include "Objects/Triangle.h"
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
+#include "Objects/Billboard.h"
 
 using namespace MyEngine;
 
@@ -90,13 +91,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     sprite.vertexData[0].position = { 0.0f, 0.0f, 0.0f, 1.0f };
     sprite.vertexData[0].texCoord = { 0.0f, 0.0f };
     // 右上
-    sprite.vertexData[1].position = { 16.0f, 0.0f, 0.0f, 1.0f };
+    sprite.vertexData[1].position = { 640.0f, 0.0f, 0.0f, 1.0f };
     sprite.vertexData[1].texCoord = { 1.0f, 0.0f };
     // 左下
-    sprite.vertexData[2].position = { 0.0f, 16.0f, 0.0f, 1.0f };
+    sprite.vertexData[2].position = { 0.0f, 320.0f, 0.0f, 1.0f };
     sprite.vertexData[2].texCoord = { 0.0f, 1.0f };
     // 右下
-    sprite.vertexData[3].position = { 16.0f, 16.0f, 0.0f, 1.0f };
+    sprite.vertexData[3].position = { 640.0f, 320.0f, 0.0f, 1.0f };
     sprite.vertexData[3].texCoord = { 1.0f, 1.0f };
 
     //==================================================
@@ -114,20 +115,90 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // カメラを設定
     sphere.camera = camera.get();
 
+    //==================================================
+    // ビルボード
+    //==================================================
+
+    //--------- ビルボード1 ---------//
+
+    BillBoard billboard1(camera.get());
+    billboard1.transform = {
+        { 1.0f, 1.0f, 1.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { -0.5f, 0.0f, 0.0f }
+    };
+    billboard1.color = { 255.0f, 255.0f, 255.0f, 255.0f };
+    // 左上
+    billboard1.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
+    billboard1.vertexData[0].texCoord = { 0.0f, 0.0f };
+    // 右上
+    billboard1.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
+    billboard1.vertexData[1].texCoord = { 1.0f, 0.0f };
+    // 左下
+    billboard1.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
+    billboard1.vertexData[2].texCoord = { 0.0f, 1.0f };
+    // 右下
+    billboard1.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
+    billboard1.vertexData[3].texCoord = { 1.0f, 1.0f };
+
+    //--------- ビルボード2 ---------//
+
+    BillBoard billboard2(camera.get());
+    billboard2.transform = {
+        { 1.0f, 1.0f, 1.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f }
+    };
+    billboard2.color = { 255.0f, 255.0f, 255.0f, 255.0f };
+    // 左上
+    billboard2.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
+    billboard2.vertexData[0].texCoord = { 0.0f, 0.0f };
+    // 右上
+    billboard2.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
+    billboard2.vertexData[1].texCoord = { 1.0f, 0.0f };
+    // 左下
+    billboard2.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
+    billboard2.vertexData[2].texCoord = { 0.0f, 1.0f };
+    // 右下
+    billboard2.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
+    billboard2.vertexData[3].texCoord = { 1.0f, 1.0f };
+
+    //--------- ビルボード3 ---------//
+
+    BillBoard billboard3(camera.get());
+    billboard3.transform = {
+        { 1.0f, 1.0f, 1.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.5f, 0.0f, 0.0f }
+    };
+    billboard3.color = { 255.0f, 255.0f, 255.0f, 255.0f };
+    // 左上
+    billboard3.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
+    billboard3.vertexData[0].texCoord = { 0.0f, 0.0f };
+    // 右上
+    billboard3.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
+    billboard3.vertexData[1].texCoord = { 1.0f, 0.0f };
+    // 左下
+    billboard3.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
+    billboard3.vertexData[2].texCoord = { 0.0f, 1.0f };
+    // 右下
+    billboard3.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
+    billboard3.vertexData[3].texCoord = { 1.0f, 1.0f };
+
     // ウィンドウのxボタンが押されるまでループ
     while (engine->ProccessMessage() != -1) {
         engine->BeginFrame();
 
         // ImGuiで三角形をいじれるようにする
         ImGui::Begin("Triangle1");
-        ImGui::DragFloat3("Triangle1 Translate", &triangle1.transform.translate.x, 0.1f);
+        ImGui::DragFloat3("Triangle1 Translate", &triangle1.transform.translate.x, 0.01f);
         ImGui::DragFloat3("Triangle1 Rotate", &triangle1.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Triangle1 Scale", &triangle1.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Triangle1 MaterialColor", &triangle1.color.x, 1.0f, 0.0f, 255.0f);
         ImGui::End();
 
         ImGui::Begin("Triangle2");
-        ImGui::DragFloat3("Triangle2 Translate", &triangle2.transform.translate.x, 0.1f);
+        ImGui::DragFloat3("Triangle2 Translate", &triangle2.transform.translate.x, 0.01f);
         ImGui::DragFloat3("Triangle2 Rotate", &triangle2.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Triangle2 Scale", &triangle2.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Triangle2 MaterialColor", &triangle2.color.x, 1.0f, 0.0f, 255.0f);
@@ -135,7 +206,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // ImGuiでスプライトをいじれるようにする
         ImGui::Begin("Sprite");
-        ImGui::DragFloat3("Sprite Translate", &sprite.transform.translate.x, 0.1f);
+        ImGui::DragFloat3("Sprite Translate", &sprite.transform.translate.x, 0.01f);
         ImGui::DragFloat3("Sprite Rotate", &sprite.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Sprite Scale", &sprite.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Sprite MaterialColor", &sprite.color.x, 1.0f, 0.0f, 255.0f);
@@ -143,7 +214,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // ImGuiで球体をいじれるようにする
         ImGui::Begin("Sphere");
-        ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.1f);
+        ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.01f);
         ImGui::DragFloat3("Sphere Rotate", &sphere.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
         ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.1f, 0.0f, 100.0f);
@@ -151,12 +222,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::End();
 
         // カメラをいじれるようにする
-        camera->MoveToMouse(0.01f, 0.01f, 0.01f);
+        camera->MoveToMouse(0.01f, 0.01f, 0.1f);
 
         drawer->Draw(&triangle1);
         drawer->Draw(&triangle2);
-        drawer->Draw(&sprite);
         drawer->Draw(&sphere);
+        drawer->Draw(&billboard1);
+        drawer->Draw(&billboard2);
+        drawer->Draw(&billboard3);
+        drawer->Draw(&sprite);
 
         engine->EndFrame();
     }

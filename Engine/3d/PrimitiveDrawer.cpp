@@ -11,6 +11,8 @@
 #pragma comment(lib, "dxcompiler.lib")
 
 namespace MyEngine {
+bool PrimitiveDrawer::isInitialized_ = false;
+DirectXCommon *PrimitiveDrawer::dxCommon_ = nullptr;
 
 namespace {
 
@@ -24,7 +26,7 @@ namespace {
 IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     IDxcUtils *dxcUtils, IDxcCompiler3 *dxcCompiler, IDxcIncludeHandler *includeHandler) {
     // これからシェーダーをコンパイルする旨をログに出力
-    Log(std::format(L"Begin CompileShader, path:{}, profile:{}", filePath, profile));
+    LogSimple(std::format(L"Begin CompileShader, path:{}, profile:{}", filePath, profile));
 
     //==================================================
     // 1. hlslファイルを読む
@@ -75,7 +77,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
     if ((shaderError != nullptr) && (shaderError->GetStringLength() != 0)) {
         // エラーがあった場合はエラーを出力して終了
-        Log(std::format(L"Compile Failed, path:{}, profile:{}", filePath, profile));
+        Log(std::format(L"Compile Failed, path:{}, profile:{}", filePath, profile), kLogLevelFlagError);
         assert(false);
     }
 
@@ -89,7 +91,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     // コンパイル結果の取得に失敗した場合はエラーを出す
     assert(SUCCEEDED(hr));
     // コンパイル完了のログを出力
-    Log(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
+    LogSimple(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
     // もう使わないリソースを解放
     shaderSource->Release();
     shaderResult->Release();
@@ -100,33 +102,40 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
 
 } // namespace
 
-PrimitiveDrawer::PrimitiveDrawer(WinApp *winApp, DirectXCommon *dxCommon) {
-    // nullチェック
-    if (winApp == nullptr) {
-        Log("winApp is null.", kLogLevelFlagError);
+void PrimitiveDrawer::Initialize(DirectXCommon *dxCommon, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (isInitialized_) {
+        Log("PrimitiveDrawer is already initialized.", kLogLevelFlagError);
         assert(false);
     }
+
+    // nullチェック
     if (dxCommon == nullptr) {
         Log("dxCommon is null.", kLogLevelFlagError);
         assert(false);
     }
 
     // 引数をメンバ変数に格納
-    winApp_ = winApp;
     dxCommon_ = dxCommon;
+    // 初期化済みフラグを立てる
+    isInitialized_ = true;
 
     // 初期化完了のログを出力
-    Log("PrimitiveDrawer Initialized.");
+    LogSimple("PrimitiveDrawer Initialized.");
     LogNewLine();
 }
 
-PrimitiveDrawer::~PrimitiveDrawer() {
-    // 終了処理完了のログを出力
-    Log("PrimitiveDrawer Finalized.");
-    LogNewLine();
-}
+Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("PrimitiveDrawer is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UINT64 size) {
     // ヒープの設定
     D3D12_HEAP_PROPERTIES uploadHeapProperties{};
     uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD; // UploadHeapを使う
@@ -151,11 +160,14 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
     assert(SUCCEEDED(hr));
 
     // ログに生成したリソースのサイズを出力
-    Log(std::format("CreateBufferResources, size:{}", size));
+    LogSimple(std::format("CreateBufferResources, size:{}", size));
     return resource;
 }
 
-std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount) {
+std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+
     // 頂点バッファの生成
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer =
         CreateBufferResources(sizeof(VertexData) * vertexCount);
@@ -177,10 +189,16 @@ std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount) {
     auto mesh = std::make_unique<Mesh>();
     mesh->vertexBuffer = vertexBuffer;
     mesh->vertexBufferView = vertexBufferView;
+
+    // ログに生成したメッシュの頂点数を出力
+    LogSimple(std::format("CreateMesh, vertexCount:{}", vertexCount));
     return mesh;
 }
 
-std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType) {
+std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, const bool isDepthEnable, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+
     //==================================================
     // ルートシグネチャの生成
     //==================================================
@@ -235,7 +253,7 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature,
         D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
     if (FAILED(hr)) {
-        Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
+        Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()), kLogLevelFlagError);
         assert(false);
     }
 
@@ -268,6 +286,13 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
 
     D3D12_BLEND_DESC blendDesc{};
     // すべての色要素を書き込む
+    blendDesc.RenderTarget[0].BlendEnable = TRUE;
+    blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
     //==================================================
@@ -315,9 +340,17 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     //==================================================
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-    depthStencilDesc.DepthEnable = true;                            // Depthの機能を有効化する
-    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;   // 深度値を書き込む
-    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;  // 比較関数はLessEqual。つまり、近ければ描画される
+    if (isDepthEnable) {
+        // 深度バッファを使う
+        depthStencilDesc.DepthEnable = true;                            // Depthの機能を有効化する
+        depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;   // 深度値を書き込む
+        depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;  // 比較関数
+    } else {
+        // 深度バッファを使わない
+        depthStencilDesc.DepthEnable = false;                           // Depthの機能を無効化する
+        depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;  // 深度値を書き込まない
+        depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;      // 比較関数
+    }
 
     //==================================================
     // PSOを生成する
@@ -356,6 +389,9 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     auto pipelineSet = std::make_unique<PipeLineSet>();
     pipelineSet->rootSignature = rootSignature;
     pipelineSet->pipelineState = pipelineState;
+
+    // ログに生成完了のメッセージを出力
+    LogSimple("CreateGraphicsPipeline Succeeded.");
     return pipelineSet;
 }
 

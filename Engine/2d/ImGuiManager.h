@@ -22,20 +22,11 @@ public:
     /// @brief ImGuiのフレーム終了処理
     void EndFrame();
 
-    /// @brief SRVディスクリプタヒープ取得
-    /// @return SRVディスクリプタヒープ
-    ID3D12DescriptorHeap *GetSRVDescriptorHeap() const {
-        return srvDescriptorHeap_.Get();
-    }
-
 private:
     /// @brief WinAppインスタンス
     WinApp *winApp_ = nullptr;
     /// @brief DirectXCommonインスタンス
     DirectXCommon *dxCommon_ = nullptr;
-
-    /// @brief SRVディスクリプタヒープ
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
 };
 
 } // namespace MyEngine

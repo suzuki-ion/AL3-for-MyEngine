@@ -12,16 +12,18 @@
 
 #include "Common/Logs.h"
 #include "Common/ConvertColor.h"
+#include "Common/Descriptors/SRV.h"
 
 #include "Objects/Triangle.h"
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
+#include "Objects/Billboard.h"
 
 #define M_PI (4.0f * std::atanf(1.0f))
 
 namespace MyEngine {
 
-Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager, TextureManager *textureManager) {
+Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager, TextureManager *textureManager) {
     // nullチェック
     if (!winApp) {
         Log("winApp is null.", kLogLevelFlagError);
@@ -29,10 +31,6 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primiti
     }
     if (!dxCommon) {
         Log("dxCommon is null.", kLogLevelFlagError);
-        assert(false);
-    }
-    if (!primitiveDrawer) {
-        Log("primitiveDrawer is null.", kLogLevelFlagError);
         assert(false);
     }
     if (!imguiManager) {
@@ -46,7 +44,6 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primiti
     // 各クラスへのポインタを設定
     winApp_ = winApp;
     dxCommon_ = dxCommon;
-    primitiveDrawer_ = primitiveDrawer;
     imguiManager_ = imguiManager;
     textureManager_ = textureManager;
 
@@ -63,13 +60,13 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primiti
 
     // 初期化完了のログを出力
     Log("Drawer Initialized.");
+    LogNewLine();
 }
 
 Drawer::~Drawer() {
     // 各クラスのポインタをnullにする
     winApp_ = nullptr;
     dxCommon_ = nullptr;
-    primitiveDrawer_ = nullptr;
     imguiManager_ = nullptr;
     // 終了処理完了のログを出力
     Log("Drawer Finalized.");
@@ -79,14 +76,14 @@ void Drawer::PreDraw() {
     dxCommon_->PreDraw();
     imguiManager_->BeginFrame();
 
-    ID3D12DescriptorHeap *descriptorHeaps[] = { imguiManager_->GetSRVDescriptorHeap() };
+    static ID3D12DescriptorHeap *descriptorHeaps[] = { SRV::GetDescriptorHeap() };
     dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
 
     //==================================================
     // 描画の準備
     //==================================================
 
-    static auto pipelineSet = primitiveDrawer_->CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+    static auto pipelineSet = PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
@@ -125,7 +122,7 @@ void Drawer::PostDraw() {
 void Drawer::Draw(Triangle *triangle) {
     // メッシュがnullptrの場合は生成
     if (triangle->mesh == nullptr) {
-        triangle->mesh = primitiveDrawer_->CreateMesh(3);
+        triangle->mesh = PrimitiveDrawer::CreateMesh(3);
     }
 
     // 頂点設定
@@ -137,14 +134,14 @@ void Drawer::Draw(Triangle *triangle) {
 
     // マテリアル用のリソースがnullptrの場合は生成
     if (triangle->materialResource == nullptr) {
-        triangle->materialResource = primitiveDrawer_->CreateBufferResources(sizeof(Vector4));
+        triangle->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
     }
     triangle->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(triangle->color);
 
     // WVP用のリソースがnullptrの場合は生成
     if (triangle->wvpResource == nullptr) {
-        triangle->wvpResource = primitiveDrawer_->CreateBufferResources(sizeof(Matrix4x4));
+        triangle->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
     }
     triangle->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
@@ -177,7 +174,7 @@ void Drawer::Draw(Triangle *triangle) {
 void Drawer::Draw(Sprite *sprite) {
     // メッシュがnullptrの場合は生成
     if (sprite->mesh == nullptr) {
-        sprite->mesh = primitiveDrawer_->CreateMesh(6);
+        sprite->mesh = PrimitiveDrawer::CreateMesh(6);
     }
 
     // 頂点設定
@@ -192,14 +189,14 @@ void Drawer::Draw(Sprite *sprite) {
 
     // マテリアル用のリソースがnullptrの場合は生成
     if (sprite->materialResource == nullptr) {
-        sprite->materialResource = primitiveDrawer_->CreateBufferResources(sizeof(Vector4));
+        sprite->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
     }
     sprite->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(sprite->color);
 
     // WVP用のリソースがnullptrの場合は生成
     if (sprite->wvpResource == nullptr) {
-        sprite->wvpResource = primitiveDrawer_->CreateBufferResources(sizeof(Matrix4x4));
+        sprite->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
     }
     sprite->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
@@ -232,7 +229,7 @@ void Drawer::Draw(Sprite *sprite) {
 void Drawer::Draw(Sphere *sphere) {
     // メッシュがnullptrの場合は生成
     if (sphere->mesh == nullptr) {
-        sphere->mesh = primitiveDrawer_->CreateMesh(sphere->kVertexCount);
+        sphere->mesh = PrimitiveDrawer::CreateMesh(sphere->kVertexCount);
     }
     // 頂点設定
     sphere->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
@@ -242,10 +239,10 @@ void Drawer::Draw(Sphere *sphere) {
     // 緯度分割1つ分の角度
     const float kLatEvery = M_PI / static_cast<float>(sphere->kSubdivision);
     // 緯度の方向に分割 -π/2 ～ π/2
-    for (uint32_t latIndex = 0; latIndex <= sphere->kSubdivision; latIndex++) {
+    for (uint32_t latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
         const float lat = -M_PI / 2.0f + (kLatEvery * static_cast<float>(latIndex));
         // 経度の方向に分割 0 ～ 2π
-        for (uint32_t lonIndex = 0; lonIndex <= sphere->kSubdivision; lonIndex++) {
+        for (uint32_t lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
             // 頂点位置を計算
             const uint32_t startIndex = (latIndex * sphere->kSubdivision + lonIndex) * 6;
             const float lon = static_cast<float>(lonIndex) * kLonEvery;
@@ -305,14 +302,14 @@ void Drawer::Draw(Sphere *sphere) {
 
     // マテリアル用のリソースがnullptrの場合は生成
     if (sphere->materialResource == nullptr) {
-        sphere->materialResource = primitiveDrawer_->CreateBufferResources(sizeof(Vector4));
+        sphere->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
     }
     sphere->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(sphere->color);
 
     // WVP用のリソースがnullptrの場合は生成
     if (sphere->wvpResource == nullptr) {
-        sphere->wvpResource = primitiveDrawer_->CreateBufferResources(sizeof(Matrix4x4));
+        sphere->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
     }
     sphere->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
@@ -340,6 +337,64 @@ void Drawer::Draw(Sphere *sphere) {
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sphere->wvpResource->GetGPUVirtualAddress());
     // 描画
     dxCommon_->GetCommandList()->DrawInstanced(sphere->kVertexCount, 1, 0, 0);
+}
+
+void Drawer::Draw(BillBoard *billboard) {
+    // メッシュがnullptrの場合は生成
+    if (billboard->mesh == nullptr) {
+        billboard->mesh = PrimitiveDrawer::CreateMesh(6);
+    }
+
+    // 頂点設定
+    billboard->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
+    // 頂点データを設定
+    vertexData_[0] = billboard->vertexData[2];
+    vertexData_[1] = billboard->vertexData[0];
+    vertexData_[2] = billboard->vertexData[3];
+    vertexData_[3] = billboard->vertexData[0];
+    vertexData_[4] = billboard->vertexData[1];
+    vertexData_[5] = billboard->vertexData[3];
+
+    // マテリアル用のリソースがnullptrの場合は生成
+    if (billboard->materialResource == nullptr) {
+        billboard->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
+    }
+    billboard->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
+    *materialData_ = ConvertColor(billboard->color);
+
+    // WVP用のリソースがnullptrの場合は生成
+    if (billboard->wvpResource == nullptr) {
+        billboard->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
+    }
+    billboard->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
+
+    // カメラと同じ向きにBillBoardを向ける
+    billboard->transform.rotate = billboard->camera->GetRotate();
+
+    // 行列を計算
+    billboard->worldMatrix.MakeAffine(
+        billboard->transform.scale,
+        billboard->transform.rotate,
+        billboard->transform.translate
+    );
+
+    // BillBoardはカメラを必ず設定しないとなのでnullptrの場合はエラー
+    if (billboard->camera == nullptr) {
+        Log("BillBoard camera is null.", kLogLevelFlagError);
+        assert(false);
+    }
+    billboard->camera->SetWorldMatrix(billboard->worldMatrix);
+    billboard->camera->CalculateMatrix();
+    *wvpData_ = billboard->camera->GetWVPMatrix();
+
+    // VBVを設定
+    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &billboard->mesh->vertexBufferView);
+    // マテリアルCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, billboard->materialResource->GetGPUVirtualAddress());
+    // WVP用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, billboard->wvpResource->GetGPUVirtualAddress());
+    // 描画
+    dxCommon_->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 }
 
 } // namespace MyEngine

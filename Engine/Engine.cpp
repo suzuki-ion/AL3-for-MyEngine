@@ -6,6 +6,9 @@
 #include "Common/VertexData.h"
 #include "Common/ConvertColor.h"
 #include "Common/Logs.h"
+#include "Common/Descriptors/RTV.h"
+#include "Common/Descriptors/SRV.h"
+#include "Common/Descriptors/DSV.h"
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
 #include "Base/TextureManager.h"
@@ -35,7 +38,6 @@ D3DResourceLeakChecker leakCheck_;
 // 各エンジン用クラスのグローバル変数
 std::unique_ptr<WinApp> sWinApp;
 std::unique_ptr<DirectXCommon> sDxCommon;
-std::unique_ptr<PrimitiveDrawer> sPrimitiveDrawer;
 std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
 std::unique_ptr<Drawer> sDrawer;
@@ -67,18 +69,18 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     sDxCommon = std::make_unique<DirectXCommon>(enableDebugLayer, sWinApp.get());
 
     // プリミティブ描画クラス初期化
-    sPrimitiveDrawer = std::make_unique<PrimitiveDrawer>(sWinApp.get(), sDxCommon.get());
+    PrimitiveDrawer::Initialize(sDxCommon.get());
 
     // ImGui初期化
     sImGuiManager = std::make_unique<ImGuiManager>(sWinApp.get(), sDxCommon.get());
 
     // テクスチャ管理クラス初期化
-    sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get(), sPrimitiveDrawer.get(), sImGuiManager.get());
+    sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get());
     // テクスチャを読み込む
     sTextureManager->Load("Resources/uvChecker.png");
 
     // 描画用クラス初期化
-    sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sPrimitiveDrawer.get(), sImGuiManager.get(), sTextureManager.get());
+    sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
 
     // 初期化完了のログを出力
     Log("Engine Initialized.");
@@ -89,9 +91,12 @@ Engine::~Engine() {
     LogInsertPartition("\n================= Engine Finalize ================\n");
     sTextureManager.reset();
     sImGuiManager.reset();
-    sPrimitiveDrawer.reset();
     sDxCommon.reset();
     sWinApp.reset();
+    // DescriptorHeapの解放
+    RTV::Finalize();
+    DSV::Finalize();
+    SRV::Finalize();
     CoUninitialize();
     // 終了処理完了のログを出力
     Log("Engine Finalized.");
@@ -130,7 +135,6 @@ FinalizeChecker::~FinalizeChecker() {
     // エンジンが完全に終了しているかチェック
     assert(!sWinApp);
     assert(!sDxCommon);
-    assert(!sPrimitiveDrawer);
     assert(!sTextureManager);
     assert(!sImGuiManager);
     // 初期化完了のログを出力

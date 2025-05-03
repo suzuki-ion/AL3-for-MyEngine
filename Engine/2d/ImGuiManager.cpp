@@ -3,6 +3,8 @@
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
 
+#include "Common/Descriptors/SRV.h"
+
 #include <imgui_impl_dx12.h>
 #include <imgui_impl_win32.h>
 
@@ -23,9 +25,7 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
     dxCommon_ = dxCommon;
 
     // srvDescriptorHeapの初期化
-    srvDescriptorHeap_ = dxCommon_->CreateDescriptorHeap(
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true
-    );
+    SRV::Initialize(dxCommon_);
 
     // ImGuiの初期化
     IMGUI_CHECKVERSION();
@@ -36,9 +36,9 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
         dxCommon_->GetDevice(),
         dxCommon_->GetSwapChainDesc().BufferCount,
         dxCommon_->GetRTVDesc().Format,
-        srvDescriptorHeap_.Get(),
-        srvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart(),
-        srvDescriptorHeap_->GetGPUDescriptorHandleForHeapStart()
+        SRV::GetDescriptorHeap(),
+        SRV::GetDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(),
+        SRV::GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart()
     );
 
     // 初期化完了のログを出力

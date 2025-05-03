@@ -11,13 +11,11 @@ namespace MyEngine {
 // 前方宣言
 class WinApp;
 class DirectXCommon;
-class PrimitiveDrawer;
-class ImGuiManager;
 
 /// @brief テクスチャ管理クラス
 class TextureManager {
 public:
-    TextureManager(WinApp *winApp, DirectXCommon *dxCommon, PrimitiveDrawer *primitiveDrawer, ImGuiManager *imguiManager);
+    TextureManager(WinApp *winApp, DirectXCommon *dxCommon);
     ~TextureManager();
 
     /// @brief テクスチャの読み込み
@@ -42,10 +40,6 @@ private:
     WinApp *winApp_ = nullptr;
     /// @brief DirectXCommonインスタンス
     DirectXCommon *dxCommon_ = nullptr;
-    /// @brief PrimitiveDrawerインスタンス
-    PrimitiveDrawer *primitiveDrawer_ = nullptr;
-    /// @brief ImGuiManagerインスタンス
-    ImGuiManager *imguiManager_ = nullptr;
 
     /// @brief テクスチャリソースのハンドル
     D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU_;
