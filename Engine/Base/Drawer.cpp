@@ -110,8 +110,6 @@ void Drawer::PreDraw() {
     // ルートシグネチャを設定。PSOに設定しているけど別途設定が必要
     dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet->rootSignature.Get());
     dxCommon_->GetCommandList()->SetPipelineState(pipelineSet->pipelineState.Get());    // PSOを設定
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTextureSrvHandleGPU());
 }
 
 void Drawer::PostDraw() {
@@ -120,11 +118,6 @@ void Drawer::PostDraw() {
 }
 
 void Drawer::Draw(Triangle *triangle) {
-    // メッシュがnullptrの場合は生成
-    if (triangle->mesh == nullptr) {
-        triangle->mesh = PrimitiveDrawer::CreateMesh(3);
-    }
-
     // 頂点設定
     triangle->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
     // 頂点データを設定
@@ -132,17 +125,8 @@ void Drawer::Draw(Triangle *triangle) {
     vertexData_[1] = triangle->vertexData[1];
     vertexData_[2] = triangle->vertexData[2];
 
-    // マテリアル用のリソースがnullptrの場合は生成
-    if (triangle->materialResource == nullptr) {
-        triangle->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
-    }
     triangle->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(triangle->color);
-
-    // WVP用のリソースがnullptrの場合は生成
-    if (triangle->wvpResource == nullptr) {
-        triangle->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
-    }
     triangle->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
     // 行列を計算
@@ -161,6 +145,14 @@ void Drawer::Draw(Triangle *triangle) {
         *wvpData_ = triangle->camera->GetWVPMatrix();
     }
 
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    if (triangle->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(triangle->useTextureIndex).srvHandleGPU);
+    } else {
+        // テクスチャを使用しない場合は0を設定
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+    }
+
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &triangle->mesh->vertexBufferView);
     // マテリアルCBufferの場所を指定
@@ -172,11 +164,6 @@ void Drawer::Draw(Triangle *triangle) {
 }
 
 void Drawer::Draw(Sprite *sprite) {
-    // メッシュがnullptrの場合は生成
-    if (sprite->mesh == nullptr) {
-        sprite->mesh = PrimitiveDrawer::CreateMesh(6);
-    }
-
     // 頂点設定
     sprite->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
     // 頂点データを設定
@@ -187,17 +174,8 @@ void Drawer::Draw(Sprite *sprite) {
     vertexData_[4] = sprite->vertexData[1];
     vertexData_[5] = sprite->vertexData[3];
 
-    // マテリアル用のリソースがnullptrの場合は生成
-    if (sprite->materialResource == nullptr) {
-        sprite->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
-    }
     sprite->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(sprite->color);
-
-    // WVP用のリソースがnullptrの場合は生成
-    if (sprite->wvpResource == nullptr) {
-        sprite->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
-    }
     sprite->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
     // 行列を計算
@@ -216,6 +194,14 @@ void Drawer::Draw(Sprite *sprite) {
         *wvpData_ = sprite->camera->GetWVPMatrix();
     }
 
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    if (sprite->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(sprite->useTextureIndex).srvHandleGPU);
+    } else {
+        // テクスチャを使用しない場合は0を設定
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+    }
+
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sprite->mesh->vertexBufferView);
     // マテリアルCBufferの場所を指定
@@ -227,10 +213,6 @@ void Drawer::Draw(Sprite *sprite) {
 }
 
 void Drawer::Draw(Sphere *sphere) {
-    // メッシュがnullptrの場合は生成
-    if (sphere->mesh == nullptr) {
-        sphere->mesh = PrimitiveDrawer::CreateMesh(sphere->kVertexCount);
-    }
     // 頂点設定
     sphere->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
 
@@ -300,17 +282,8 @@ void Drawer::Draw(Sphere *sphere) {
         }
     }
 
-    // マテリアル用のリソースがnullptrの場合は生成
-    if (sphere->materialResource == nullptr) {
-        sphere->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
-    }
     sphere->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(sphere->color);
-
-    // WVP用のリソースがnullptrの場合は生成
-    if (sphere->wvpResource == nullptr) {
-        sphere->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
-    }
     sphere->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
     // 行列を計算
@@ -329,6 +302,14 @@ void Drawer::Draw(Sphere *sphere) {
         *wvpData_ = sphere->camera->GetWVPMatrix();
     }
 
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    if (sphere->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(sphere->useTextureIndex).srvHandleGPU);
+    } else {
+        // テクスチャを使用しない場合は0を設定
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+    }
+
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sphere->mesh->vertexBufferView);
     // マテリアルCBufferの場所を指定
@@ -340,11 +321,6 @@ void Drawer::Draw(Sphere *sphere) {
 }
 
 void Drawer::Draw(BillBoard *billboard) {
-    // メッシュがnullptrの場合は生成
-    if (billboard->mesh == nullptr) {
-        billboard->mesh = PrimitiveDrawer::CreateMesh(6);
-    }
-
     // 頂点設定
     billboard->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
     // 頂点データを設定
@@ -355,17 +331,8 @@ void Drawer::Draw(BillBoard *billboard) {
     vertexData_[4] = billboard->vertexData[1];
     vertexData_[5] = billboard->vertexData[3];
 
-    // マテリアル用のリソースがnullptrの場合は生成
-    if (billboard->materialResource == nullptr) {
-        billboard->materialResource = PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
-    }
     billboard->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
     *materialData_ = ConvertColor(billboard->color);
-
-    // WVP用のリソースがnullptrの場合は生成
-    if (billboard->wvpResource == nullptr) {
-        billboard->wvpResource = PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
-    }
     billboard->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
 
     // カメラと同じ向きにBillBoardを向ける
@@ -386,6 +353,14 @@ void Drawer::Draw(BillBoard *billboard) {
     billboard->camera->SetWorldMatrix(billboard->worldMatrix);
     billboard->camera->CalculateMatrix();
     *wvpData_ = billboard->camera->GetWVPMatrix();
+
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    if (billboard->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(billboard->useTextureIndex).srvHandleGPU);
+    } else {
+        // テクスチャを使用しない場合は0を設定
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+    }
 
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &billboard->mesh->vertexBufferView);

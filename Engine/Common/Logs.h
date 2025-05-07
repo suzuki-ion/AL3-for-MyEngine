@@ -12,14 +12,23 @@ enum LogLevelFlags {
     kLogLevelFlagAll = kLogLevelFlagInfo | kLogLevelFlagWarning | kLogLevelFlagError,
 };
 
+enum LogTypeFlags {
+    kLogTypeFlagNone = 0b0000,
+    kLogTypeFlagMessage = 0b0001,
+    kLogTypeFlagLocation = 0b0010,
+    kLogTypeFlagAll = kLogTypeFlagMessage | kLogTypeFlagLocation,
+};
+
 /// @brief ログ初期化
 /// @param filePath ログファイルを保存するフォルダへのパス
 /// @param projectDir プロジェクトのルートディレクトリへのパス
-/// @param outputLogLevel 出力するログの種類
+/// @param outputLogLevel 出力するログのレベル
+/// @param outputLogType 出力するログの種類
 void InitializeLog(
     const std::string &filePath,
     const std::string &projectDir,
-    const LogLevelFlags outputLogLevel = kLogLevelFlagAll
+    const LogLevelFlags outputLogLevel = kLogLevelFlagAll,
+    const LogTypeFlags outputLogType = kLogTypeFlagAll
 );
 
 /// @brief 詳細情報有りのログ出力

@@ -6,6 +6,8 @@
 #include <wrl.h>
 #include <DirectXTex.h>
 
+#include "Common/Texture.h"
+
 namespace MyEngine {
 
 // 前方宣言
@@ -20,20 +22,13 @@ public:
 
     /// @brief テクスチャの読み込み
     /// @param filePath 読み込むテクスチャのファイル名
-    /// @return テクスチャのハンドル
+    /// @return テクスチャを読み込んだインデックス
     uint32_t Load(const std::string &filePath);
 
-    /// @brief テクスチャのSRVハンドルを取得
-    /// @return テクスチャのSRVハンドル
-    D3D12_CPU_DESCRIPTOR_HANDLE GetTextureSrvHandleCPU() const {
-        return textureSrvHandleCPU_;
-    }
-
-    /// @brief テクスチャのSRVハンドルを取得
-    /// @return テクスチャのSRVハンドル
-    D3D12_GPU_DESCRIPTOR_HANDLE GetTextureSrvHandleGPU() const {
-        return textureSrvHandleGPU_;
-    }
+    /// @brief テクスチャデータの取得
+    /// @param index テクスチャのインデックス
+    /// @return テクスチャデータ
+    [[nodiscard]] const Texture &GetTexture(uint32_t index) const;
 
 private:
     /// @brief WinAppインスタンス
@@ -41,14 +36,8 @@ private:
     /// @brief DirectXCommonインスタンス
     DirectXCommon *dxCommon_ = nullptr;
 
-    /// @brief テクスチャリソースのハンドル
-    D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU_;
-    /// @brief テクスチャリソースのハンドル
-    D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU_;
-    /// @brief テクスチャリソース
-    Microsoft::WRL::ComPtr<ID3D12Resource> textureResource_;
-    /// @brief 中間リソース
-    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> intermediateResources_;
+    /// @brief テクスチャのデータ
+    std::vector<Texture> textures_;
 
     /// @brief テクスチャのリソースを作成
     /// @param metadata テクスチャのメタデータ

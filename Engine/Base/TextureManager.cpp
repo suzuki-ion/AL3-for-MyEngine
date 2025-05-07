@@ -74,11 +74,29 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     DirectX::ScratchImage mipImages = LoadTexture(filePath);
     // ミップマップのメタデータを取得
     const DirectX::TexMetadata &metadata = mipImages.GetMetadata();
+
+    // テクスチャデータを作成
+    Texture texture = {
+        nullptr,
+        nullptr,
+        // SRVを作成するDescriptorHeapの場所を決める
+        SRV::GetCPUDescriptorHandle(),
+        SRV::GetGPUDescriptorHandle(),
+        // テクスチャのサイズを保存
+        static_cast<uint32_t>(metadata.width),
+        static_cast<uint32_t>(metadata.height)
+    };
+    textures_.push_back(texture);
+
     // テクスチャリソースを作成
     CreateTextureResource(metadata);
 
-    // テクスチャデータをアップロード
-    intermediateResources_.push_back(UploadTextureData(textureResource_.Get(), mipImages));
+    // テクスチャリソースをアップロード
+    textures_.back().intermediateResource = UploadTextureData(
+        textures_.back().resource.Get(),
+        mipImages
+    );
+
     // コマンドを実行
     dxCommon_->CommandExecute();
 
@@ -89,26 +107,18 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MipLevels = UINT(metadata.mipLevels);
 
-    // SRVを作成するDescriptorHeapの場所を決める
-    textureSrvHandleCPU_ = SRV::GetCPUDescriptorHandle();
-    textureSrvHandleGPU_ = SRV::GetGPUDescriptorHandle();
-
-    // 先頭はImGuiが使っているのでその次を使う
-    textureSrvHandleCPU_ = SRV::GetCPUDescriptorHandle();
-    textureSrvHandleGPU_ = SRV::GetGPUDescriptorHandle();
-
     // SRVの生成
     dxCommon_->GetDevice()->CreateShaderResourceView(
-        textureResource_.Get(),
+        textures_.back().resource.Get(),
         &srvDesc,
-        textureSrvHandleCPU_
+        textures_.back().srvHandleCPU
     );
 
     // Barrierを元に戻す
     D3D12_RESOURCE_BARRIER barrier{};
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = textureResource_.Get();
+    barrier.Transition.pResource = textures_.back().resource.Get();
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -117,9 +127,20 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     // 読み込んだテクスチャのログを出力
     Log(std::format("Load Texture: {}", filePath));
 
-    // テクスチャのハンドルを返す
-    return static_cast<uint32_t>(intermediateResources_.size() - 1);
+    // テクスチャのインデックスを返す
+    return static_cast<uint32_t>(textures_.size() - 1);
 }
+
+const Texture &TextureManager::GetTexture(uint32_t index) const {
+    // インデックスのオーバーフローをチェック
+    if (index >= textures_.size()) {
+        Log("Texture index overflow.", kLogLevelFlagError);
+        assert(false);
+    }
+    // テクスチャデータを返す
+    return textures_[index];
+}
+
 
 void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata) {
     //==================================================
@@ -147,12 +168,12 @@ void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata)
     //==================================================
 
     HRESULT hr = dxCommon_->GetDevice()->CreateCommittedResource(
-        &heapProperties,                    // Heapの設定
-        D3D12_HEAP_FLAG_NONE,               // Heapの特殊な設定
-        &resourceDesc,                      // Resourceの設定
-        D3D12_RESOURCE_STATE_COPY_DEST,     // データ転送される設定
-        nullptr,                            // Clear最適値。使わないのでnullptr
-        IID_PPV_ARGS(&textureResource_)     // 作成するResourceポインタへのポインタ
+        &heapProperties,                            // Heapの設定
+        D3D12_HEAP_FLAG_NONE,                       // Heapの特殊な設定
+        &resourceDesc,                              // Resourceの設定
+        D3D12_RESOURCE_STATE_COPY_DEST,             // データ転送される設定
+        nullptr,                                    // Clear最適値。使わないのでnullptr
+        IID_PPV_ARGS(&textures_.back().resource)    // 作成するResourceポインタへのポインタ
     );
     assert(SUCCEEDED(hr));
 }

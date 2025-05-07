@@ -13,8 +13,10 @@ namespace {
 std::ofstream logStream;
 // プロジェクトのルートディレクトリ
 std::string projectDir;
-// 出力するログの種類
+// 出力するログのレベル
 LogLevelFlags outputLogLevel;
+// 出力するログの種類
+LogTypeFlags outputLogType;
 // ログレベルフラグの文字列
 const char *logLevelFlagStrings[] = {
     "NONE",
@@ -83,7 +85,8 @@ std::string CreateLogText(const std::string &message, LogLevelFlags logLevelFlag
 
 } // namespace
 
-void InitializeLog(const std::string &filePath, const std::string &projectDir, const LogLevelFlags outputLogLevel) {
+void InitializeLog(const std::string &filePath, const std::string &projectDir,
+    const LogLevelFlags outputLogLevel, const LogTypeFlags outputLogType) {
     // プロジェクトのルートディレクトリを保存
     MyEngine::projectDir = projectDir;
 
@@ -94,10 +97,13 @@ void InitializeLog(const std::string &filePath, const std::string &projectDir, c
     // ファイルを使って書き込み準備
     logStream.open(logFilePath);
 
-    // 出力するログの種類を保存
+    // 出力するログのレベルを保存
     MyEngine::outputLogLevel = outputLogLevel;
+    // 出力するログの種類を保存
+    MyEngine::outputLogType = outputLogType;
 
-    // 初期化完了のログとプロジェクトのルートディレクトリと出力するログの種類をログに出力
+    // 初期化完了のログとプロジェクトのルートディレクトリと
+    // 出力するログのレベルと種類を出力
     logStream << "Log initialized." << std::endl;
     logStream << "Project Directory: \"" << projectDir << "\"" << std::endl;
     if (outputLogLevel & kLogLevelFlagInfo) {
@@ -109,6 +115,14 @@ void InitializeLog(const std::string &filePath, const std::string &projectDir, c
     if (outputLogLevel & kLogLevelFlagError) {
         logStream << "Output Log Level: [ERROR]" << std::endl;
     }
+    logStream << std::endl;
+    if (outputLogType & kLogTypeFlagMessage) {
+        logStream << "Output Log Type: [MESSAGE]" << std::endl;
+    }
+    if (outputLogType & kLogTypeFlagLocation) {
+        logStream << "Output Log Type: [LOCATION]" << std::endl;
+    }
+    logStream << std::endl;
 }
 
 void Log(const std::string &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {

@@ -11,7 +11,13 @@ struct Sphere : public Object {
     Sphere(const int subdivision) :
         kSubdivision(subdivision),
         kVertexCount((subdivision) * (subdivision) * 6)
-    {}
+    {
+        // メッシュの生成
+        mesh = PrimitiveDrawer::CreateMesh(kVertexCount);
+    }
+
+    /// @brief 初期化用関数
+    void Initialize();
 
     /// @brief 半径
     float radius;

@@ -119,4 +119,26 @@ D3D12_GPU_DESCRIPTOR_HANDLE SRV::GetGPUDescriptorHandle(const std::source_locati
     return handle;
 }
 
+uint32_t SRV::GetNextIndexCPU(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("SRV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    return nextIndexCPU_;
+}
+
+uint32_t SRV::GetNextIndexGPU(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("SRV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    return nextIndexGPU_;
+}
+
 } // namespace MyEngine

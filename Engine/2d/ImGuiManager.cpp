@@ -37,8 +37,8 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
         dxCommon_->GetSwapChainDesc().BufferCount,
         dxCommon_->GetRTVDesc().Format,
         SRV::GetDescriptorHeap(),
-        SRV::GetDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(),
-        SRV::GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart()
+        SRV::GetCPUDescriptorHandle(),
+        SRV::GetGPUDescriptorHandle()
     );
 
     // 初期化完了のログを出力

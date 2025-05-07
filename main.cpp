@@ -114,76 +114,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     sphere.radius = 1.0f;
     // カメラを設定
     sphere.camera = camera.get();
-
-    //==================================================
-    // ビルボード
-    //==================================================
-
-    //--------- ビルボード1 ---------//
-
-    BillBoard billboard1(camera.get());
-    billboard1.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { -0.5f, 0.0f, 0.0f }
-    };
-    billboard1.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    // 左上
-    billboard1.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
-    billboard1.vertexData[0].texCoord = { 0.0f, 0.0f };
-    // 右上
-    billboard1.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
-    billboard1.vertexData[1].texCoord = { 1.0f, 0.0f };
-    // 左下
-    billboard1.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
-    billboard1.vertexData[2].texCoord = { 0.0f, 1.0f };
-    // 右下
-    billboard1.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
-    billboard1.vertexData[3].texCoord = { 1.0f, 1.0f };
-
-    //--------- ビルボード2 ---------//
-
-    BillBoard billboard2(camera.get());
-    billboard2.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f }
-    };
-    billboard2.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    // 左上
-    billboard2.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
-    billboard2.vertexData[0].texCoord = { 0.0f, 0.0f };
-    // 右上
-    billboard2.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
-    billboard2.vertexData[1].texCoord = { 1.0f, 0.0f };
-    // 左下
-    billboard2.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
-    billboard2.vertexData[2].texCoord = { 0.0f, 1.0f };
-    // 右下
-    billboard2.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
-    billboard2.vertexData[3].texCoord = { 1.0f, 1.0f };
-
-    //--------- ビルボード3 ---------//
-
-    BillBoard billboard3(camera.get());
-    billboard3.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.5f, 0.0f, 0.0f }
-    };
-    billboard3.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    // 左上
-    billboard3.vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
-    billboard3.vertexData[0].texCoord = { 0.0f, 0.0f };
-    // 右上
-    billboard3.vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
-    billboard3.vertexData[1].texCoord = { 1.0f, 0.0f };
-    // 左下
-    billboard3.vertexData[2].position = { -0.5f, -0.5f, 0.0f, 1.0f };
-    billboard3.vertexData[2].texCoord = { 0.0f, 1.0f };
-    // 右下
-    billboard3.vertexData[3].position = { 0.5f, -0.5f, 0.0f, 1.0f };
-    billboard3.vertexData[3].texCoord = { 1.0f, 1.0f };
+    // テクスチャを設定
+    sphere.useTextureIndex = 0;
 
     // ウィンドウのxボタンが押されるまでループ
     while (engine->ProccessMessage() != -1) {
@@ -195,6 +127,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::DragFloat3("Triangle1 Rotate", &triangle1.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Triangle1 Scale", &triangle1.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Triangle1 MaterialColor", &triangle1.color.x, 1.0f, 0.0f, 255.0f);
+        ImGui::InputInt("Triangle1 TextureIndex", &triangle1.useTextureIndex);
         ImGui::End();
 
         ImGui::Begin("Triangle2");
@@ -202,6 +135,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::DragFloat3("Triangle2 Rotate", &triangle2.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Triangle2 Scale", &triangle2.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Triangle2 MaterialColor", &triangle2.color.x, 1.0f, 0.0f, 255.0f);
+        ImGui::InputInt("Triangle2 TextureIndex", &triangle2.useTextureIndex);
         ImGui::End();
 
         // ImGuiでスプライトをいじれるようにする
@@ -210,6 +144,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::DragFloat3("Sprite Rotate", &sprite.transform.rotate.x, 0.01f);
         ImGui::DragFloat3("Sprite Scale", &sprite.transform.scale.x, 0.01f);
         ImGui::DragFloat4("Sprite MaterialColor", &sprite.color.x, 1.0f, 0.0f, 255.0f);
+        ImGui::InputInt("Sprite TextureIndex", &sprite.useTextureIndex);
         ImGui::End();
 
         // ImGuiで球体をいじれるようにする
@@ -219,6 +154,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
         ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.1f, 0.0f, 100.0f);
         ImGui::DragFloat4("Sphere MaterialColor", &sphere.color.x, 1.0f, 0.0f, 255.0f);
+        ImGui::InputInt("Sphere TextureIndex", &sphere.useTextureIndex);
         ImGui::End();
 
         // カメラをいじれるようにする
@@ -227,9 +163,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         drawer->Draw(&triangle1);
         drawer->Draw(&triangle2);
         drawer->Draw(&sphere);
-        drawer->Draw(&billboard1);
-        drawer->Draw(&billboard2);
-        drawer->Draw(&billboard3);
         drawer->Draw(&sprite);
 
         engine->EndFrame();

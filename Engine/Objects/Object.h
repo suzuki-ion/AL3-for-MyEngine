@@ -1,12 +1,8 @@
 #pragma once
-#include <memory>
-#include <d3d12.h>
-#include <wrl.h>
-
 #include "Math/Transform.h"
 #include "Math/Matrix4x4.h"
 #include "Common/VertexData.h"
-#include "Common/Mesh.h"
+#include "3d/PrimitiveDrawer.h"
 
 namespace MyEngine {
 
@@ -20,9 +16,11 @@ struct Object {
     /// @brief メッシュ
     std::unique_ptr<Mesh> mesh = nullptr;
     /// @brief マテリアル用のリソース
-    Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = nullptr;
+    const Microsoft::WRL::ComPtr<ID3D12Resource> materialResource =
+        PrimitiveDrawer::CreateBufferResources(sizeof(Vector4));
     /// @brief WVP用のリソース
-    Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource = nullptr;
+    const Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource =
+        PrimitiveDrawer::CreateBufferResources(sizeof(Matrix4x4));
 
     /// @brief 変形用のtransform
     Transform transform;
@@ -30,6 +28,9 @@ struct Object {
     Matrix4x4 worldMatrix;
     /// @brief 色データ
     Vector4 color;
+
+    /// @brief 使用するテクスチャのインデックス
+    int useTextureIndex = -1;
 };
 
 } // namespace MyEngine

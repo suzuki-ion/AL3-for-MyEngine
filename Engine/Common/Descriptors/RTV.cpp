@@ -119,4 +119,70 @@ D3D12_GPU_DESCRIPTOR_HANDLE RTV::GetGPUDescriptorHandle(const std::source_locati
     return handle;
 }
 
+D3D12_CPU_DESCRIPTOR_HANDLE RTV::GetCPUDescriptorHandle(const uint32_t index, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("RTV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    // インデックスのオーバーフローをチェック
+    if (index >= numDescriptors_) {
+        Log("CPU DescriptorHandle index overflow.", kLogLevelFlagError);
+        assert(false);
+    }
+    // 返すハンドルのインデックス数をログに出力
+    LogSimple("CPU DescriptorHandle index: " + std::to_string(index));
+
+    // ディスクリプタヒープのCPUハンドルを返す
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = descriptorHeap_->GetCPUDescriptorHandleForHeapStart();
+    handle.ptr += dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * index;
+    return handle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE RTV::GetGPUDescriptorHandle(const uint32_t index, const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("RTV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    // インデックスのオーバーフローをチェック
+    if (index >= numDescriptors_) {
+        Log("GPU DescriptorHandle index overflow.", kLogLevelFlagError);
+        assert(false);
+    }
+    // 返すハンドルのインデックス数をログに出力
+    LogSimple("GPU DescriptorHandle index: " + std::to_string(index));
+
+    // ディスクリプタヒープのGPUハンドルを返す
+    D3D12_GPU_DESCRIPTOR_HANDLE handle = descriptorHeap_->GetGPUDescriptorHandleForHeapStart();
+    handle.ptr += dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * index;
+    return handle;
+}
+
+uint32_t RTV::GetNextIndexCPU(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("RTV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    return nextIndexCPU_;
+}
+
+uint32_t RTV::GetNextIndexGPU(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("RTV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+    return nextIndexGPU_;
+}
+
 } // namespace MyEngine

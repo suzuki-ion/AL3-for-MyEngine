@@ -10,6 +10,7 @@ struct BillBoard : public Object {
     /// @param camera カメラ
     BillBoard(Camera *camera) {
         this->camera = camera;
+        mesh = PrimitiveDrawer::CreateMesh(6);
     }
 
     /// @brief 頂点データ

@@ -60,6 +60,34 @@ public:
         const std::source_location &location = std::source_location::current()
     );
 
+    /// @brief 指定の位置のCPUディスクリプタハンドルの取得
+    /// @param index インデックス
+    /// @return CPUディスクリプタハンドル
+    [[nodiscard]] static D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(
+        const uint32_t index,
+        const std::source_location &location = std::source_location::current()
+    );
+
+    /// @brief 指定の位置のGPUディスクリプタハンドルの取得
+    /// param index インデックス
+    /// @return GPUディスクリプタハンドル
+    [[nodiscard]] static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(
+        const uint32_t index,
+        const std::source_location &location = std::source_location::current()
+    );
+
+    /// @brief 次に使用するCPUディスクリプタハンドルのインデックスを取得
+    /// @return 次に使用するCPUディスクリプタハンドルのインデックス
+    [[nodiscard]] static uint32_t GetNextIndexCPU(
+        const std::source_location &location = std::source_location::current()
+    );
+
+    /// @brief 次に使用するGPUディスクリプタハンドルのインデックスを取得
+    /// @return 次に使用するGPUディスクリプタハンドルのインデックス
+    [[nodiscard]] static uint32_t GetNextIndexGPU(
+        const std::source_location &location = std::source_location::current()
+    );
+
 private:
     DSV() = default;
     ~DSV() = default;

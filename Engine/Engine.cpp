@@ -78,6 +78,7 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get());
     // テクスチャを読み込む
     sTextureManager->Load("Resources/uvChecker.png");
+    sTextureManager->Load("Resources/monsterBall.png");
 
     // 描画用クラス初期化
     sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
