@@ -5,6 +5,9 @@
 #include "Common/VertexData.h"
 #include "Common/Mesh.h"
 #include "Common/PipeLineSet.h"
+#include "Common/TransformationMatrix.h"
+#include "Common/Material.h"
+#include "3d/DirectionalLight.h"
 #include "Math/Transform.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
@@ -41,6 +44,10 @@ public:
     /// @brief 描画終了処理
     void PostDraw();
 
+    /// @brief 平行光源の設定
+    /// @param light 平行光源へのポインタ
+    void SetLight(DirectionalLight *light);
+
     /// @brief 三角形を描画する
     /// @param triangle 描画する三角形へのポインタ
     void Draw(Triangle *triangle);
@@ -67,12 +74,8 @@ private:
     /// @brief TextureManagerインスタンス
     TextureManager *textureManager_ = nullptr;
 
-    /// @brief 頂点データ設定用のポインタ
-    VertexData *vertexData_ = nullptr;
-    /// @brief マテリアルデータ設定用のポインタ
-    Vector4 *materialData_ = nullptr;
-    /// @brief WVP行列設定用のポインタ
-    Matrix4x4 *wvpData_ = nullptr;
+    /// @brief ライトデータ設定用のポインタ
+    DirectionalLight *directionalLightData_ = nullptr;
 
     /// @brief 2D描画用のビュー行列
     Matrix4x4 viewMatrix2D_;

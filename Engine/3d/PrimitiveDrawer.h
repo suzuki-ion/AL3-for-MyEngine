@@ -41,7 +41,7 @@ public:
     /// @param vertexCount 頂点数
     /// @param indexCount インデックス数
     /// @return 生成したメッシュ
-    static std::unique_ptr<Mesh> CreateMesh(UINT vertexCount, const std::source_location &location = std::source_location::current());
+    static std::unique_ptr<Mesh> CreateMesh(UINT vertexCount, UINT indexCount, const std::source_location &location = std::source_location::current());
     
     /// @brief グラフィックパイプライン生成
     /// @param topologyType トポロジータイプ

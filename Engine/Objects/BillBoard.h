@@ -8,13 +8,20 @@ struct BillBoard : public Object {
     BillBoard() = delete;
     /// @brief ビルボードのコンストラクタ
     /// @param camera カメラ
-    BillBoard(Camera *camera) {
+    BillBoard(Camera *camera) :
+        mesh(PrimitiveDrawer::CreateMesh(4, 6))
+    {
         this->camera = camera;
-        mesh = PrimitiveDrawer::CreateMesh(6);
+        mesh->indexBufferMap[0] = 0;
+        mesh->indexBufferMap[1] = 1;
+        mesh->indexBufferMap[2] = 2;
+        mesh->indexBufferMap[3] = 1;
+        mesh->indexBufferMap[4] = 3;
+        mesh->indexBufferMap[5] = 2;
     }
 
-    /// @brief 頂点データ
-    VertexData vertexData[4];
+    /// @brief メッシュ
+    const std::unique_ptr<Mesh> mesh;
 };
 
 } // namespace MyEngine

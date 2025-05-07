@@ -164,13 +164,16 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
     return resource;
 }
 
-std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, const std::source_location &location) {
+std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, UINT indexCount, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
 
     // 頂点バッファの生成
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer =
         CreateBufferResources(sizeof(VertexData) * vertexCount);
+    // インデックスバッファの生成
+    Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer =
+        CreateBufferResources(sizeof(uint32_t) * indexCount);
 
     //==================================================
     // 頂点バッファの設定
@@ -185,13 +188,31 @@ std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, const std::s
     // 1頂点あたりのサイズ
     vertexBufferView.StrideInBytes = sizeof(VertexData);
 
+    //==================================================
+    // インデックスバッファの設定
+    //==================================================
+
+    // インデックスバッファビューを作成する
+    D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+    // リソースの先頭アドレスから使う
+    indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
+    // 使用するリソースのサイズ
+    indexBufferView.SizeInBytes = sizeof(uint32_t) * indexCount;
+    // フォーマット
+    indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
     // メッシュを返す
     auto mesh = std::make_unique<Mesh>();
     mesh->vertexBuffer = vertexBuffer;
+    mesh->indexBuffer = indexBuffer;
     mesh->vertexBufferView = vertexBufferView;
+    mesh->indexBufferView = indexBufferView;
+    // マップを取得
+    mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&mesh->vertexBufferMap));
+    mesh->indexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&mesh->indexBufferMap));
 
-    // ログに生成したメッシュの頂点数を出力
-    LogSimple(std::format("CreateMesh, vertexCount:{}", vertexCount));
+    // ログに生成したメッシュの頂点数とインデックス数を出力
+    LogSimple(std::format("CreateMesh, vertexCount:{}, indexCount:{}", vertexCount, indexCount));
     return mesh;
 }
 
@@ -209,7 +230,7 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
 
     //--------- RootParameter作成 ---------//
 
-    D3D12_ROOT_PARAMETER rootParameters[3]{};
+    D3D12_ROOT_PARAMETER rootParameters[4]{};
     // PixelShaderのMaterial
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;    // CBVを使う
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderを使う
@@ -230,6 +251,11 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                 // PixelShaderで使う
     rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;              // Tableの中身の配列を指定
     rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);  // Tableで利用する数
+
+    // 平行光源用
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;    // CBVを使う
+    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderを使う
+    rootParameters[3].Descriptor.ShaderRegister = 1;                    // レジスタ番号1を使う
 
     descriptionRootSignature.pParameters = rootParameters;              // ルートパラメータ配列へのポインタ
     descriptionRootSignature.NumParameters = _countof(rootParameters);  // 配列の長さ
@@ -267,7 +293,7 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     // InputLayoutの設定
     //==================================================
 
-    D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
+    D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
     inputElementDescs[0].SemanticName = "POSITION";
     inputElementDescs[0].SemanticIndex = 0;
     inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -276,6 +302,11 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     inputElementDescs[1].SemanticIndex = 0;
     inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
     inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+    inputElementDescs[2].SemanticName = "NORMAL";
+    inputElementDescs[2].SemanticIndex = 0;
+    inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
     D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
     inputLayoutDesc.pInputElementDescs = inputElementDescs;
     inputLayoutDesc.NumElements = _countof(inputElementDescs);
@@ -322,7 +353,7 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
     assert(SUCCEEDED(hr));
 
-    // 現時点でincludeはしないが、includeに対応するための設定を行っておく
+    // includeに対応するための設定
     IDxcIncludeHandler *includeHandler = nullptr;
     hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
     assert(SUCCEEDED(hr));

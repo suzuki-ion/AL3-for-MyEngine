@@ -4,6 +4,7 @@
 
 namespace MyEngine {
 
+struct Vector4;
 struct Matrix4x4;
 
 struct Vector3 {
@@ -13,6 +14,7 @@ struct Vector3 {
     constexpr Vector3(float x, float y, float z) noexcept : x(x), y(y), z(z) {}
     explicit constexpr Vector3(float v) noexcept : x(v), y(v), z(v) {}
     Vector3(const Vector3 &vector) : x(vector.x), y(vector.y), z(vector.z) {}
+    Vector3(const Vector4 &vector);
 
     float operator[](const int index) const noexcept;
     float &operator[](const int index) noexcept;
@@ -46,12 +48,16 @@ struct Vector3 {
 
     /// @brief ベクトルを正規化する
     /// @return 正規化されたベクトル
-    [[nodiscard]] inline const Vector3 Normalize() const;
+    [[nodiscard]] Vector3 Normalize() const;
 
-    /// @brief ベクトルを射影する
+    /// @brief 正射影ベクトルを求める
     /// @param vector 射影するベクトル
     /// @return 射影されたベクトル
-    [[nodiscard]] inline constexpr const Vector3 Projection(const Vector3 &vector) const noexcept;
+    [[nodiscard]] Vector3 Projection(const Vector3 &vector) const noexcept;
+
+    /// @brief 垂直ベクトルを求める
+    /// @return 垂直ベクトル
+    [[nodiscard]] Vector3 Perpendicular() const noexcept;
 
     /// @brief 垂線を求める
     /// @param vector 垂線を求めるベクトル
@@ -84,14 +90,39 @@ struct Vector3 {
     float z;
 };
 
-inline constexpr const Vector3 operator-(const Vector3 &vector) noexcept;
-inline constexpr const Vector3 operator+(const Vector3 &vector1, const Vector3 &vector2) noexcept;
-inline constexpr const Vector3 operator-(const Vector3 &vector1, const Vector3 &vector2) noexcept;
-inline constexpr const Vector3 operator*(const Vector3 &vector, const float scalar) noexcept;
-inline constexpr const Vector3 operator*(const float scalar, const Vector3 &vector) noexcept;
-inline constexpr const Vector3 operator*(const Vector3 &vector1, const Vector3 &vector2) noexcept;
-inline constexpr const Vector3 operator/(const Vector3 &vector, const float scalar);
-inline constexpr const Vector3 operator/(const Vector3 &vector1, const Vector3 &vector2);
+
+inline constexpr const Vector3 operator-(const Vector3 &vector) noexcept {
+    return Vector3(-vector.x, -vector.y, -vector.z);
+}
+
+inline constexpr const Vector3 operator+(const Vector3 &vector1, const Vector3 &vector2) noexcept {
+    return Vector3(vector1.x + vector2.x, vector1.y + vector2.y, vector1.z + vector2.z);
+}
+
+inline constexpr const Vector3 operator-(const Vector3 &vector1, const Vector3 &vector2) noexcept {
+    return Vector3(vector1.x - vector2.x, vector1.y - vector2.y, vector1.z - vector2.z);
+}
+
+inline constexpr const Vector3 operator*(const Vector3 &vector, const float scalar) noexcept {
+    return Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
+}
+
+inline constexpr const Vector3 operator*(const float scalar, const Vector3 &vector) noexcept {
+    return Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
+}
+
+inline constexpr const Vector3 operator*(const Vector3 &vector1, const Vector3 &vector2) noexcept {
+    return Vector3(vector1.x * vector2.x, vector1.y * vector2.y, vector1.z * vector2.z);
+}
+
+inline constexpr const Vector3 operator/(const Vector3 &vector, const float scalar) {
+    return vector * (1.0f / scalar);
+}
+
+inline constexpr const Vector3 operator/(const Vector3 &vector1, const Vector3 &vector2) {
+    return Vector3(vector1.x / vector2.x, vector1.y / vector2.y, vector1.z / vector2.z);
+}
+
 inline constexpr const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept;
 inline constexpr const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept;
 

@@ -134,6 +134,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\3d\DirectionalLight.h" />
     <ClInclude Include="Engine\Base\Drawer.h" />
     <ClInclude Include="Engine\2d\ImGuiManager.h" />
     <ClInclude Include="Engine\Base\ResourceLeakChecker.h" />
@@ -151,13 +152,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Common\DescriptorHeap\SRV.h" />
     <ClInclude Include="Engine\Common\Texture.h" />
     <ClInclude Include="Engine\Common\TimeGet.h" />
+    <ClInclude Include="Engine\Common\TransformationMatrix.h" />
     <ClInclude Include="Engine\Common\VertexData.h" />
     <ClInclude Include="Engine\Base\WinApp.h" />
     <ClInclude Include="Engine\Common\Mesh.h" />
+    <ClInclude Include="Engine\Common\Material.h" />
     <ClInclude Include="Engine\Objects\BillBoard.h" />
     <ClInclude Include="Engine\Objects\Object.h" />
     <ClInclude Include="Engine\Common\PipeLineSet.h" />
-    <ClInclude Include="Engine\Common\VertexPosColor.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Engine\3d\PrimitiveDrawer.h" />
     <ClInclude Include="Engine\Math\AffineMatrix.h" />

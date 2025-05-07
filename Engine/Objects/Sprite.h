@@ -4,13 +4,19 @@
 namespace MyEngine {
 
 struct Sprite : public Object {
-    Sprite() {
-        // メッシュの生成
-        mesh = PrimitiveDrawer::CreateMesh(6);
+    Sprite() :
+        mesh(PrimitiveDrawer::CreateMesh(4, 6))
+    {
+        mesh->indexBufferMap[0] = 0;
+        mesh->indexBufferMap[1] = 1;
+        mesh->indexBufferMap[2] = 2;
+        mesh->indexBufferMap[3] = 1;
+        mesh->indexBufferMap[4] = 3;
+        mesh->indexBufferMap[5] = 2;
     }
 
-    /// @brief 頂点データ
-    VertexData vertexData[4];
+    /// @brief メッシュ
+    const std::unique_ptr<Mesh> mesh;
 };
 
 } // namespace MyEngine

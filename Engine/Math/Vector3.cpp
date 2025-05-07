@@ -1,8 +1,21 @@
 #include "Vector3.h"
+#include "Vector4.h"
 #include "Matrix4x4.h"
 #include <cassert>
 
 namespace MyEngine {
+
+Vector3::Vector3(const Vector4 &vector) {
+    if (vector.w == 0.0f) {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+    } else {
+        x = vector.x / vector.w;
+        y = vector.y / vector.w;
+        z = vector.z / vector.w;
+    }
+}
 
 float Vector3::operator[](const int index) const noexcept {
     return (&x)[index];
@@ -61,38 +74,6 @@ Vector3 &Vector3::operator/=(const Vector3 &vector) {
     return *this;
 }
 
-inline constexpr const Vector3 operator-(const Vector3 &vector) noexcept {
-    return Vector3(-vector.x, -vector.y, -vector.z);
-}
-
-inline constexpr const Vector3 operator+(const Vector3 &vector1, const Vector3 &vector2) noexcept {
-    return Vector3(vector1.x + vector2.x, vector1.y + vector2.y, vector1.z + vector2.z);
-}
-
-inline constexpr const Vector3 operator-(const Vector3 &vector1, const Vector3 &vector2) noexcept {
-    return Vector3(vector1.x - vector2.x, vector1.y - vector2.y, vector1.z - vector2.z);
-}
-
-inline constexpr const Vector3 operator*(const Vector3 &vector, const float scalar) noexcept {
-    return Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
-}
-
-inline constexpr const Vector3 operator*(const float scalar, const Vector3 &vector) noexcept {
-    return Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
-}
-
-inline constexpr const Vector3 operator*(const Vector3 &vector1, const Vector3 &vector2) noexcept {
-    return Vector3(vector1.x * vector2.x, vector1.y * vector2.y, vector1.z * vector2.z);
-}
-
-inline constexpr const Vector3 operator/(const Vector3 &vector, const float scalar) {
-    return vector * (1.0f / scalar);
-}
-
-inline constexpr const Vector3 operator/(const Vector3 &vector1, const Vector3 &vector2) {
-    return Vector3(vector1.x / vector2.x, vector1.y / vector2.y, vector1.z / vector2.z);
-}
-
 bool Vector3::operator==(const Vector3 &vector) const noexcept {
     return x == vector.x && y == vector.y && z == vector.z;
 }
@@ -121,16 +102,23 @@ constexpr float Vector3::LengthSquared() const noexcept {
     return Dot(*this);
 }
 
-inline const Vector3 Vector3::Normalize() const {
+Vector3 Vector3::Normalize() const {
     const float length = Length();
     if (length == 0.0f) {
-        throw std::runtime_error("Vector3::Normalize() : Division by zero");
+        return Vector3(0.0f, 0.0f, 0.0f);
     }
     return *this / length;
 }
 
-inline constexpr const Vector3 Vector3::Projection(const Vector3 &vector) const noexcept {
-    return vector * (Dot(vector) / vector.Dot(vector)) * vector;
+Vector3 Vector3::Projection(const Vector3 &vector) const noexcept {
+    return (Dot(vector) / vector.Dot(vector)) * vector;
+}
+
+Vector3 Vector3::Perpendicular() const noexcept {
+    if (x != 0.0f || y != 0.0f) {
+        return Vector3(-y, x, 0.0f);
+    }
+    return Vector3(0.0f, -z, y);
 }
 
 inline constexpr const Vector3 Vector3::Rejection(const Vector3 &vector) const noexcept {
@@ -161,7 +149,9 @@ Vector3 Vector3::Transform(const Matrix4x4 &mat) const noexcept {
     result.z = x * mat.m[0][2] + y * mat.m[1][2] + z * mat.m[2][2] + 1.0f * mat.m[3][2];
     float w = x * mat.m[0][3] + y * mat.m[1][3] + z * mat.m[2][3] + 1.0f * mat.m[3][3];
 
-    assert(w != 0.0f);
+    if (w == 0.0f) {
+        return Vector3(0.0f);
+    }
 
     result.x /= w;
     result.y /= w;

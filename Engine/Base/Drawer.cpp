@@ -117,17 +117,38 @@ void Drawer::PostDraw() {
     dxCommon_->PostDraw();
 }
 
-void Drawer::Draw(Triangle *triangle) {
-    // 頂点設定
-    triangle->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
-    // 頂点データを設定
-    vertexData_[0] = triangle->vertexData[0];
-    vertexData_[1] = triangle->vertexData[1];
-    vertexData_[2] = triangle->vertexData[2];
+void Drawer::SetLight(DirectionalLight *light) {
+    // 光源のリソースを生成
+    static auto directionalLightResource = PrimitiveDrawer::CreateBufferResources(sizeof(DirectionalLight));
+    directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData_));
+    // 光源のデータを設定
+    directionalLightData_->color = ConvertColor(light->color);
+    directionalLightData_->direction = light->direction;
+    directionalLightData_->intensity = light->intensity;
 
-    triangle->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
-    *materialData_ = ConvertColor(triangle->color);
-    triangle->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
+    // CBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+}
+
+void Drawer::Draw(Triangle *triangle) {
+    // 法線を設定
+    static Vector3 position[3];
+    if (triangle->camera == nullptr || triangle->material.enableLighting == false) {
+        for (int i = 0; i < 3; i++) {
+            triangle->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
+        }
+    } else {
+        position[0] = Vector3(triangle->mesh->vertexBufferMap[0].position);
+        position[1] = Vector3(triangle->mesh->vertexBufferMap[1].position);
+        position[2] = Vector3(triangle->mesh->vertexBufferMap[2].position);
+        for (int i = 0; i < 3; i++) {
+            triangle->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+        }
+    }
+
+    // マテリアルを設定
+    triangle->materialMap->color = ConvertColor(triangle->material.color);
+    triangle->materialMap->enableLighting = triangle->material.enableLighting;
 
     // 行列を計算
     triangle->worldMatrix.MakeAffine(
@@ -138,11 +159,13 @@ void Drawer::Draw(Triangle *triangle) {
     // Cameraがnullptrの場合は2D描画
     if (triangle->camera == nullptr) {
         wvpMatrix2D_ = triangle->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        *wvpData_ = wvpMatrix2D_;
+        triangle->transformationMatrixMap->wvp = wvpMatrix2D_;
+        triangle->transformationMatrixMap->world = triangle->worldMatrix;
     } else {
         triangle->camera->SetWorldMatrix(triangle->worldMatrix);
         triangle->camera->CalculateMatrix();
-        *wvpData_ = triangle->camera->GetWVPMatrix();
+        triangle->transformationMatrixMap->wvp = triangle->camera->GetWVPMatrix();
+        triangle->transformationMatrixMap->world = triangle->worldMatrix;
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
@@ -155,28 +178,41 @@ void Drawer::Draw(Triangle *triangle) {
 
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &triangle->mesh->vertexBufferView);
+    // IBVを設定
+    dxCommon_->GetCommandList()->IASetIndexBuffer(&triangle->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, triangle->materialResource->GetGPUVirtualAddress());
-    // WVP用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, triangle->wvpResource->GetGPUVirtualAddress());
+    // TransformationMatrix用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, triangle->transformationMatrixResource->GetGPUVirtualAddress());
     // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(3, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(Sprite *sprite) {
-    // 頂点設定
-    sprite->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
-    // 頂点データを設定
-    vertexData_[0] = sprite->vertexData[2];
-    vertexData_[1] = sprite->vertexData[0];
-    vertexData_[2] = sprite->vertexData[3];
-    vertexData_[3] = sprite->vertexData[0];
-    vertexData_[4] = sprite->vertexData[1];
-    vertexData_[5] = sprite->vertexData[3];
+    // 法線を設定
+    static Vector3 position[3];
+    if (sprite->camera == nullptr || sprite->material.enableLighting == false) {
+        for (int i = 0; i < 4; i++) {
+            sprite->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
+        }
+    } else {
+        position[0] = Vector3(sprite->mesh->vertexBufferMap[0].position);
+        position[1] = Vector3(sprite->mesh->vertexBufferMap[1].position);
+        position[2] = Vector3(sprite->mesh->vertexBufferMap[2].position);
+        for (int i = 0; i < 3; i++) {
+            sprite->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+        }
+        position[0] = Vector3(sprite->mesh->vertexBufferMap[3].position);
+        position[1] = Vector3(sprite->mesh->vertexBufferMap[4].position);
+        position[2] = Vector3(sprite->mesh->vertexBufferMap[5].position);
+        for (int i = 3; i < 6; i++) {
+            sprite->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+        }
+    }
 
-    sprite->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
-    *materialData_ = ConvertColor(sprite->color);
-    sprite->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
+    // マテリアルを設定
+    sprite->materialMap->color = ConvertColor(sprite->material.color);
+    sprite->materialMap->enableLighting = sprite->material.enableLighting;
 
     // 行列を計算
     sprite->worldMatrix.MakeAffine(
@@ -187,11 +223,13 @@ void Drawer::Draw(Sprite *sprite) {
     // Cameraがnullptrの場合は2D描画
     if (sprite->camera == nullptr) {
         wvpMatrix2D_ = sprite->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        *wvpData_ = wvpMatrix2D_;
+        sprite->transformationMatrixMap->wvp = wvpMatrix2D_;
+        sprite->transformationMatrixMap->world = sprite->worldMatrix;
     } else {
         sprite->camera->SetWorldMatrix(sprite->worldMatrix);
         sprite->camera->CalculateMatrix();
-        *wvpData_ = sprite->camera->GetWVPMatrix();
+        sprite->transformationMatrixMap->wvp = sprite->camera->GetWVPMatrix();
+        sprite->transformationMatrixMap->world = sprite->worldMatrix;
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
@@ -204,102 +242,79 @@ void Drawer::Draw(Sprite *sprite) {
 
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sprite->mesh->vertexBufferView);
+    // IBVを設定
+    dxCommon_->GetCommandList()->IASetIndexBuffer(&sprite->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, sprite->materialResource->GetGPUVirtualAddress());
-    // WVP用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sprite->wvpResource->GetGPUVirtualAddress());
+    // TransformationMatrix用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sprite->transformationMatrixResource->GetGPUVirtualAddress());
     // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(Sphere *sphere) {
-    // 頂点設定
-    sphere->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
-
-    // 軽度分割1つ分の角度
-    const float kLonEvery = M_PI * 2.0f / static_cast<float>(sphere->kSubdivision);
+    // 経度分割1つ分の角度
+    const float kLonEvery = (2.0f * M_PI) / static_cast<float>(sphere->kSubdivision);
     // 緯度分割1つ分の角度
     const float kLatEvery = M_PI / static_cast<float>(sphere->kSubdivision);
-    // 緯度の方向に分割 -π/2 ～ π/2
-    for (uint32_t latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
-        const float lat = -M_PI / 2.0f + (kLatEvery * static_cast<float>(latIndex));
-        // 経度の方向に分割 0 ～ 2π
-        for (uint32_t lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
-            // 頂点位置を計算
-            const uint32_t startIndex = (latIndex * sphere->kSubdivision + lonIndex) * 6;
-            const float lon = static_cast<float>(lonIndex) * kLonEvery;
-            
-            //--------- 頂点データを設定 ---------//
+    // 経度の方向に分割 -π/2 ～　π/2
+    for (int lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
+        // 緯度の方向に分割 -π/2 ～　π/2
+        for (int latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
+            // 頂点インデックス
+            const uint32_t vertexIndex = (latIndex * sphere->kSubdivision + lonIndex) * 4;
 
-            // 左下
-            vertexData_[startIndex + 0].position = {
-                sphere->radius * std::cosf(lat) * std::cosf(lon),
-                sphere->radius * std::sinf(lat),
-                sphere->radius * std::cosf(lat) * std::sinf(lon),
-                1.0f
+            //--------- 法線を設定 ---------//
+
+            if (sphere->camera == nullptr || sphere->material.enableLighting == false) {
+                for (int i = 0; i < 4; i++) {
+                    sphere->mesh->vertexBufferMap[vertexIndex + i].normal = { 0.0f, 0.0f, -1.0f };
+                }
+                continue;
+            }
+            sphere->mesh->vertexBufferMap[vertexIndex + 0].normal = {
+                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.x,
+                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.y,
+                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.z
             };
-            vertexData_[startIndex + 0].texCoord = {
-                static_cast<float>(lonIndex) / static_cast<float>(sphere->kSubdivision),
-                1.0f - static_cast<float>(latIndex) / static_cast<float>(sphere->kSubdivision)
+            sphere->mesh->vertexBufferMap[vertexIndex + 1].normal = {
+                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.x,
+                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.y,
+                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.z
             };
-            // 左上
-            vertexData_[startIndex + 1].position = {
-                sphere->radius * std::cosf(lat + kLatEvery) * std::cosf(lon),
-                sphere->radius * std::sinf(lat + kLatEvery),
-                sphere->radius * std::cosf(lat + kLatEvery) * std::sinf(lon),
-                1.0f
+            sphere->mesh->vertexBufferMap[vertexIndex + 2].normal = {
+                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.x,
+                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.y,
+                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.z
             };
-            vertexData_[startIndex + 1].texCoord = {
-                static_cast<float>(lonIndex) / static_cast<float>(sphere->kSubdivision),
-                1.0f - static_cast<float>(latIndex + 1) / static_cast<float>(sphere->kSubdivision)
+            sphere->mesh->vertexBufferMap[vertexIndex + 3].normal = {
+                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.x,
+                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.y,
+                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.z
             };
-            // 右下
-            vertexData_[startIndex + 2].position = {
-                sphere->radius * std::cosf(lat) * std::cosf(lon + kLonEvery),
-                sphere->radius * std::sinf(lat),
-                sphere->radius * std::cosf(lat) * std::sinf(lon + kLonEvery),
-                1.0f
-            };
-            vertexData_[startIndex + 2].texCoord = {
-                static_cast<float>(lonIndex + 1) / static_cast<float>(sphere->kSubdivision),
-                1.0f - static_cast<float>(latIndex) / static_cast<float>(sphere->kSubdivision)
-            };
-            // 左上
-            vertexData_[startIndex + 3] = vertexData_[startIndex + 1];
-            // 右上
-            vertexData_[startIndex + 4].position = {
-                sphere->radius * std::cosf(lat + kLatEvery) * std::cosf(lon + kLonEvery),
-                sphere->radius * std::sinf(lat + kLatEvery),
-                sphere->radius * std::cosf(lat + kLatEvery) * std::sinf(lon + kLonEvery),
-                1.0f
-            };
-            vertexData_[startIndex + 4].texCoord = {
-                static_cast<float>(lonIndex + 1) / static_cast<float>(sphere->kSubdivision),
-                1.0f - static_cast<float>(latIndex + 1) / static_cast<float>(sphere->kSubdivision)
-            };
-            // 右下
-            vertexData_[startIndex + 5] = vertexData_[startIndex + 2];
         }
     }
 
-    sphere->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
-    *materialData_ = ConvertColor(sphere->color);
-    sphere->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
+    // マテリアルを設定
+    sphere->materialMap->color = ConvertColor(sphere->material.color);
+    sphere->materialMap->enableLighting = sphere->material.enableLighting;
 
     // 行列を計算
     sphere->worldMatrix.MakeAffine(
-        sphere->transform.scale,
+        sphere->transform.scale * sphere->radius,
         sphere->transform.rotate,
         sphere->transform.translate
     );
     // Cameraがnullptrの場合は2D描画
     if (sphere->camera == nullptr) {
         wvpMatrix2D_ = sphere->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        *wvpData_ = wvpMatrix2D_;
+        sphere->transformationMatrixMap->wvp = wvpMatrix2D_;
+        sphere->transformationMatrixMap->world = sphere->worldMatrix;
     } else {
         sphere->camera->SetWorldMatrix(sphere->worldMatrix);
         sphere->camera->CalculateMatrix();
-        *wvpData_ = sphere->camera->GetWVPMatrix();
+        sphere->transformationMatrixMap->wvp = sphere->camera->GetWVPMatrix();
+        sphere->transformationMatrixMap->world = sphere->worldMatrix;
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
@@ -310,30 +325,31 @@ void Drawer::Draw(Sphere *sphere) {
         dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
     }
 
+    // IBVを設定
+    dxCommon_->GetCommandList()->IASetIndexBuffer(&sphere->mesh->indexBufferView);
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sphere->mesh->vertexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, sphere->materialResource->GetGPUVirtualAddress());
-    // WVP用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sphere->wvpResource->GetGPUVirtualAddress());
+    // TransformationMatrix用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sphere->transformationMatrixResource->GetGPUVirtualAddress());
     // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(sphere->kVertexCount, 1, 0, 0);
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(sphere->kIndexCount, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(BillBoard *billboard) {
-    // 頂点設定
-    billboard->mesh->vertexBuffer->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
-    // 頂点データを設定
-    vertexData_[0] = billboard->vertexData[2];
-    vertexData_[1] = billboard->vertexData[0];
-    vertexData_[2] = billboard->vertexData[3];
-    vertexData_[3] = billboard->vertexData[0];
-    vertexData_[4] = billboard->vertexData[1];
-    vertexData_[5] = billboard->vertexData[3];
+    // 法線を設定
+    static Vector3 position[3];
+    position[0] = Vector3(billboard->mesh->vertexBufferMap[0].position);
+    position[1] = Vector3(billboard->mesh->vertexBufferMap[1].position);
+    position[2] = Vector3(billboard->mesh->vertexBufferMap[2].position);
+    for (int i = 0; i < 3; i++) {
+        billboard->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+    }
 
-    billboard->materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
-    *materialData_ = ConvertColor(billboard->color);
-    billboard->wvpResource->Map(0, nullptr, reinterpret_cast<void **>(&wvpData_));
+    // マテリアルを設定
+    billboard->materialMap->color = ConvertColor(billboard->material.color);
+    billboard->materialMap->enableLighting = billboard->material.enableLighting;
 
     // カメラと同じ向きにBillBoardを向ける
     billboard->transform.rotate = billboard->camera->GetRotate();
@@ -352,7 +368,8 @@ void Drawer::Draw(BillBoard *billboard) {
     }
     billboard->camera->SetWorldMatrix(billboard->worldMatrix);
     billboard->camera->CalculateMatrix();
-    *wvpData_ = billboard->camera->GetWVPMatrix();
+    billboard->transformationMatrixMap->wvp = billboard->camera->GetWVPMatrix();
+    billboard->transformationMatrixMap->world = billboard->worldMatrix;
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
     if (billboard->useTextureIndex != -1) {
@@ -364,12 +381,14 @@ void Drawer::Draw(BillBoard *billboard) {
 
     // VBVを設定
     dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &billboard->mesh->vertexBufferView);
+    // IBVを設定
+    dxCommon_->GetCommandList()->IASetIndexBuffer(&billboard->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, billboard->materialResource->GetGPUVirtualAddress());
-    // WVP用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, billboard->wvpResource->GetGPUVirtualAddress());
+    // TransformationMatrix用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, billboard->transformationMatrixResource->GetGPUVirtualAddress());
     // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
 
 } // namespace MyEngine

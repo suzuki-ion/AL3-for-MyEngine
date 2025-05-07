@@ -4,13 +4,16 @@
 namespace MyEngine {
 
 struct Triangle : public Object {
-    Triangle() {
-        // メッシュの生成
-        mesh = PrimitiveDrawer::CreateMesh(3);
+    Triangle() :
+        mesh(PrimitiveDrawer::CreateMesh(3, 3))
+    {
+        mesh->indexBufferMap[0] = 0;
+        mesh->indexBufferMap[1] = 1;
+        mesh->indexBufferMap[2] = 2;
     }
 
-    /// @brief 頂点データ
-    VertexData vertexData[3];
+    /// @brief メッシュ
+    const std::unique_ptr<Mesh> mesh;
 };
 
 } // namespace MyEngine
