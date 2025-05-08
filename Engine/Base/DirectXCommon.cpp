@@ -141,6 +141,62 @@ void DirectXCommon::SetBarrier(D3D12_RESOURCE_BARRIER &barrier) {
     currentBarrierState_ = barrier.Transition.StateAfter;
 }
 
+void DirectXCommon::Resize(int32_t width, int32_t height) {
+    // スワップチェインのサイズを変更
+    HRESULT hr = swapChain_->ResizeBuffers(2, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+    // スワップチェインのサイズ変更が成功したかをチェック
+    assert(SUCCEEDED(hr));
+    // スワップチェインからのリソースを再生成
+    InitializeSwapChainResources();
+    // RTVの初期化
+    RTV::Initialize(this);
+    // DSVの初期化
+    DSV::Initialize(winApp_, this);
+    // スワップチェインからのリソースの生成
+    InitializeSwapChainResources();
+    // RTVのハンドルを初期化
+    InitializeRTVHandle();
+    // DSVのハンドルを初期化
+    InitializeDSVHandle();
+}
+
+void DirectXCommon::CommandExecute() {
+    // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
+    HRESULT hr = commandList_->Close();
+    // コマンドリストの内容を確定できたかをチェック
+    assert(SUCCEEDED(hr));
+
+    // GPUにコマンドリストの実行を行わせる
+    ID3D12CommandList *commandLists[] = { commandList_.Get() };
+    commandQueue_->ExecuteCommandLists(1, commandLists);
+    // GPUとOSに画面の交換を行うよう通知
+    swapChain_->Present(1, 0);
+
+    //==================================================
+    // Fenceの処理
+    //==================================================
+
+    // Fenceの値を更新
+    fenceValue_++;
+    // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
+    commandQueue_->Signal(fence_.Get(), fenceValue_);
+
+    // Fenceの値が指定したSignal値にたどり着いているか確認する
+    // GetCompletedValueの初期値はFence作成時に渡した初期値
+    if (fence_->GetCompletedValue() < fenceValue_) {
+        // 指定したSignalにたどりついていないので、たどり着くまで待つようにイベントを設定する
+        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
+        // イベントを待つ
+        WaitForSingleObject(fenceEvent_, INFINITE);
+    }
+
+    // 次のフレーム用のコマンドリストを準備
+    hr = commandAllocator_->Reset();
+    assert(SUCCEEDED(hr));
+    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
+    assert(SUCCEEDED(hr));
+}
+
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
@@ -310,6 +366,7 @@ void DirectXCommon::InitializeSwapChain() {
     swapChainDesc_.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;   // レンダーターゲットとして使用
     swapChainDesc_.BufferCount = 2;                                 // バッファ数。ダブルバッファ
     swapChainDesc_.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;      // モニタに映したら中身を破棄
+    swapChainDesc_.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;  // モード変更を許可
 
     // コマンドキュー、ウィンドウハンドル、設定を渡してスワップチェインを生成
     HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winApp_->GetWindowHandle(), &swapChainDesc_, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
@@ -337,6 +394,8 @@ void DirectXCommon::InitializeDSV() {
 }
 
 void DirectXCommon::InitializeSwapChainResources() {
+    static bool isInitialized = false;
+
     // スワップチェインからのリソースの生成
     for (UINT i = 0; i < 2; ++i) {
         swapChainResources_[i] = nullptr;
@@ -344,9 +403,14 @@ void DirectXCommon::InitializeSwapChainResources() {
         // リソースの生成が成功したかをチェック
         assert(SUCCEEDED(hr));
     }
-
-    // 初期化完了のログを出力
-    Log("Complete Initialize SwapChain Resources.");
+    
+    if (!isInitialized) {
+        // 初期化完了のログを出力
+        Log("Complete Initialize SwapChain Resources.");
+    } else {
+        // 2回目以降は再生成のログを出力
+        Log("Reinitialize SwapChain Resources.");
+    }
 }
 
 void DirectXCommon::InitializeRTVHandle() {
@@ -385,43 +449,6 @@ void DirectXCommon::InitializeFence() {
 
     // 初期化完了のログを出力
     Log("Complete Initialize Fence.");
-}
-
-void DirectXCommon::CommandExecute() {
-    // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
-    HRESULT hr = commandList_->Close();
-    // コマンドリストの内容を確定できたかをチェック
-    assert(SUCCEEDED(hr));
-
-    // GPUにコマンドリストの実行を行わせる
-    ID3D12CommandList *commandLists[] = { commandList_.Get() };
-    commandQueue_->ExecuteCommandLists(1, commandLists);
-    // GPUとOSに画面の交換を行うよう通知
-    swapChain_->Present(1, 0);
-
-    //==================================================
-    // Fenceの処理
-    //==================================================
-
-    // Fenceの値を更新
-    fenceValue_++;
-    // GPUがここまでたどり着いたときに、Fenceの値を指定した値に代入するようにSignalを送る
-    commandQueue_->Signal(fence_.Get(), fenceValue_);
-
-    // Fenceの値が指定したSignal値にたどり着いているか確認する
-    // GetCompletedValueの初期値はFence作成時に渡した初期値
-    if (fence_->GetCompletedValue() < fenceValue_) {
-        // 指定したSignalにたどりついていないので、たどり着くまで待つようにイベントを設定する
-        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
-        // イベントを待つ
-        WaitForSingleObject(fenceEvent_, INFINITE);
-    }
-
-    // 次のフレーム用のコマンドリストを準備
-    hr = commandAllocator_->Reset();
-    assert(SUCCEEDED(hr));
-    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
-    assert(SUCCEEDED(hr));
 }
 
 } // namespace MyEngine

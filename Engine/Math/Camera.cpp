@@ -1,13 +1,18 @@
 #include "Camera.h"
 #include "RenderingPipeline.h"
+#include "Base/WinApp.h"
+#include "Common/Logs.h"
 #include <imgui.h>
 #include <cmath>
 
 namespace MyEngine {
 
-Camera::Camera(const float winWidth, const float winHeight) noexcept {
-    winWidth_ = winWidth;
-    winHeight_ = winHeight;
+Camera::Camera(WinApp *winApp) noexcept {
+    // nullチェック
+    if (!winApp) {
+        Log("winApp is null.", kLogLevelFlagError);
+        assert(false);
+    }
     cameraScale_ = { 1.0f, 1.0f, 1.0f };
     cameraRotate_ = { 0.0f, 0.0f, 0.0f };
     cameraTranslate_ = { 0.0f, 0.0f, 0.0f };
@@ -18,9 +23,8 @@ Camera::Camera(const float winWidth, const float winHeight) noexcept {
     CalculateMatrix();
 }
 
-Camera::Camera(const float winWidth, const float winHeight, const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept {
-    winWidth_ = winWidth;
-    winHeight_ = winHeight;
+Camera::Camera(WinApp *winApp, const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept {
+    winApp_ = winApp;
     cameraScale_ = cameraScale;
     cameraRotate_ = cameraRotate;
     cameraTranslate_ = cameraTranslate;
@@ -58,9 +62,9 @@ void Camera::CalculateMatrix() noexcept {
     cameraMatrix_.SetRotate(cameraRotate_);
     cameraMatrix_.SetTranslate(cameraTranslate_);
     viewMatrix_ = cameraMatrix_.InverseScale() * cameraMatrix_.InverseRotate() * cameraMatrix_.InverseTranslate();
-    projectionMatrix_ = MakePerspectiveFovMatrix(0.45f, winWidth_ / winHeight_, 0.1f, 100.0f);
+    projectionMatrix_ = MakePerspectiveFovMatrix(0.45f, static_cast<float>(winApp_->GetClientWidth()) / static_cast<float>(winApp_->GetClientHeight()), 0.1f, 100.0f);
     wvpMatrix_ = worldMatrix_ * (viewMatrix_ * projectionMatrix_);
-    viewportMatrix_ = MakeViewportMatrix(0.0f, 0.0f, winWidth_, winHeight_, 0.0f, 1.0f);
+    viewportMatrix_ = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(winApp_->GetClientWidth()), static_cast<float>(winApp_->GetClientHeight()), 0.0f, 1.0f);
 }
 
 void Camera::MoveToMouse(const float translateSpeed, const float rotateSpeed, const float scaleSpeed) noexcept {

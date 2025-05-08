@@ -64,6 +64,7 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
         width,
         height
     );
+    sWinApp->SetSizeChangeMode(MyEngine::SizeChangeMode::kNone);
 
     // DirectX初期化
     sDxCommon = std::make_unique<DirectXCommon>(enableDebugLayer, sWinApp.get());
@@ -76,9 +77,6 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
 
     // テクスチャ管理クラス初期化
     sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get());
-    // テクスチャを読み込む
-    sTextureManager->Load("Resources/uvChecker.png");
-    sTextureManager->Load("Resources/monsterBall.png");
 
     // 描画用クラス初期化
     sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
@@ -112,20 +110,16 @@ void Engine::EndFrame() {
     sDrawer->PostDraw();
 }
 
-HWND Engine::GetWindowHandle() const {
-    return sWinApp->GetWindowHandle();
-}
-
-int32_t Engine::GetClientWidth() const {
-    return sWinApp->GetClientWidth();
-}
-
-int32_t Engine::GetClientHeight() const {
-    return sWinApp->GetClientHeight();
+MyEngine::WinApp *Engine::GetWinApp() const {
+    return sWinApp.get();
 }
 
 MyEngine::Drawer *Engine::GetDrawer() const {
     return sDrawer.get();
+}
+
+MyEngine::TextureManager *Engine::GetTextureManager() const {
+    return sTextureManager.get();
 }
 
 int Engine::ProccessMessage() {

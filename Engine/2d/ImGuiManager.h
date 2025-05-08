@@ -22,6 +22,9 @@ public:
     /// @brief ImGuiのフレーム終了処理
     void EndFrame();
 
+    /// @brief ImGuiの再初期化
+    void Reinitialize();
+
 private:
     /// @brief WinAppインスタンス
     WinApp *winApp_ = nullptr;

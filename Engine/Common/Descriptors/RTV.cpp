@@ -45,6 +45,28 @@ void RTV::Initialize(DirectXCommon *dxCommon, const std::source_location &locati
     LogSimple("Complete Initialize RTV.", kLogLevelFlagInfo);
 }
 
+void RTV::Recreate(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+    // 初期化済みフラグをチェック
+    if (!isInitialized_) {
+        Log("RTV is not initialized.", kLogLevelFlagError);
+        assert(false);
+    }
+
+    // ディスクリプタヒープの解放
+    descriptorHeap_.Reset();
+    // RTV用のヒープを生成
+    descriptorHeap_ = dxCommon_->CreateDescriptorHeap(
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+        numDescriptors_,
+        false
+    );
+
+    // 再初期化完了のログを出力
+    LogSimple("Complete Recreate RTV.", kLogLevelFlagInfo);
+}
+
 void RTV::Finalize(const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);

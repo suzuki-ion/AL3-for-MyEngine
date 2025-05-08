@@ -3,11 +3,14 @@
 
 namespace MyEngine {
 
+// 前方宣言
+class WinApp;
+
 class Camera {
 public:
     Camera() = delete;
-    Camera(const float winWidth, const float winHeight) noexcept;
-    Camera(const float winWidth, const float winHeight, const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept;
+    Camera(WinApp *winApp) noexcept;
+    Camera(WinApp *winApp, const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept;
 
     /// @brief カメラの行列を設定する
     /// @param cameraTranslate 平行移動
@@ -107,8 +110,7 @@ public:
     }
 
 private:
-    float winWidth_;
-    float winHeight_;
+    WinApp *winApp_;
     Vector3 cameraScale_;
     Vector3 cameraRotate_;
     Vector3 cameraTranslate_;

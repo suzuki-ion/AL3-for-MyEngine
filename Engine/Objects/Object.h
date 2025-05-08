@@ -11,12 +11,24 @@ namespace MyEngine {
 // 前方宣言
 class Camera;
 
+enum NormalType {
+    kNormalTypeVertex,
+    kNormalTypeFace,
+};
+
 struct Object {
     Object() {
         // マテリアルリソースのマップを取得
         materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialMap));
         // TransformationMatrixリソースのマップを取得
         transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixMap));
+        // UVTransformの初期化
+        material.uvTransform.MakeIdentity();
+        uvTransform = {
+            { 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 0.0f },
+            { 0.0f, 0.0f, 0.0f }
+        };
     }
     ~Object() {
         // マテリアルリソースのアンマップ
@@ -42,6 +54,8 @@ struct Object {
 
     /// @brief 変形用のtransform
     Transform transform;
+    /// @brief UV用のtransform
+    Transform uvTransform;
     /// @brief ワールド行列
     Matrix4x4 worldMatrix;
     /// @brief マテリアルデータ
@@ -49,6 +63,8 @@ struct Object {
 
     /// @brief 使用するテクスチャのインデックス
     int useTextureIndex = -1;
+    /// @brief 法線のタイプ
+    NormalType normalType = kNormalTypeVertex;
 };
 
 } // namespace MyEngine

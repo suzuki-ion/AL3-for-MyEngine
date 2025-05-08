@@ -27,6 +27,10 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
     assert(SUCCEEDED(hr));
 
     // ミップマップの作成
+    // サイズが1x1のテクスチャはミップマップを作成しない
+    if (image.GetMetadata().width == 1 && image.GetMetadata().height == 1) {
+        return image;
+    }
     DirectX::ScratchImage mipImages{};
     hr = DirectX::GenerateMipMaps(
         image.GetImages(),
@@ -124,8 +128,13 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     dxCommon_->SetBarrier(barrier);
 
-    // 読み込んだテクスチャのログを出力
-    Log(std::format("Load Texture: {}", filePath));
+    // 読み込んだテクスチャとそのインデックスをログに出力
+    Log(std::format("Load Texture: {} ({}x{}) index: {}",
+        filePath,
+        textures_.back().width,
+        textures_.back().height,
+        static_cast<uint32_t>(textures_.size() - 1)
+    ), kLogLevelFlagInfo);
 
     // テクスチャのインデックスを返す
     return static_cast<uint32_t>(textures_.size() - 1);

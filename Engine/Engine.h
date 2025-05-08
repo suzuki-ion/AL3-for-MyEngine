@@ -8,7 +8,14 @@
 #include "Math/Transform.h"
 #include "Math/Vector4.h"
 
-#include "Base/Drawer.h"
+namespace MyEngine {
+
+// 前方宣言
+class WinApp;
+class Drawer;
+class TextureManager;
+
+} // namespace MyEngine
 
 /// @brief 自作エンジンクラス
 class Engine final {
@@ -23,20 +30,17 @@ public:
     /// @brief フレーム終了処理
     void EndFrame();
 
-    /// @brief ウィンドウハンドル取得
-    HWND GetWindowHandle() const;
-
-    /// @brief クライアントサイズの横幅取得
-    /// @return クライアントサイズの横幅
-    int32_t GetClientWidth() const;
-    
-    /// @brief クライアントサイズの縦幅取得
-    /// @return クライアントサイズの縦幅
-    int32_t GetClientHeight() const;
+    /// @brief WinAppクラスのポインタ取得
+    /// @return WinAppクラスのポインタ
+    MyEngine::WinApp *GetWinApp() const;
 
     /// @brief 描画用クラスのポインタ取得
     /// @return 描画用クラスのポインタ
     MyEngine::Drawer *GetDrawer() const;
+
+    /// @brief テクスチャ管理クラスのポインタ取得
+    /// @return テクスチャ管理クラスのポインタ
+    MyEngine::TextureManager *GetTextureManager() const;
     
     /// @brief メッセージ処理
     /// @return メッセージ処理結果。-1の場合は終了

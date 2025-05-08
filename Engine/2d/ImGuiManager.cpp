@@ -69,4 +69,24 @@ void ImGuiManager::EndFrame() {
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
 }
 
+void ImGuiManager::Reinitialize() {
+    // ImGuiの終了処理
+    ImGui_ImplDX12_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+    // ImGuiの初期化
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(winApp_->GetWindowHandle());
+    ImGui_ImplDX12_Init(
+        dxCommon_->GetDevice(),
+        dxCommon_->GetSwapChainDesc().BufferCount,
+        dxCommon_->GetRTVDesc().Format,
+        SRV::GetDescriptorHeap(),
+        SRV::GetCPUDescriptorHandle(),
+        SRV::GetGPUDescriptorHandle()
+    );
+}
+
 } // namespace MyEngine

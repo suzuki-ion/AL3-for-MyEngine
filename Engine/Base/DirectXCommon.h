@@ -28,6 +28,11 @@ public:
     /// @param barrier バリアの設定
     void SetBarrier(D3D12_RESOURCE_BARRIER &barrier);
 
+    /// @brief サイズ変更
+    /// @param width 新しい横幅
+    /// @param height 新しい縦幅
+    void Resize(int32_t width, int32_t height);
+
     /// @brief コマンドの実行
     void CommandExecute();
 

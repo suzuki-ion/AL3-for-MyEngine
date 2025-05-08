@@ -9,6 +9,10 @@ struct Material {
     Vector4 color;
     /// @brief Lightingの有効無効
     int32_t enableLighting;
+    /// @brief padding分のメモリ
+    float padding[3];
+    /// @brief テクスチャ用のUVTransform行列
+    Matrix4x4 uvTransform;
 };
 
 } // namespace MyEngine

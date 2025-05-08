@@ -144,7 +144,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Base\DirectXCommon.h" />
     <ClInclude Include="Engine\Base\TextureManager.h" />
     <ClInclude Include="Engine\Common\DescriptorHeap\DSV.h" />
+    <ClInclude Include="Engine\Common\Descriptors\CPUHandle.h" />
     <ClInclude Include="Engine\Common\Descriptors\DSV.h" />
+    <ClInclude Include="Engine\Common\Descriptors\GPUHandle.h" />
     <ClInclude Include="Engine\Common\Descriptors\RTV.h" />
     <ClInclude Include="Engine\Common\Descriptors\SRV.h" />
     <ClInclude Include="Engine\Common\Logs.h" />

@@ -87,8 +87,8 @@ void Drawer::PreDraw() {
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = static_cast<float>(winApp_->GetClientWidth());
-    viewport.Height = static_cast<float>(winApp_->GetClientHeight());
+    viewport.Width = 1280.0f /*static_cast<float>(winApp_->GetClientWidth())*/;
+    viewport.Height = 720.0f /*static_cast<float>(winApp_->GetClientHeight())*/;
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
@@ -98,9 +98,9 @@ void Drawer::PreDraw() {
     D3D12_RECT scissorRect{};
     // 基本的にビューポートと同じ矩形が構成されるようにする
     scissorRect.left = 0;
-    scissorRect.right = winApp_->GetClientWidth();
+    scissorRect.right = 1280.0f /*winApp_->GetClientWidth()*/;
     scissorRect.top = 0;
-    scissorRect.bottom = winApp_->GetClientHeight();
+    scissorRect.bottom = 720.0f /*winApp_->GetClientHeight()*/;
 
     // コマンドを積む
     dxCommon_->GetCommandList()->RSSetViewports(1, &viewport);          // ビューポートを設定
@@ -138,17 +138,30 @@ void Drawer::Draw(Triangle *triangle) {
             triangle->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
         }
     } else {
-        position[0] = Vector3(triangle->mesh->vertexBufferMap[0].position);
-        position[1] = Vector3(triangle->mesh->vertexBufferMap[1].position);
-        position[2] = Vector3(triangle->mesh->vertexBufferMap[2].position);
-        for (int i = 0; i < 3; i++) {
-            triangle->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+        if (triangle->normalType == kNormalTypeVertex) {
+            for (int i = 0; i < 3; i++) {
+                triangle->mesh->vertexBufferMap[i].normal =
+                    Vector3(triangle->mesh->vertexBufferMap[i].position);
+            }
+        } else if (triangle->normalType == kNormalTypeFace) {
+            position[0] = Vector3(triangle->mesh->vertexBufferMap[0].position);
+            position[1] = Vector3(triangle->mesh->vertexBufferMap[1].position);
+            position[2] = Vector3(triangle->mesh->vertexBufferMap[2].position);
+            for (int i = 0; i < 3; i++) {
+                triangle->mesh->vertexBufferMap[i].normal =
+                    (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+            }
         }
     }
 
     // マテリアルを設定
     triangle->materialMap->color = ConvertColor(triangle->material.color);
     triangle->materialMap->enableLighting = triangle->material.enableLighting;
+    triangle->materialMap->uvTransform.MakeAffine(
+        triangle->uvTransform.scale,
+        triangle->uvTransform.rotate,
+        triangle->uvTransform.translate
+    );
 
     // 行列を計算
     triangle->worldMatrix.MakeAffine(
@@ -196,23 +209,30 @@ void Drawer::Draw(Sprite *sprite) {
             sprite->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
         }
     } else {
-        position[0] = Vector3(sprite->mesh->vertexBufferMap[0].position);
-        position[1] = Vector3(sprite->mesh->vertexBufferMap[1].position);
-        position[2] = Vector3(sprite->mesh->vertexBufferMap[2].position);
-        for (int i = 0; i < 3; i++) {
-            sprite->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
-        }
-        position[0] = Vector3(sprite->mesh->vertexBufferMap[3].position);
-        position[1] = Vector3(sprite->mesh->vertexBufferMap[4].position);
-        position[2] = Vector3(sprite->mesh->vertexBufferMap[5].position);
-        for (int i = 3; i < 6; i++) {
-            sprite->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+        if (sprite->normalType == kNormalTypeVertex) {
+            for (int i = 0; i < 4; i++) {
+                sprite->mesh->vertexBufferMap[i].normal =
+                    Vector3(sprite->mesh->vertexBufferMap[i].position);
+            }
+        } else if (sprite->normalType == kNormalTypeFace) {
+            position[0] = Vector3(sprite->mesh->vertexBufferMap[0].position);
+            position[1] = Vector3(sprite->mesh->vertexBufferMap[1].position);
+            position[2] = Vector3(sprite->mesh->vertexBufferMap[2].position);
+            for (int i = 0; i < 4; i++) {
+                sprite->mesh->vertexBufferMap[sprite->mesh->indexBufferMap[i]].normal =
+                    (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+            }
         }
     }
 
     // マテリアルを設定
     sprite->materialMap->color = ConvertColor(sprite->material.color);
     sprite->materialMap->enableLighting = sprite->material.enableLighting;
+    sprite->materialMap->uvTransform.MakeAffine(
+        sprite->uvTransform.scale,
+        sprite->uvTransform.rotate,
+        sprite->uvTransform.translate
+    );
 
     // 行列を計算
     sprite->worldMatrix.MakeAffine(
@@ -253,15 +273,14 @@ void Drawer::Draw(Sprite *sprite) {
 }
 
 void Drawer::Draw(Sphere *sphere) {
-    // 経度分割1つ分の角度
-    const float kLonEvery = (2.0f * M_PI) / static_cast<float>(sphere->kSubdivision);
-    // 緯度分割1つ分の角度
-    const float kLatEvery = M_PI / static_cast<float>(sphere->kSubdivision);
-    // 経度の方向に分割 -π/2 ～　π/2
-    for (int lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
-        // 緯度の方向に分割 -π/2 ～　π/2
-        for (int latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
-            // 頂点インデックス
+    static Vector3 position[3];
+    // 緯度の方向に分割
+    for (uint32_t latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
+        // 経度の方向に分割
+        for (uint32_t lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
+            // インデックスを計算
+            const uint32_t startIndex = (latIndex * sphere->kSubdivision + lonIndex) * 6;
+            // 頂点位置を計算
             const uint32_t vertexIndex = (latIndex * sphere->kSubdivision + lonIndex) * 4;
 
             //--------- 法線を設定 ---------//
@@ -272,32 +291,49 @@ void Drawer::Draw(Sphere *sphere) {
                 }
                 continue;
             }
-            sphere->mesh->vertexBufferMap[vertexIndex + 0].normal = {
-                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.x,
-                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.y,
-                sphere->mesh->vertexBufferMap[vertexIndex + 0].position.z
-            };
-            sphere->mesh->vertexBufferMap[vertexIndex + 1].normal = {
-                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.x,
-                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.y,
-                sphere->mesh->vertexBufferMap[vertexIndex + 1].position.z
-            };
-            sphere->mesh->vertexBufferMap[vertexIndex + 2].normal = {
-                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.x,
-                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.y,
-                sphere->mesh->vertexBufferMap[vertexIndex + 2].position.z
-            };
-            sphere->mesh->vertexBufferMap[vertexIndex + 3].normal = {
-                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.x,
-                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.y,
-                sphere->mesh->vertexBufferMap[vertexIndex + 3].position.z
-            };
+            if (sphere->normalType == kNormalTypeVertex) {
+                sphere->mesh->vertexBufferMap[vertexIndex + 0].normal =
+                    Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 0].position);
+                sphere->mesh->vertexBufferMap[vertexIndex + 1].normal =
+                    Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 1].position);
+                sphere->mesh->vertexBufferMap[vertexIndex + 2].normal = 
+                    Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 2].position);
+                sphere->mesh->vertexBufferMap[vertexIndex + 3].normal =
+                    Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 3].position);
+
+            } else if (sphere->normalType == kNormalTypeFace) {
+                position[0] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 0].position);
+                position[1] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 1].position);
+                position[2] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 2].position);
+                for (int i = 0; i < 4; i++) {
+                    sphere->mesh->vertexBufferMap[vertexIndex + i].normal =
+                        (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+                }
+            }
+        }
+    }
+    // 面法線の場合、真下の面の法線だけ別で計算する
+    if (sphere->normalType == kNormalTypeFace) {
+        for (int i = 0; i < sphere->kSubdivision; i++) {
+            const uint32_t vertexIndex = i * 4;
+            position[0] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 1].position);
+            position[1] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 3].position);
+            position[2] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 2].position);
+            for (int i = 0; i < 4; i++) {
+                sphere->mesh->vertexBufferMap[vertexIndex + i].normal =
+                    (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+            }
         }
     }
 
     // マテリアルを設定
     sphere->materialMap->color = ConvertColor(sphere->material.color);
     sphere->materialMap->enableLighting = sphere->material.enableLighting;
+    sphere->materialMap->uvTransform.MakeAffine(
+        sphere->uvTransform.scale,
+        sphere->uvTransform.rotate,
+        sphere->uvTransform.translate
+    );
 
     // 行列を計算
     sphere->worldMatrix.MakeAffine(
@@ -340,16 +376,35 @@ void Drawer::Draw(Sphere *sphere) {
 void Drawer::Draw(BillBoard *billboard) {
     // 法線を設定
     static Vector3 position[3];
-    position[0] = Vector3(billboard->mesh->vertexBufferMap[0].position);
-    position[1] = Vector3(billboard->mesh->vertexBufferMap[1].position);
-    position[2] = Vector3(billboard->mesh->vertexBufferMap[2].position);
-    for (int i = 0; i < 3; i++) {
-        billboard->mesh->vertexBufferMap[i].normal = (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+    if (billboard->material.enableLighting == false) {
+        for (int i = 0; i < 4; i++) {
+            billboard->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
+        }
+    } else {
+        if (billboard->normalType == kNormalTypeVertex) {
+            for (int i = 0; i < 4; i++) {
+                billboard->mesh->vertexBufferMap[i].normal =
+                    Vector3(billboard->mesh->vertexBufferMap[i].position);
+            }
+        } else if (billboard->normalType == kNormalTypeFace) {
+            position[0] = Vector3(billboard->mesh->vertexBufferMap[0].position);
+            position[1] = Vector3(billboard->mesh->vertexBufferMap[1].position);
+            position[2] = Vector3(billboard->mesh->vertexBufferMap[2].position);
+            for (int i = 0; i < 4; i++) {
+                billboard->mesh->vertexBufferMap[i].normal =
+                    (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+            }
+        }
     }
 
     // マテリアルを設定
     billboard->materialMap->color = ConvertColor(billboard->material.color);
     billboard->materialMap->enableLighting = billboard->material.enableLighting;
+    billboard->materialMap->uvTransform.MakeAffine(
+        billboard->uvTransform.scale,
+        billboard->uvTransform.rotate,
+        billboard->uvTransform.translate
+    );
 
     // カメラと同じ向きにBillBoardを向ける
     billboard->transform.rotate = billboard->camera->GetRotate();
