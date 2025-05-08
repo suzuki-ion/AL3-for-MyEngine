@@ -24,6 +24,7 @@ struct Triangle;
 struct Sprite;
 struct Sphere;
 struct BillBoard;
+struct ModelData;
 
 /// @brief 描画用クラス
 class Drawer {
@@ -63,6 +64,10 @@ public:
     /// @brief ビルボードを描画する
     /// @param billboard 描画するビルボードへのポインタ
     void Draw(BillBoard *billboard);
+
+    /// @brief モデルを描画する
+    /// @param model 描画するモデルへのポインタ
+    void Draw(ModelData *model);
 
 private:
     /// @brief WinAppインスタンス

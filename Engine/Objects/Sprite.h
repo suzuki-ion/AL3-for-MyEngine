@@ -4,9 +4,8 @@
 namespace MyEngine {
 
 struct Sprite : public Object {
-    Sprite() :
-        mesh(PrimitiveDrawer::CreateMesh(4, 6))
-    {
+    Sprite() {
+        mesh = PrimitiveDrawer::CreateMesh(4, 6);
         mesh->indexBufferMap[0] = 0;
         mesh->indexBufferMap[1] = 1;
         mesh->indexBufferMap[2] = 2;
@@ -14,9 +13,6 @@ struct Sprite : public Object {
         mesh->indexBufferMap[4] = 3;
         mesh->indexBufferMap[5] = 2;
     }
-
-    /// @brief メッシュ
-    const std::unique_ptr<Mesh> mesh;
 };
 
 } // namespace MyEngine

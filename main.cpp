@@ -11,6 +11,7 @@
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
 #include "Objects/Billboard.h"
+#include "Objects/ModelData.h"
 
 using namespace MyEngine;
 
@@ -180,6 +181,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 法線の種類
     billboard.normalType = kNormalTypeFace;
 
+    //==================================================
+    // モデル
+    //==================================================
+
+    ModelData modelData(
+        "Resources",
+        "multiMesh.obj",
+        textureManager
+    );
+    modelData.transform = {
+        { 1.0f, 1.0f, 1.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f }
+    };
+    modelData.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
+    modelData.material.enableLighting = true;
+    // カメラを設定
+    modelData.camera = camera.get();
+
     // ウィンドウのxボタンが押されるまでループ
     while (engine->ProccessMessage() != -1) {
         engine->BeginFrame();
@@ -275,6 +295,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             ImGui::TreePop();
         }
 
+        // モデル
+        if (ImGui::TreeNode("ModelData")) {
+            ImGui::DragFloat3("ModelData Translate", &modelData.transform.translate.x, 0.01f);
+            ImGui::DragFloat3("ModelData Rotate", &modelData.transform.rotate.x, 0.01f);
+            ImGui::DragFloat3("ModelData Scale", &modelData.transform.scale.x, 0.01f);
+            ImGui::DragFloat4("ModelData MaterialColor", &modelData.material.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::InputInt("ModelData TextureIndex", &modelData.useTextureIndex);
+            if (ImGui::TreeNode("ModelData uvTransform")) {
+                ImGui::DragFloat2("ModelData uvTransform Translate", &modelData.uvTransform.translate.x, 0.01f);
+                ImGui::DragFloat3("ModelData uvTransform Rotate", &modelData.uvTransform.rotate.x, 0.01f);
+                ImGui::DragFloat2("ModelData uvTransform Scale", &modelData.uvTransform.scale.x, 0.01f);
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
+
         ImGui::End();
 
         // カメラをいじれるようにする
@@ -285,9 +321,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         //drawer->Draw(&triangle1);
         //drawer->Draw(&triangle2);
-        drawer->Draw(&sphere);
-        drawer->Draw(&billboard);
+        //drawer->Draw(&sphere);
+        //drawer->Draw(&billboard);
         //drawer->Draw(&sprite);
+        drawer->Draw(&modelData);
 
         engine->EndFrame();
     }

@@ -18,6 +18,7 @@
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
 #include "Objects/Billboard.h"
+#include "Objects/ModelData.h"
 
 #define M_PI (4.0f * std::atanf(1.0f))
 
@@ -87,8 +88,8 @@ void Drawer::PreDraw() {
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = 1280.0f /*static_cast<float>(winApp_->GetClientWidth())*/;
-    viewport.Height = 720.0f /*static_cast<float>(winApp_->GetClientHeight())*/;
+    viewport.Width = static_cast<float>(winApp_->GetClientWidth());
+    viewport.Height = static_cast<float>(winApp_->GetClientHeight());
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
@@ -98,9 +99,9 @@ void Drawer::PreDraw() {
     D3D12_RECT scissorRect{};
     // 基本的にビューポートと同じ矩形が構成されるようにする
     scissorRect.left = 0;
-    scissorRect.right = 1280.0f /*winApp_->GetClientWidth()*/;
+    scissorRect.right = winApp_->GetClientWidth();
     scissorRect.top = 0;
-    scissorRect.bottom = 720.0f /*winApp_->GetClientHeight()*/;
+    scissorRect.bottom = winApp_->GetClientHeight();
 
     // コマンドを積む
     dxCommon_->GetCommandList()->RSSetViewports(1, &viewport);          // ビューポートを設定
@@ -314,7 +315,7 @@ void Drawer::Draw(Sphere *sphere) {
     }
     // 面法線の場合、真下の面の法線だけ別で計算する
     if (sphere->normalType == kNormalTypeFace) {
-        for (int i = 0; i < sphere->kSubdivision; i++) {
+        for (uint32_t i = 0; i < sphere->kSubdivision; i++) {
             const uint32_t vertexIndex = i * 4;
             position[0] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 1].position);
             position[1] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 3].position);
@@ -444,6 +445,53 @@ void Drawer::Draw(BillBoard *billboard) {
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, billboard->transformationMatrixResource->GetGPUVirtualAddress());
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+}
+
+void Drawer::Draw(ModelData *model) {
+    // マテリアルを設定
+    model->materialMap->color = ConvertColor(model->material.color);
+    model->materialMap->enableLighting = model->material.enableLighting;
+    model->materialMap->uvTransform.MakeAffine(
+        model->uvTransform.scale,
+        model->uvTransform.rotate,
+        model->uvTransform.translate
+    );
+
+    // 行列を計算
+    model->worldMatrix.MakeAffine(
+        model->transform.scale,
+        model->transform.rotate,
+        model->transform.translate
+    );
+
+    // Cameraがnullptrの場合は2D描画
+    if (model->camera == nullptr) {
+        wvpMatrix2D_ = model->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
+        model->transformationMatrixMap->wvp = wvpMatrix2D_;
+        model->transformationMatrixMap->world = model->worldMatrix;
+    } else {
+        model->camera->SetWorldMatrix(model->worldMatrix);
+        model->camera->CalculateMatrix();
+        model->transformationMatrixMap->wvp = model->camera->GetWVPMatrix();
+        model->transformationMatrixMap->world = model->worldMatrix;
+    }
+
+    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
+    if (model->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(model->useTextureIndex).srvHandleGPU);
+    } else {
+        // テクスチャを使用しない場合は0を設定
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+    }
+
+    // VBVを設定
+    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &model->mesh->vertexBufferView);
+    // マテリアルCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, model->materialResource->GetGPUVirtualAddress());
+    // TransformationMatrix用のCBufferの場所を指定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, model->transformationMatrixResource->GetGPUVirtualAddress());
+    // 描画
+    dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(model->vertices.size()), 1, 0, 0);
 }
 
 } // namespace MyEngine

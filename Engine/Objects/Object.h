@@ -46,6 +46,8 @@ struct Object {
     /// @brief TransformationMatrix用のリソース
     const Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource =
         PrimitiveDrawer::CreateBufferResources(sizeof(TransformationMatrix));
+    /// @brief メッシュ
+    std::unique_ptr<Mesh> mesh;
 
     /// @brief マテリアルマップ
     Material *materialMap = nullptr;

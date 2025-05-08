@@ -11,9 +11,9 @@ struct Sphere : public Object {
     Sphere(const int subdivision) :
         kSubdivision(subdivision),
         kVertexCount(subdivision * subdivision * 4),
-        kIndexCount(subdivision * subdivision * 6),
-        mesh(PrimitiveDrawer::CreateMesh(kVertexCount, kIndexCount))
+        kIndexCount(subdivision * subdivision * 6)
     {
+        mesh = PrimitiveDrawer::CreateMesh(kVertexCount, kIndexCount);
         const float pi = 3.14159265358979323846f;
         // 経度分割1つ分の角度
         const float kLonEvery = pi * 2.0f / static_cast<float>(kSubdivision);
@@ -99,8 +99,6 @@ struct Sphere : public Object {
     const uint32_t kVertexCount;
     /// @brief インデックス数
     const uint32_t kIndexCount;
-    /// @brief メッシュ
-    const std::unique_ptr<Mesh> mesh;
 };
 
 } // namespace MyEngine
