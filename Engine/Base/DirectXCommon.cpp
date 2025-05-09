@@ -8,6 +8,7 @@
 
 #include "Common/Descriptors/DSV.h"
 #include "Common/Descriptors/RTV.h"
+#include "Math/Vector4.h"
 
 namespace MyEngine {
 
@@ -129,8 +130,7 @@ void DirectXCommon::ClearRenderTarget() {
     // 描画先のRTVを設定
     commandList_->OMSetRenderTargets(1, &rtvHandle_[backBufferIndex], false, nullptr);
     // 指定した色で画面全体をクリア
-    float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
-    commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor, 0, nullptr);
+    commandList_->ClearRenderTargetView(rtvHandle_[backBufferIndex], clearColor_, 0, nullptr);
 }
 
 void DirectXCommon::SetBarrier(D3D12_RESOURCE_BARRIER &barrier) {
@@ -139,6 +139,20 @@ void DirectXCommon::SetBarrier(D3D12_RESOURCE_BARRIER &barrier) {
     
     // Barrierの状態を更新
     currentBarrierState_ = barrier.Transition.StateAfter;
+}
+
+void DirectXCommon::SetClearColor(float r, float g, float b, float a) {
+    clearColor_[0] = r;
+    clearColor_[1] = g;
+    clearColor_[2] = b;
+    clearColor_[3] = a;
+}
+
+void DirectXCommon::SetClearColor(const Vector4 &color) {
+    clearColor_[0] = color.x;
+    clearColor_[1] = color.y;
+    clearColor_[2] = color.z;
+    clearColor_[3] = color.w;
 }
 
 void DirectXCommon::Resize(int32_t width, int32_t height) {

@@ -12,6 +12,7 @@ namespace MyEngine {
 
 // 前方宣言
 class WinApp;
+class DirectXCommon;
 class Drawer;
 class TextureManager;
 
@@ -33,6 +34,10 @@ public:
     /// @brief WinAppクラスのポインタ取得
     /// @return WinAppクラスのポインタ
     MyEngine::WinApp *GetWinApp() const;
+
+    /// @brief DirectXCommonクラスのポインタ取得
+    /// @return DirectXCommonクラスのポインタ
+    MyEngine::DirectXCommon *GetDxCommon() const;
 
     /// @brief 描画用クラスのポインタ取得
     /// @return 描画用クラスのポインタ

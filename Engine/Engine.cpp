@@ -114,6 +114,10 @@ MyEngine::WinApp *Engine::GetWinApp() const {
     return sWinApp.get();
 }
 
+MyEngine::DirectXCommon *Engine::GetDxCommon() const {
+    return sDxCommon.get();
+}
+
 MyEngine::Drawer *Engine::GetDrawer() const {
     return sDrawer.get();
 }

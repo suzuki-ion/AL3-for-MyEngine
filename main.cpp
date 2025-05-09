@@ -3,10 +3,13 @@
 #include <imgui.h>
 
 #include "Base/WinApp.h"
+#include "Base/DirectXCommon.h"
 #include "Base/Drawer.h"
 #include "Base/TextureManager.h"
 
 #include "Math/Camera.h"
+#include "Common/ConvertColor.h"
+
 #include "Objects/Triangle.h"
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
@@ -23,6 +26,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // WinAppクラスへのポインタ
     WinApp *winApp = engine->GetWinApp();
     winApp->SetSizeChangeMode(SizeChangeMode::kFixedAspect);
+    // DirectXCommonクラスへのポインタ
+    DirectXCommon *dxCommon = engine->GetDxCommon();
     // 描画用クラスへのポインタ
     Drawer *drawer = engine->GetDrawer();
     // テクスチャ管理クラスへのポインタ
@@ -44,14 +49,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         Vector3( 0.0f, 0.0f, 0.0f ),
         Vector3( 1.0f, 1.0f, 1.0f )
     );
+    // デバッグカメラの有効化フラグ
+    bool isUseDebugCamera = false;
+
+    //==================================================
+    // 背景の色
+    //==================================================
+
+    Vector4 clearColor = { 128.0f, 192.0f, 256.0f, 255.0f };
 
     //==================================================
     // 平行光源
     //==================================================
 
     DirectionalLight directionalLight = {
-        { 255.0f, 255.0f, 255.0f, 255.0f },
-        { 0.0f, -1.0f, 0.0f },
+        { 255.0f, 192.0f, 224.0f, 255.0f },
+        { 0.5f, -0.75f, 0.5f },
         1.0f
     };
 
@@ -136,7 +149,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 球体
     //==================================================
 
-    Sphere sphere(8);
+    Sphere sphere(16);
     sphere.transform = {
         { 1.0f, 1.0f, 1.0f },
         { 0.0f, 0.0f, 0.0f },
@@ -150,7 +163,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // テクスチャを設定
     sphere.useTextureIndex = 0;
     // 法線の種類
-    sphere.normalType = kNormalTypeFace;
+    sphere.normalType = kNormalTypeVertex;
 
     //==================================================
     // ビルボード
@@ -205,6 +218,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         engine->BeginFrame();
 
         ImGui::Begin("Objects");
+
+        // デバッグカメラの有効化
+        if (ImGui::Checkbox("DebugCamera", &isUseDebugCamera)) {
+            drawer->ToggleDebugCamera();
+        }
+
+        // 背景色
+        ImGui::DragFloat4("ClearColor", &clearColor.x, 1.0f, 0.0f, 255.0f);
 
         // 平行光源
         if (ImGui::TreeNode("Directional Light")) {
@@ -314,15 +335,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::End();
 
         // カメラをいじれるようにする
-        camera->MoveToMouse(0.01f, 0.01f, 0.1f);
+        /*if (!drawer->IsUseDebugCamera()) {
+            camera->MoveToMouse(0.01f, 0.01f, 0.1f);
+        }*/
+
+        // 背景色を設定
+        dxCommon->SetClearColor(ConvertColor(clearColor));
 
         // 平行光源を設定
         drawer->SetLight(&directionalLight);
 
-        //drawer->Draw(&triangle1);
-        //drawer->Draw(&triangle2);
-        //drawer->Draw(&sphere);
-        //drawer->Draw(&billboard);
+        drawer->Draw(&triangle1);
+        drawer->Draw(&triangle2);
+        drawer->Draw(&sphere);
+        drawer->Draw(&billboard);
         //drawer->Draw(&sprite);
         drawer->Draw(&modelData);
 

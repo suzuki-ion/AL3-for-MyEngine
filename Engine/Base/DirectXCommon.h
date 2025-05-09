@@ -9,6 +9,7 @@ namespace MyEngine {
 
 // 前方宣言
 class WinApp;
+struct Vector4;
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -27,6 +28,14 @@ public:
     /// @brief バリアを張る
     /// @param barrier バリアの設定
     void SetBarrier(D3D12_RESOURCE_BARRIER &barrier);
+
+    /// @brief レンダーターゲットのクリア色を設定
+    /// @param r 赤
+    /// @param g 緑
+    /// @param b 青
+    /// @param a 透明度
+    void SetClearColor(float r, float g, float b, float a);
+    void SetClearColor(const Vector4 &color);
 
     /// @brief サイズ変更
     /// @param width 新しい横幅
@@ -125,6 +134,11 @@ private:
 
     /// @brief 現在のBarrierState
     D3D12_RESOURCE_STATES currentBarrierState_;
+
+    //--------- 色 ---------//
+
+    /// @brief レンダーターゲットのクリアカラー
+    float clearColor_[4] = { 0.1f, 0.25f, 0.5f, 1.0f };
 
     //--------- 各種初期化用関数 ---------//
 

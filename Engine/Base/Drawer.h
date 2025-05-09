@@ -45,6 +45,15 @@ public:
     /// @brief 描画終了処理
     void PostDraw();
 
+    /// @brief デバッグカメラの切り替え
+    void ToggleDebugCamera();
+
+    /// @brief デバッグカメラが有効かどうか
+    /// @return 有効ならtrue、無効ならfalse
+    bool IsUseDebugCamera() const {
+        return isUseDebugCamera_;
+    }
+
     /// @brief 平行光源の設定
     /// @param light 平行光源へのポインタ
     void SetLight(DirectionalLight *light);
@@ -81,6 +90,8 @@ private:
 
     /// @brief ライトデータ設定用のポインタ
     DirectionalLight *directionalLightData_ = nullptr;
+    /// @brief デバッグカメラ使用フラグ
+    bool isUseDebugCamera_ = false;
 
     /// @brief 2D描画用のビュー行列
     Matrix4x4 viewMatrix2D_;

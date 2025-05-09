@@ -24,6 +24,13 @@
 
 namespace MyEngine {
 
+namespace {
+
+/// @brief デバッグカメラの初期化
+std::unique_ptr<Camera> sDebugCamera;
+
+} // namespace
+
 Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager, TextureManager *textureManager) {
     // nullチェック
     if (!winApp) {
@@ -59,6 +66,14 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManag
         100.0f
     );
 
+    // デバッグカメラの初期化
+    sDebugCamera = std::make_unique<Camera>(
+        winApp_,
+        Vector3(0.0f, 0.0f, -5.0f),
+        Vector3(0.0f, 0.0f, 0.0f),
+        Vector3(1.0f, 1.0f, 1.0f)
+    );
+
     // 初期化完了のログを出力
     Log("Drawer Initialized.");
     LogNewLine();
@@ -69,6 +84,8 @@ Drawer::~Drawer() {
     winApp_ = nullptr;
     dxCommon_ = nullptr;
     imguiManager_ = nullptr;
+    // デバッグカメラ解放
+    sDebugCamera.reset();
     // 終了処理完了のログを出力
     Log("Drawer Finalized.");
 }
@@ -88,8 +105,8 @@ void Drawer::PreDraw() {
     // ビューポート
     D3D12_VIEWPORT viewport{};
     // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = static_cast<float>(winApp_->GetClientWidth());
-    viewport.Height = static_cast<float>(winApp_->GetClientHeight());
+    viewport.Width = 1280.0f;//static_cast<float>(winApp_->GetClientWidth());
+    viewport.Height = 720.0f;//static_cast<float>(winApp_->GetClientHeight());
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
@@ -99,9 +116,9 @@ void Drawer::PreDraw() {
     D3D12_RECT scissorRect{};
     // 基本的にビューポートと同じ矩形が構成されるようにする
     scissorRect.left = 0;
-    scissorRect.right = winApp_->GetClientWidth();
+    scissorRect.right = 1280.0f;//winApp_->GetClientWidth();
     scissorRect.top = 0;
-    scissorRect.bottom = winApp_->GetClientHeight();
+    scissorRect.bottom = 720.0f;//winApp_->GetClientHeight();
 
     // コマンドを積む
     dxCommon_->GetCommandList()->RSSetViewports(1, &viewport);          // ビューポートを設定
@@ -111,11 +128,21 @@ void Drawer::PreDraw() {
     // ルートシグネチャを設定。PSOに設定しているけど別途設定が必要
     dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet->rootSignature.Get());
     dxCommon_->GetCommandList()->SetPipelineState(pipelineSet->pipelineState.Get());    // PSOを設定
+
+    // デバッグカメラが有効ならデバッグカメラの処理
+    if (isUseDebugCamera_) {
+        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.1f);
+    }
 }
 
 void Drawer::PostDraw() {
     imguiManager_->EndFrame();
     dxCommon_->PostDraw();
+}
+
+void Drawer::ToggleDebugCamera() {
+    // デバッグカメラのトグル
+    isUseDebugCamera_ = !isUseDebugCamera_;
 }
 
 void Drawer::SetLight(DirectionalLight *light) {
@@ -176,9 +203,15 @@ void Drawer::Draw(Triangle *triangle) {
         triangle->transformationMatrixMap->wvp = wvpMatrix2D_;
         triangle->transformationMatrixMap->world = triangle->worldMatrix;
     } else {
-        triangle->camera->SetWorldMatrix(triangle->worldMatrix);
-        triangle->camera->CalculateMatrix();
-        triangle->transformationMatrixMap->wvp = triangle->camera->GetWVPMatrix();
+        if (isUseDebugCamera_) {
+            sDebugCamera->SetWorldMatrix(triangle->worldMatrix);
+            sDebugCamera->CalculateMatrix();
+            triangle->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+        } else {
+            triangle->camera->SetWorldMatrix(triangle->worldMatrix);
+            triangle->camera->CalculateMatrix();
+            triangle->transformationMatrixMap->wvp = triangle->camera->GetWVPMatrix();
+        }
         triangle->transformationMatrixMap->world = triangle->worldMatrix;
     }
 
@@ -247,9 +280,15 @@ void Drawer::Draw(Sprite *sprite) {
         sprite->transformationMatrixMap->wvp = wvpMatrix2D_;
         sprite->transformationMatrixMap->world = sprite->worldMatrix;
     } else {
-        sprite->camera->SetWorldMatrix(sprite->worldMatrix);
-        sprite->camera->CalculateMatrix();
-        sprite->transformationMatrixMap->wvp = sprite->camera->GetWVPMatrix();
+        if (isUseDebugCamera_) {
+            sDebugCamera->SetWorldMatrix(sprite->worldMatrix);
+            sDebugCamera->CalculateMatrix();
+            sprite->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+        } else {
+            sprite->camera->SetWorldMatrix(sprite->worldMatrix);
+            sprite->camera->CalculateMatrix();
+            sprite->transformationMatrixMap->wvp = sprite->camera->GetWVPMatrix();
+        }
         sprite->transformationMatrixMap->world = sprite->worldMatrix;
     }
 
@@ -348,9 +387,15 @@ void Drawer::Draw(Sphere *sphere) {
         sphere->transformationMatrixMap->wvp = wvpMatrix2D_;
         sphere->transformationMatrixMap->world = sphere->worldMatrix;
     } else {
-        sphere->camera->SetWorldMatrix(sphere->worldMatrix);
-        sphere->camera->CalculateMatrix();
-        sphere->transformationMatrixMap->wvp = sphere->camera->GetWVPMatrix();
+        if (isUseDebugCamera_) {
+            sDebugCamera->SetWorldMatrix(sphere->worldMatrix);
+            sDebugCamera->CalculateMatrix();
+            sphere->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+        } else {
+            sphere->camera->SetWorldMatrix(sphere->worldMatrix);
+            sphere->camera->CalculateMatrix();
+            sphere->transformationMatrixMap->wvp = sphere->camera->GetWVPMatrix();
+        }
         sphere->transformationMatrixMap->world = sphere->worldMatrix;
     }
 
@@ -422,9 +467,15 @@ void Drawer::Draw(BillBoard *billboard) {
         Log("BillBoard camera is null.", kLogLevelFlagError);
         assert(false);
     }
-    billboard->camera->SetWorldMatrix(billboard->worldMatrix);
-    billboard->camera->CalculateMatrix();
-    billboard->transformationMatrixMap->wvp = billboard->camera->GetWVPMatrix();
+    if (isUseDebugCamera_) {
+        sDebugCamera->SetWorldMatrix(billboard->worldMatrix);
+        sDebugCamera->CalculateMatrix();
+        billboard->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+    } else {
+        billboard->camera->SetWorldMatrix(billboard->worldMatrix);
+        billboard->camera->CalculateMatrix();
+        billboard->transformationMatrixMap->wvp = billboard->camera->GetWVPMatrix();
+    }
     billboard->transformationMatrixMap->world = billboard->worldMatrix;
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
@@ -470,9 +521,15 @@ void Drawer::Draw(ModelData *model) {
         model->transformationMatrixMap->wvp = wvpMatrix2D_;
         model->transformationMatrixMap->world = model->worldMatrix;
     } else {
-        model->camera->SetWorldMatrix(model->worldMatrix);
-        model->camera->CalculateMatrix();
-        model->transformationMatrixMap->wvp = model->camera->GetWVPMatrix();
+        if (isUseDebugCamera_) {
+            sDebugCamera->SetWorldMatrix(model->worldMatrix);
+            sDebugCamera->CalculateMatrix();
+            model->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+        } else {
+            model->camera->SetWorldMatrix(model->worldMatrix);
+            model->camera->CalculateMatrix();
+            model->transformationMatrixMap->wvp = model->camera->GetWVPMatrix();
+        }
         model->transformationMatrixMap->world = model->worldMatrix;
     }
 
