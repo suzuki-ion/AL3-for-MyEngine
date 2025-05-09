@@ -1,3 +1,5 @@
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
 #include <Windows.h>
 #include <cassert>
 #include <format>
@@ -9,6 +11,9 @@
 #include "Common/Descriptors/DSV.h"
 #include "Common/Descriptors/RTV.h"
 #include "Math/Vector4.h"
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
 
 namespace MyEngine {
 

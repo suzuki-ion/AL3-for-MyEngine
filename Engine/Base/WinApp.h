@@ -17,6 +17,10 @@ public:
     WinApp(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height);
     ~WinApp();
 
+    /// @brief ウィンドウクラス取得
+    /// @return ウィンドウクラス
+    WNDCLASS GetWindowClass() const { return wc_; }
+
     /// @brief ウィンドウハンドル取得
     /// @return ウィンドウハンドル
     HWND GetWindowHandle() const { return hwnd_; }

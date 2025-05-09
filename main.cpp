@@ -6,6 +6,7 @@
 #include "Base/DirectXCommon.h"
 #include "Base/Drawer.h"
 #include "Base/TextureManager.h"
+#include "Base/InputManager.h"
 
 #include "Math/Camera.h"
 #include "Common/ConvertColor.h"
@@ -216,6 +217,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // ウィンドウのxボタンが押されるまでループ
     while (engine->ProccessMessage() != -1) {
         engine->BeginFrame();
+        InputManager::Update();
+
+        // F3キーでデバッグカメラの有効化
+        if (InputManager::IsKeyDown(DIK_F3) && !InputManager::IsPreKeyDown(DIK_F3)) {
+            isUseDebugCamera = !isUseDebugCamera;
+            drawer->ToggleDebugCamera();
+        }
 
         ImGui::Begin("Objects");
 
