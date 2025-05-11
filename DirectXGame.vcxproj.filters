@@ -295,4 +295,7 @@
   <ItemGroup>
     <None Include="Engine\Shader\Object3d.hlsli" />
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="DpiAwarenessPerMonitor.manifest" />
+  </ItemGroup>
 </Project>

@@ -107,6 +107,10 @@ Engine::~Engine() {
 }
 
 void Engine::BeginFrame() {
+    // ウィンドウのサイズ変更がされてたら他の場所でも適応させる
+    if (sWinApp->IsSizing()) {
+        sDxCommon->Resize();
+    }
     sDrawer->PreDraw();
 }
 

@@ -8,8 +8,9 @@
 #include "WinApp.h"
 #include "Common/Logs.h"
 
-#include "Common/Descriptors/DSV.h"
 #include "Common/Descriptors/RTV.h"
+#include "Common/Descriptors/SRV.h"
+#include "Common/Descriptors/DSV.h"
 #include "Math/Vector4.h"
 
 #pragma comment(lib, "dinput8.lib")
@@ -160,9 +161,18 @@ void DirectXCommon::SetClearColor(const Vector4 &color) {
     clearColor_[3] = color.w;
 }
 
-void DirectXCommon::Resize(int32_t width, int32_t height) {
+void DirectXCommon::Resize() {
+    for (UINT i = 0; i < 2; ++i) {
+        swapChainResources_[i] = nullptr;
+    }
     // スワップチェインのサイズを変更
-    HRESULT hr = swapChain_->ResizeBuffers(2, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+    HRESULT hr = swapChain_->ResizeBuffers(
+        2,
+        static_cast<UINT>(winApp_->GetClientWidth()),
+        static_cast<UINT>(winApp_->GetClientHeight()),
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+    );
     // スワップチェインのサイズ変更が成功したかをチェック
     assert(SUCCEEDED(hr));
     // スワップチェインからのリソースを再生成
@@ -171,11 +181,9 @@ void DirectXCommon::Resize(int32_t width, int32_t height) {
     RTV::Initialize(this);
     // DSVの初期化
     DSV::Initialize(winApp_, this);
-    // スワップチェインからのリソースの生成
-    InitializeSwapChainResources();
-    // RTVのハンドルを初期化
+    // RTVハンドルの初期化
     InitializeRTVHandle();
-    // DSVのハンドルを初期化
+    // DSVハンドルの初期化
     InitializeDSVHandle();
 }
 
@@ -216,15 +224,14 @@ void DirectXCommon::CommandExecute() {
     assert(SUCCEEDED(hr));
 }
 
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+void DirectXCommon::CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> &descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
+    descriptorHeap = nullptr;
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
     descriptorHeapDesc.Type = heapType;
     descriptorHeapDesc.NumDescriptors = numDescriptors;
     descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     HRESULT hr = device_->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
     assert(SUCCEEDED(hr));
-    return descriptorHeap;
 }
 
 void DirectXCommon::InitializeDXGI() {
@@ -433,24 +440,41 @@ void DirectXCommon::InitializeSwapChainResources() {
 }
 
 void DirectXCommon::InitializeRTVHandle() {
+    static bool isInitialized = false;
+
     rtvDesc_.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;       // 出力結果をSRGBに変換して書き込む
     rtvDesc_.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;  // 2Dテクスチャとして書き込む
 
     // RTVの1つ目を作成。1つ目は最初のところに作る。作る場所をこちらで設定してあげる必要がある
-    rtvHandle_[0] = RTV::GetCPUDescriptorHandle();
+    rtvHandle_[0] = RTV::GetCPUDescriptorHandle(0);
     device_->CreateRenderTargetView(swapChainResources_[0].Get(), &rtvDesc_, rtvHandle_[0]);
 
     // 2つ目のディスクリプタハンドルを得る
-    rtvHandle_[1] = RTV::GetCPUDescriptorHandle();
+    rtvHandle_[1] = RTV::GetCPUDescriptorHandle(1);
     // RTVの2つ目を作成。
     device_->CreateRenderTargetView(swapChainResources_[1].Get(), &rtvDesc_, rtvHandle_[1]);
+
+    // 初期化完了のログを出力
+    if (!isInitialized) {
+        Log("Complete Initialize RTV Handle.");
+        isInitialized = true;
+    } else {
+        Log("Reinitialize RTV Handle.");
+    }
 }
 
 void DirectXCommon::InitializeDSVHandle() {
-    dsvHandle_ = DSV::GetCPUDescriptorHandle();
+    static bool isInitialized = false;
+
+    dsvHandle_ = DSV::GetCPUDescriptorHandle(0);
 
     // 初期化完了のログを出力
-    Log("Complete Initialize DSV Handle.");
+    if (!isInitialized) {
+        Log("Complete Initialize DSV Handle.");
+        isInitialized = true;
+    } else {
+        Log("Reinitialize DSV Handle.");
+    }
 }
 
 void DirectXCommon::InitializeFence() {

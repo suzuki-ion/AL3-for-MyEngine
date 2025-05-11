@@ -37,6 +37,10 @@ public:
     /// @return サイズ変更モード
     SizeChangeMode GetSizeChangeMode() const { return sizeChangeMode_; }
 
+    /// @brief ウィンドウがサイズ変更されたかどうか
+    /// @return true:サイズ変更された false:サイズ変更されていない
+    bool IsSizing() { return isSizing_; }
+
     /// @brief サイズ変更モードの設定
     /// @param mode サイズ変更モード
     void SetSizeChangeMode(SizeChangeMode mode);
@@ -64,6 +68,8 @@ private:
     SizeChangeMode sizeChangeMode_ = SizeChangeMode::kNone;
     /// @brief アスペクト比
     float aspectRatio_;
+    /// @brief サイズ変更フラグ
+    bool isSizing_ = false;
 
     /// @brief ウィンドウプロシージャ
     /// @param hwnd ウィンドウハンドル

@@ -71,22 +71,18 @@ namespace {
 void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
-    // 初期化済みフラグをチェック
-    if (isInitialized_) {
-        Log("DSV is already initialized.", kLogLevelFlagError);
-        assert(false);
-    }
 
-    // nullチェック
-    if (dxCommon == nullptr) {
-        Log("dxCommon is null.", kLogLevelFlagError);
-        assert(false);
-    }
+    // 初回だけnullチェックと変数の初期化をする
+    if (!isInitialized_) {
+        // nullチェック
+        if (dxCommon == nullptr) {
+            Log("dxCommon is null.", kLogLevelFlagError);
+            assert(false);
+        }
 
-    // 引数をメンバ変数に格納
-    dxCommon_ = dxCommon;
-    // 初期化済みフラグを立てる
-    isInitialized_ = true;
+        // 引数をメンバ変数に格納
+        dxCommon_ = dxCommon;
+    }
 
     //==================================================
     // 深度ステンシルビュー用のリソースを生成
@@ -103,7 +99,8 @@ void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_
     //==================================================
 
     // DSV用のヒープでディスクリプタの数は1。DSVはShader内で触るものではないので、ShaderVisibleはfalse
-    descriptorHeap_ = dxCommon_->CreateDescriptorHeap(
+    dxCommon_->CreateDescriptorHeap(
+        descriptorHeap_,
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
         numDescriptors_,
         false
@@ -122,7 +119,13 @@ void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_
     );
 
     // 初期化完了のログを出力
-    LogSimple("Complete Initialize DSV.", kLogLevelFlagInfo);
+    if (!isInitialized_) {
+        LogSimple("Complete Initialize DSV.", kLogLevelFlagInfo);
+        // 初期化済みフラグを立てる
+        isInitialized_ = true;
+    } else {
+        LogSimple("Reinitialize DSV.", kLogLevelFlagInfo);
+    }
 }
 
 void DSV::Finalize(const std::source_location &location) {

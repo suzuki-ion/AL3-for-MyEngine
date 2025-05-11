@@ -29,11 +29,6 @@ public:
         const std::source_location &location = std::source_location::current()
     );
 
-    /// @brief 再生成処理
-    static void Recreate(
-        const std::source_location &location = std::source_location::current()
-    );
-
     /// @brief 終了処理
     static void Finalize(
         const std::source_location &location = std::source_location::current()

@@ -35,22 +35,23 @@ public:
     /// @param b 青
     /// @param a 透明度
     void SetClearColor(float r, float g, float b, float a);
+
+    /// @brief レンダーターゲットのクリア色を設定
+    /// @param color RGBA
     void SetClearColor(const Vector4 &color);
 
-    /// @brief サイズ変更
-    /// @param width 新しい横幅
-    /// @param height 新しい縦幅
-    void Resize(int32_t width, int32_t height);
+    /// @brief ウィンドウサイズ変更適応
+    void Resize();
 
     /// @brief コマンドの実行
     void CommandExecute();
 
     /// @brief ディスクリプタヒープの作成
+    /// @param descriptorHeap ディスクリプタヒープへのポインタ
     /// @param heapType ヒープの種類
     /// @param numDescriptors ディスクリプタの数
     /// @param shaderVisible シェーダーから見えるかどうか
-    /// @return ディスクリプタヒープのポインタ
-    [[nodiscard]] Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
+    void CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> &descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
 
     /// @brief D3D12デバイス取得
     /// @return D3D12デバイス

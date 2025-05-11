@@ -16,6 +16,10 @@ public:
     ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon);
     ~ImGuiManager();
 
+    /// @brief ImGuiのウィンドウ作成
+    /// @param name ウィンドウの名前
+    static void Begin(const char *name);
+
     /// @brief ImGuiのフレーム開始処理
     void BeginFrame();
 

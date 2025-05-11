@@ -8,6 +8,8 @@
 #include "Base/TextureManager.h"
 #include "Base/Input.h"
 
+#include "2d/ImGuiManager.h"
+
 #include "Math/Camera.h"
 #include "Common/ConvertColor.h"
 
@@ -23,11 +25,11 @@ using namespace MyEngine;
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // エンジンのインスタンスを作成
-    std::unique_ptr<Engine> engine = std::make_unique<Engine>("MyEngine", 1280, 720, true);
+    std::unique_ptr<Engine> engine = std::make_unique<Engine>("MyEngine", 1920, 1080, true);
 
     // WinAppクラスへのポインタ
     WinApp *winApp = engine->GetWinApp();
-    winApp->SetSizeChangeMode(SizeChangeMode::kFixedAspect);
+    winApp->SetSizeChangeMode(SizeChangeMode::kNormal);
     // DirectXCommonクラスへのポインタ
     DirectXCommon *dxCommon = engine->GetDxCommon();
     // 描画用クラスへのポインタ
@@ -261,18 +263,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             blendMode = kBlendModeExclusion;
         }
 
-        ImGui::Begin("Objects");
+        ImGuiManager::Begin("オブジェクト");
 
         // デバッグカメラの有効化
-        if (ImGui::Checkbox("DebugCamera", &isUseDebugCamera)) {
+        if (ImGui::Checkbox("デバッグカメラ有効化", &isUseDebugCamera)) {
             drawer->ToggleDebugCamera();
         }
 
         // 背景色
-        ImGui::DragFloat4("ClearColor", &clearColor.x, 1.0f, 0.0f, 255.0f);
+        ImGui::DragFloat4("背景色", &clearColor.x, 1.0f, 0.0f, 255.0f);
 
         // 平行光源
-        if (ImGui::TreeNode("Directional Light")) {
+        if (ImGui::TreeNode("平行光源")) {
             ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
             ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, ImGuiColorEditFlags_Uint8);
             ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f, 0.0f, 1.0f);
@@ -280,7 +282,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // 三角形1
-        if (ImGui::TreeNode("Triangle1")) {
+        if (ImGui::TreeNode("三角形1")) {
             ImGui::DragFloat3("Triangle1 Translate", &triangle1.transform.translate.x, 0.01f);
             ImGui::DragFloat3("Triangle1 Rotate", &triangle1.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("Triangle1 Scale", &triangle1.transform.scale.x, 0.01f);
@@ -296,7 +298,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // 三角形2
-        if (ImGui::TreeNode("Triangle2")) {
+        if (ImGui::TreeNode("三角形2")) {
             ImGui::DragFloat3("Triangle2 Translate", &triangle2.transform.translate.x, 0.01f);
             ImGui::DragFloat3("Triangle2 Rotate", &triangle2.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("Triangle2 Scale", &triangle2.transform.scale.x, 0.01f);
@@ -312,7 +314,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // スプライト
-        if (ImGui::TreeNode("Sprite")) {
+        if (ImGui::TreeNode("スプライト")) {
             ImGui::DragFloat3("Sprite Translate", &sprite.transform.translate.x, 0.01f);
             ImGui::DragFloat3("Sprite Rotate", &sprite.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("Sprite Scale", &sprite.transform.scale.x, 0.01f);
@@ -328,7 +330,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // 球体
-        if (ImGui::TreeNode("Sphere")) {
+        if (ImGui::TreeNode("球体")) {
             ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.01f);
             ImGui::DragFloat3("Sphere Rotate", &sphere.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
@@ -345,7 +347,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // ビルボード
-        if (ImGui::TreeNode("Billboard")) {
+        if (ImGui::TreeNode("ビルボード")) {
             ImGui::DragFloat3("Billboard Translate", &billboard.transform.translate.x, 0.01f);
             ImGui::DragFloat3("Billboard Rotate", &billboard.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("Billboard Scale", &billboard.transform.scale.x, 0.01f);
@@ -390,7 +392,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         drawer->SetBlendMode(blendMode);
 
         // 平行光源を設定
-        //drawer->SetLight(&directionalLight);
+        drawer->SetLight(&directionalLight);
 
         drawer->DrawSet(&triangle1);
         drawer->DrawSet(&triangle2);

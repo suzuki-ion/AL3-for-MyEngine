@@ -14,57 +14,38 @@ uint32_t RTV::nextIndexGPU_ = 0;
 void RTV::Initialize(DirectXCommon *dxCommon, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
-    // 初期化済みフラグをチェック
-    if (isInitialized_) {
-        Log("RTV is already initialized.", kLogLevelFlagError);
-        assert(false);
-    }
 
-    // nullチェック
-    if (dxCommon == nullptr) {
-        Log("dxCommon is null.", kLogLevelFlagError);
-        assert(false);
-    }
+    // 初回だけnullチェックと変数の初期化をする
+    if (!isInitialized_) {
+        // nullチェック
+        if (dxCommon == nullptr) {
+            Log("dxCommon is null.", kLogLevelFlagError);
+            assert(false);
+        }
 
-    // 引数をメンバ変数に格納
-    dxCommon_ = dxCommon;
-    // 初期化済みフラグを立てる
-    isInitialized_ = true;
+        // 引数をメンバ変数に格納
+        dxCommon_ = dxCommon;
+    }
 
     //==================================================
     // RTV用のヒープを生成
     //==================================================
     
-    descriptorHeap_ = dxCommon_->CreateDescriptorHeap(
+    dxCommon_->CreateDescriptorHeap(
+        descriptorHeap_,
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
         numDescriptors_,
         false
     );
 
     // 初期化完了のログを出力
-    LogSimple("Complete Initialize RTV.", kLogLevelFlagInfo);
-}
-
-void RTV::Recreate(const std::source_location &location) {
-    // 呼び出された場所のログを出力
-    Log(location);
-    // 初期化済みフラグをチェック
     if (!isInitialized_) {
-        Log("RTV is not initialized.", kLogLevelFlagError);
-        assert(false);
+        LogSimple("Complete Initialize RTV.", kLogLevelFlagInfo);
+        // 初期化済みフラグを立てる
+        isInitialized_ = true;
+    } else {
+        LogSimple("Reinitialize RTV.", kLogLevelFlagInfo);
     }
-
-    // ディスクリプタヒープの解放
-    descriptorHeap_.Reset();
-    // RTV用のヒープを生成
-    descriptorHeap_ = dxCommon_->CreateDescriptorHeap(
-        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-        numDescriptors_,
-        false
-    );
-
-    // 再初期化完了のログを出力
-    LogSimple("Complete Recreate RTV.", kLogLevelFlagInfo);
 }
 
 void RTV::Finalize(const std::source_location &location) {

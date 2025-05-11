@@ -41,6 +41,10 @@ ImGuiManager::ImGuiManager(WinApp *winApp, DirectXCommon *dxCommon) {
         SRV::GetGPUDescriptorHandle()
     );
 
+    // 日本語フォントを設定
+    ImGuiIO &io = ImGui::GetIO();
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\meiryo.ttc", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+
     // 初期化完了のログを出力
     Log("ImGuiManager Initialized.");
     LogNewLine();
@@ -54,6 +58,13 @@ ImGuiManager::~ImGuiManager() {
     // 終了処理完了のログを出力
     Log("ImGuiManager Finalized.");
     LogNewLine();
+}
+
+void ImGuiManager::Begin(const char *name) {
+    ImGui::Begin(name);
+    // ImGui上でのフォントサイズを設定
+    auto dpi = GetDpiForSystem();
+    ImGui::SetWindowFontScale(static_cast<float>(dpi) / 96.0f);
 }
 
 void ImGuiManager::BeginFrame() {

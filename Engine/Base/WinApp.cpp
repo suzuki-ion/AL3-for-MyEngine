@@ -120,6 +120,7 @@ void WinApp::SetSizeChangeMode(SizeChangeMode mode) {
 }
 
 int WinApp::ProccessMessage() {
+    isSizing_ = false;
     if (msg_.message == WM_QUIT) {
         LogNewLine();
         Log("Window Quit.");
@@ -180,6 +181,7 @@ LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             }
 
             InvalidateRect(hwnd, NULL, TRUE);
+            winApp->isSizing_ = true;
             return TRUE;
     }
 

@@ -14,35 +14,38 @@ uint32_t SRV::nextIndexGPU_ = 0;
 void SRV::Initialize(DirectXCommon *dxCommon, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
-    // 初期化済みフラグをチェック
-    if (isInitialized_) {
-        Log("SRV is already initialized.", kLogLevelFlagError);
-        assert(false);
-    }
+    
+    // 初回だけnullチェックと変数の初期化をする
+    if (!isInitialized_) {
+        // nullチェック
+        if (dxCommon == nullptr) {
+            Log("dxCommon is null.", kLogLevelFlagError);
+            assert(false);
+        }
 
-    // nullチェック
-    if (dxCommon == nullptr) {
-        Log("dxCommon is null.", kLogLevelFlagError);
-        assert(false);
+        // 引数をメンバ変数に格納
+        dxCommon_ = dxCommon;
     }
-
-    // 引数をメンバ変数に格納
-    dxCommon_ = dxCommon;
-    // 初期化済みフラグを立てる
-    isInitialized_ = true;
 
     //==================================================
     // SRV用のヒープを生成
     //==================================================
 
-    descriptorHeap_ = dxCommon_->CreateDescriptorHeap(
+    dxCommon_->CreateDescriptorHeap(
+        descriptorHeap_,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
         numDescriptors_,
         true
     );
 
     // 初期化完了のログを出力
-    LogSimple("Complete Initialize SRV.", kLogLevelFlagInfo);
+    if (!isInitialized_) {
+        LogSimple("Complete Initialize SRV.", kLogLevelFlagInfo);
+        // 初期化済みフラグを立てる
+        isInitialized_ = true;
+    } else {
+        LogSimple("Reinitialize SRV.", kLogLevelFlagInfo);
+    }
 }
 
 void SRV::Finalize(const std::source_location &location) {

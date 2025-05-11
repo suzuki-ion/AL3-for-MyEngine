@@ -118,20 +118,6 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManag
     pipelineSet_[kFillModeWireframe][kBlendModeExclusion] =
         PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeExclusion);
 
-    // ビューポートの設定
-    viewport_.Width = static_cast<FLOAT>(winApp_->GetClientWidth());
-    viewport_.Height = static_cast<FLOAT>(winApp_->GetClientHeight());
-    viewport_.TopLeftX = 0;
-    viewport_.TopLeftY = 0;
-    viewport_.MinDepth = 0.0f;
-    viewport_.MaxDepth = 1.0f;
-
-    // シザー矩形の設定
-    scissorRect_.left = 0;
-    scissorRect_.right = static_cast<LONG>(winApp_->GetClientWidth());
-    scissorRect_.top = 0;
-    scissorRect_.bottom = static_cast<LONG>(winApp_->GetClientHeight());
-
     // 初期化完了のログを出力
     Log("Drawer Initialized.");
     LogNewLine();
@@ -162,9 +148,23 @@ void Drawer::PreDraw() {
 
     // 平行光源をリセット
     directionalLight_ = nullptr;
-
     // ブレンドモードを設定
     blendMode_ = kBlendModeNormal;
+
+    // ビューポートの設定
+    viewport_.Width = static_cast<FLOAT>(winApp_->GetClientWidth());
+    viewport_.Height = static_cast<FLOAT>(winApp_->GetClientHeight());
+    viewport_.TopLeftX = 0;
+    viewport_.TopLeftY = 0;
+    viewport_.MinDepth = 0.0f;
+    viewport_.MaxDepth = 1.0f;
+
+    // シザー矩形の設定
+    scissorRect_.left = 0;
+    scissorRect_.right = static_cast<LONG>(winApp_->GetClientWidth());
+    scissorRect_.top = 0;
+    scissorRect_.bottom = static_cast<LONG>(winApp_->GetClientHeight());
+
     // コマンドを積む
     dxCommon_->GetCommandList()->RSSetViewports(1, &viewport_);         // ビューポートを設定
     dxCommon_->GetCommandList()->RSSetScissorRects(1, &scissorRect_);   // シザー矩形を設定
