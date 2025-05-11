@@ -11,24 +11,6 @@
 
 namespace MyEngine {
 
-namespace {
-
-// ref: https://devblogs.microsoft.com/oldnewthing/20131017-00/?p=2903
-BOOL UnadjustWindowRectEx(LPRECT prc, DWORD dwStyle, BOOL fMenu, DWORD dwExStyle) {
-    RECT rc;
-    SetRectEmpty(&rc);
-    BOOL fRc = AdjustWindowRectEx(&rc, dwStyle, fMenu, dwExStyle);
-    if (fRc) {
-        prc->left -= rc.left;
-        prc->top -= rc.top;
-        prc->right -= rc.right;
-        prc->bottom -= rc.bottom;
-    }
-    return fRc;
-}
-
-} // namespace
-
 WinApp::WinApp(const std::wstring &title, UINT windowStyle, int32_t width, int32_t height) {
     //==================================================
     // ウィンドウの初期化
@@ -176,33 +158,29 @@ LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             if (winApp->GetSizeChangeMode() == SizeChangeMode::kFixedAspect) {
                 float aspectRatio = winApp->aspectRatio_;
                 float aspectRatioRecp = 1.0f / aspectRatio;
-                RECT *wrc = reinterpret_cast<RECT *>(&lparam);
-                UnadjustWindowRectEx(wrc, GetWindowLong(hwnd, GWL_STYLE), GetMenu(hwnd) != 0,
-                    GetWindowLong(hwnd, GWL_EXSTYLE));
+                RECT *wrc = reinterpret_cast<RECT *>(lparam);
 
                 switch (wparam) {
                     case WMSZ_LEFT:
                     case WMSZ_BOTTOMLEFT:
                     case WMSZ_RIGHT:
                     case WMSZ_BOTTOMRIGHT:
-                        wrc->bottom = wrc->top + LONG((wrc->right - wrc->left) * aspectRatioRecp);
+                        wrc->bottom = wrc->top + static_cast<LONG>((wrc->right - wrc->left) * aspectRatioRecp);
                         break;
-
                     case WMSZ_TOP:
                     case WMSZ_TOPRIGHT:
                     case WMSZ_BOTTOM:
-                        wrc->right = wrc->left + LONG((wrc->bottom - wrc->top) * aspectRatio);
+                        wrc->right = wrc->left + static_cast<LONG>((wrc->bottom - wrc->top) * aspectRatio);
                         break;
-
                     case WMSZ_TOPLEFT:
-                        wrc->top = wrc->bottom - LONG((wrc->right - wrc->left) * aspectRatioRecp);
-                        wrc->left = wrc->right - LONG((wrc->bottom - wrc->top) * aspectRatio);
+                        wrc->top = wrc->bottom - static_cast<LONG>((wrc->right - wrc->left) * aspectRatioRecp);
+                        wrc->left = wrc->right - static_cast<LONG>((wrc->bottom - wrc->top) * aspectRatio);
                         break;
                 }
-                AdjustWindowRectEx(wrc, GetWindowLong(hwnd, GWL_STYLE), GetMenu(hwnd) != 0,
-                    GetWindowLong(hwnd, GWL_EXSTYLE));
             }
-            break;
+
+            InvalidateRect(hwnd, NULL, TRUE);
+            return TRUE;
     }
 
     // 標準のメッセージ処理を行う

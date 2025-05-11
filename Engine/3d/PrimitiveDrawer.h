@@ -12,6 +12,23 @@
 
 namespace MyEngine {
 
+enum BlendMode {
+    kBlendModeNone,
+    kBlendModeNormal,
+    kBlendModeAdd,
+    kBlendModeSubtract,
+    kBlendModeMultiply,
+    kBlendModeScreen,
+    kBlendModeExclusion,
+
+    kBlendModeMax,
+};
+
+enum FillMode {
+    kFillModeSolid,
+    kFillModeWireframe,
+};
+
 // 前方宣言
 class DirectXCommon;
 
@@ -45,8 +62,9 @@ public:
     
     /// @brief グラフィックパイプライン生成
     /// @param topologyType トポロジータイプ
+    /// @param rasterizerDesc ラスタライザ設定
     /// @return パイプラインセット
-    static std::unique_ptr<PipeLineSet> CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, const bool isDepthEnable = true, const std::source_location &location = std::source_location::current());
+    static PipeLineSet CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable = true, const std::source_location &location = std::source_location::current());
 
 private:
     PrimitiveDrawer() = default;

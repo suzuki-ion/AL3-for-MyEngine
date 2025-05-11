@@ -10,12 +10,12 @@ class WinApp;
 // 入力はどこでも使えるようにしたいのでstaticにする
 
 /// @brief 入力管理クラス
-class InputManager {
+class Input {
 public:
-    InputManager() = delete;
-    InputManager(const InputManager &) = delete;
-    InputManager(InputManager &&) = delete;
-    InputManager &operator=(const InputManager &) = delete;
+    Input() = delete;
+    Input(const Input &) = delete;
+    Input(Input &&) = delete;
+    Input &operator=(const Input &) = delete;
 
     /// @brief 初期化処理
     /// @param winApp WinAppインスタンス
@@ -39,6 +39,20 @@ public:
     /// @return 前回の押下状態
     static bool IsPreKeyDown(int key) {
         return (preKeyboardState_[key] & 0x80) != 0;
+    }
+
+    /// @brief キーのトリガー状態を取得
+    /// @param key キーコード
+    /// @return トリガー状態
+    static bool IsKeyTrigger(int key) {
+        return (keyboardState_[key] & 0x80) != 0 && (preKeyboardState_[key] & 0x80) == 0;
+    }
+
+    /// @brief キーのリリース状態を取得
+    /// @param key キーコード
+    /// @return リリース状態
+    static bool IsKeyRelease(int key) {
+        return (keyboardState_[key] & 0x80) == 0 && (preKeyboardState_[key] & 0x80) != 0;
     }
 
 private:

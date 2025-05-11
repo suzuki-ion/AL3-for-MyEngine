@@ -1,19 +1,21 @@
 #include <cmath>
+#include <algorithm>
 
 #include "Drawer.h"
 #include "WinApp.h"
 #include "DirectXCommon.h"
 #include "TextureManager.h"
 #include "2d/ImGuiManager.h"
-#include "3d/PrimitiveDrawer.h"
 
 #include "Math/Camera.h"
 #include "Math/RenderingPipeline.h"
+#include "3d/DirectionalLight.h"
 
 #include "Common/Logs.h"
 #include "Common/ConvertColor.h"
 #include "Common/Descriptors/SRV.h"
 
+#include "Objects/Object.h"
 #include "Objects/Triangle.h"
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
@@ -28,6 +30,17 @@ namespace {
 
 /// @brief デバッグカメラの初期化
 std::unique_ptr<Camera> sDebugCamera;
+
+bool ZSort(Object *a, Object *b) {
+    // Z値でソートする
+    if (a->camera == nullptr || b->camera == nullptr) {
+        // カメラが設定されていない場合はソートしない
+        return false;
+    }
+
+    return a->transform.translate.Distance(a->camera->GetTranslate()) >
+        b->transform.translate.Distance(b->camera->GetTranslate());
+}
 
 } // namespace
 
@@ -74,6 +87,51 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManag
         Vector3(1.0f, 1.0f, 1.0f)
     );
 
+    // パイプラインセットの初期化
+    pipelineSet_[kFillModeSolid][kBlendModeNone] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNone);
+    pipelineSet_[kFillModeSolid][kBlendModeNormal] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNormal);
+    pipelineSet_[kFillModeSolid][kBlendModeAdd] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeAdd);
+    pipelineSet_[kFillModeSolid][kBlendModeSubtract] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeSubtract);
+    pipelineSet_[kFillModeSolid][kBlendModeMultiply] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeMultiply);
+    pipelineSet_[kFillModeSolid][kBlendModeScreen] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeScreen);
+    pipelineSet_[kFillModeSolid][kBlendModeExclusion] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeExclusion);
+
+    pipelineSet_[kFillModeWireframe][kBlendModeNone] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNone);
+    pipelineSet_[kFillModeWireframe][kBlendModeNormal] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNormal);
+    pipelineSet_[kFillModeWireframe][kBlendModeAdd] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeAdd);
+    pipelineSet_[kFillModeWireframe][kBlendModeSubtract] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeSubtract);
+    pipelineSet_[kFillModeWireframe][kBlendModeMultiply] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeMultiply);
+    pipelineSet_[kFillModeWireframe][kBlendModeScreen] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeScreen);
+    pipelineSet_[kFillModeWireframe][kBlendModeExclusion] =
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeExclusion);
+
+    // ビューポートの設定
+    viewport_.Width = static_cast<FLOAT>(winApp_->GetClientWidth());
+    viewport_.Height = static_cast<FLOAT>(winApp_->GetClientHeight());
+    viewport_.TopLeftX = 0;
+    viewport_.TopLeftY = 0;
+    viewport_.MinDepth = 0.0f;
+    viewport_.MaxDepth = 1.0f;
+
+    // シザー矩形の設定
+    scissorRect_.left = 0;
+    scissorRect_.right = static_cast<LONG>(winApp_->GetClientWidth());
+    scissorRect_.top = 0;
+    scissorRect_.bottom = static_cast<LONG>(winApp_->GetClientHeight());
+
     // 初期化完了のログを出力
     Log("Drawer Initialized.");
     LogNewLine();
@@ -93,6 +151,7 @@ Drawer::~Drawer() {
 void Drawer::PreDraw() {
     dxCommon_->PreDraw();
     imguiManager_->BeginFrame();
+    drawObjects_.clear();
 
     static ID3D12DescriptorHeap *descriptorHeaps[] = { SRV::GetDescriptorHeap() };
     dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
@@ -101,33 +160,20 @@ void Drawer::PreDraw() {
     // 描画の準備
     //==================================================
 
-    static auto pipelineSet = PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-    // ビューポート
-    D3D12_VIEWPORT viewport{};
-    // クライアント領域のサイズと一緒にして画面全体に表示
-    viewport.Width = 1280.0f;//static_cast<float>(winApp_->GetClientWidth());
-    viewport.Height = 720.0f;//static_cast<float>(winApp_->GetClientHeight());
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
+    // 平行光源をリセット
+    directionalLight_ = nullptr;
 
-    // シザー矩形
-    D3D12_RECT scissorRect{};
-    // 基本的にビューポートと同じ矩形が構成されるようにする
-    scissorRect.left = 0;
-    scissorRect.right = 1280.0f;//winApp_->GetClientWidth();
-    scissorRect.top = 0;
-    scissorRect.bottom = 720.0f;//winApp_->GetClientHeight();
-
+    // ブレンドモードを設定
+    blendMode_ = kBlendModeNormal;
     // コマンドを積む
-    dxCommon_->GetCommandList()->RSSetViewports(1, &viewport);          // ビューポートを設定
-    dxCommon_->GetCommandList()->RSSetScissorRects(1, &scissorRect);    // シザー矩形を設定
-    // 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけばいい
+    dxCommon_->GetCommandList()->RSSetViewports(1, &viewport_);         // ビューポートを設定
+    dxCommon_->GetCommandList()->RSSetScissorRects(1, &scissorRect_);   // シザー矩形を設定
+    // 形状を設定
     dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    // ルートシグネチャを設定。PSOに設定しているけど別途設定が必要
-    dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet->rootSignature.Get());
-    dxCommon_->GetCommandList()->SetPipelineState(pipelineSet->pipelineState.Get());    // PSOを設定
+    // シグネチャを設定
+    dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet_[kFillModeSolid][blendMode_].rootSignature.Get());
+    // パイプラインを設定
+    dxCommon_->GetCommandList()->SetPipelineState(pipelineSet_[kFillModeSolid][blendMode_].pipelineState.Get());
 
     // デバッグカメラが有効ならデバッグカメラの処理
     if (isUseDebugCamera_) {
@@ -136,6 +182,33 @@ void Drawer::PreDraw() {
 }
 
 void Drawer::PostDraw() {
+    static DirectionalLight defaultDirectionalLight = {
+        { 255.0f, 255.0f, 255.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f },
+        1.0f
+    };
+    // もし光源が設定されていなければデフォルトの光源を設定
+    if (directionalLight_ == nullptr) {
+        SetLightBuffer(&defaultDirectionalLight);
+    } else {
+        SetLightBuffer(directionalLight_);
+    }
+
+    //std::sort(drawObjects_.begin(), drawObjects_.end(), ZSort);
+
+    for (auto object : drawObjects_) {
+        if (dynamic_cast<Triangle *>(object)) {
+            Draw(static_cast<Triangle *>(object));
+        } else if (dynamic_cast<Sprite *>(object)) {
+            Draw(static_cast<Sprite *>(object));
+        } else if (dynamic_cast<Sphere *>(object)) {
+            Draw(static_cast<Sphere *>(object));
+        } else if (dynamic_cast<BillBoard *>(object)) {
+            Draw(static_cast<BillBoard *>(object));
+        } else if (dynamic_cast<ModelData *>(object)) {
+            Draw(static_cast<ModelData *>(object));
+        }
+    }
     imguiManager_->EndFrame();
     dxCommon_->PostDraw();
 }
@@ -145,15 +218,18 @@ void Drawer::ToggleDebugCamera() {
     isUseDebugCamera_ = !isUseDebugCamera_;
 }
 
-void Drawer::SetLight(DirectionalLight *light) {
+void Drawer::SetLightBuffer(DirectionalLight *light) {
     // 光源のリソースを生成
     static auto directionalLightResource = PrimitiveDrawer::CreateBufferResources(sizeof(DirectionalLight));
-    directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData_));
-    // 光源のデータを設定
-    directionalLightData_->color = ConvertColor(light->color);
-    directionalLightData_->direction = light->direction;
-    directionalLightData_->intensity = light->intensity;
+    // 光源設定用のマップ
+    static DirectionalLight *directionalLightData = nullptr;
 
+    // 光源設定用のマップを取得
+    directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData));
+    // 光源のデータを設定
+    directionalLightData->color = ConvertColor(light->color);
+    directionalLightData->direction = light->direction;
+    directionalLightData->intensity = light->intensity;
     // CBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 }
@@ -181,56 +257,8 @@ void Drawer::Draw(Triangle *triangle) {
             }
         }
     }
-
-    // マテリアルを設定
-    triangle->materialMap->color = ConvertColor(triangle->material.color);
-    triangle->materialMap->enableLighting = triangle->material.enableLighting;
-    triangle->materialMap->uvTransform.MakeAffine(
-        triangle->uvTransform.scale,
-        triangle->uvTransform.rotate,
-        triangle->uvTransform.translate
-    );
-
-    // 行列を計算
-    triangle->worldMatrix.MakeAffine(
-        triangle->transform.scale,
-        triangle->transform.rotate,
-        triangle->transform.translate
-    );
-    // Cameraがnullptrの場合は2D描画
-    if (triangle->camera == nullptr) {
-        wvpMatrix2D_ = triangle->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        triangle->transformationMatrixMap->wvp = wvpMatrix2D_;
-        triangle->transformationMatrixMap->world = triangle->worldMatrix;
-    } else {
-        if (isUseDebugCamera_) {
-            sDebugCamera->SetWorldMatrix(triangle->worldMatrix);
-            sDebugCamera->CalculateMatrix();
-            triangle->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
-        } else {
-            triangle->camera->SetWorldMatrix(triangle->worldMatrix);
-            triangle->camera->CalculateMatrix();
-            triangle->transformationMatrixMap->wvp = triangle->camera->GetWVPMatrix();
-        }
-        triangle->transformationMatrixMap->world = triangle->worldMatrix;
-    }
-
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (triangle->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(triangle->useTextureIndex).srvHandleGPU);
-    } else {
-        // テクスチャを使用しない場合は0を設定
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
-    }
-
-    // VBVを設定
-    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &triangle->mesh->vertexBufferView);
-    // IBVを設定
-    dxCommon_->GetCommandList()->IASetIndexBuffer(&triangle->mesh->indexBufferView);
-    // マテリアルCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, triangle->materialResource->GetGPUVirtualAddress());
-    // TransformationMatrix用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, triangle->transformationMatrixResource->GetGPUVirtualAddress());
+    // 描画処理
+    DrawCommon(triangle);
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(3, 1, 0, 0, 0);
 }
@@ -258,56 +286,8 @@ void Drawer::Draw(Sprite *sprite) {
             }
         }
     }
-
-    // マテリアルを設定
-    sprite->materialMap->color = ConvertColor(sprite->material.color);
-    sprite->materialMap->enableLighting = sprite->material.enableLighting;
-    sprite->materialMap->uvTransform.MakeAffine(
-        sprite->uvTransform.scale,
-        sprite->uvTransform.rotate,
-        sprite->uvTransform.translate
-    );
-
-    // 行列を計算
-    sprite->worldMatrix.MakeAffine(
-        sprite->transform.scale,
-        sprite->transform.rotate,
-        sprite->transform.translate
-    );
-    // Cameraがnullptrの場合は2D描画
-    if (sprite->camera == nullptr) {
-        wvpMatrix2D_ = sprite->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        sprite->transformationMatrixMap->wvp = wvpMatrix2D_;
-        sprite->transformationMatrixMap->world = sprite->worldMatrix;
-    } else {
-        if (isUseDebugCamera_) {
-            sDebugCamera->SetWorldMatrix(sprite->worldMatrix);
-            sDebugCamera->CalculateMatrix();
-            sprite->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
-        } else {
-            sprite->camera->SetWorldMatrix(sprite->worldMatrix);
-            sprite->camera->CalculateMatrix();
-            sprite->transformationMatrixMap->wvp = sprite->camera->GetWVPMatrix();
-        }
-        sprite->transformationMatrixMap->world = sprite->worldMatrix;
-    }
-
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (sprite->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(sprite->useTextureIndex).srvHandleGPU);
-    } else {
-        // テクスチャを使用しない場合は0を設定
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
-    }
-
-    // VBVを設定
-    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sprite->mesh->vertexBufferView);
-    // IBVを設定
-    dxCommon_->GetCommandList()->IASetIndexBuffer(&sprite->mesh->indexBufferView);
-    // マテリアルCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, sprite->materialResource->GetGPUVirtualAddress());
-    // TransformationMatrix用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sprite->transformationMatrixResource->GetGPUVirtualAddress());
+    // 描画処理
+    DrawCommon(sprite);
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
@@ -365,61 +345,15 @@ void Drawer::Draw(Sphere *sphere) {
             }
         }
     }
-
-    // マテリアルを設定
-    sphere->materialMap->color = ConvertColor(sphere->material.color);
-    sphere->materialMap->enableLighting = sphere->material.enableLighting;
-    sphere->materialMap->uvTransform.MakeAffine(
-        sphere->uvTransform.scale,
-        sphere->uvTransform.rotate,
-        sphere->uvTransform.translate
-    );
-
-    // 行列を計算
-    sphere->worldMatrix.MakeAffine(
-        sphere->transform.scale * sphere->radius,
-        sphere->transform.rotate,
-        sphere->transform.translate
-    );
-    // Cameraがnullptrの場合は2D描画
-    if (sphere->camera == nullptr) {
-        wvpMatrix2D_ = sphere->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        sphere->transformationMatrixMap->wvp = wvpMatrix2D_;
-        sphere->transformationMatrixMap->world = sphere->worldMatrix;
-    } else {
-        if (isUseDebugCamera_) {
-            sDebugCamera->SetWorldMatrix(sphere->worldMatrix);
-            sDebugCamera->CalculateMatrix();
-            sphere->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
-        } else {
-            sphere->camera->SetWorldMatrix(sphere->worldMatrix);
-            sphere->camera->CalculateMatrix();
-            sphere->transformationMatrixMap->wvp = sphere->camera->GetWVPMatrix();
-        }
-        sphere->transformationMatrixMap->world = sphere->worldMatrix;
-    }
-
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (sphere->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(sphere->useTextureIndex).srvHandleGPU);
-    } else {
-        // テクスチャを使用しない場合は0を設定
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
-    }
-
-    // IBVを設定
-    dxCommon_->GetCommandList()->IASetIndexBuffer(&sphere->mesh->indexBufferView);
-    // VBVを設定
-    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &sphere->mesh->vertexBufferView);
-    // マテリアルCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, sphere->materialResource->GetGPUVirtualAddress());
-    // TransformationMatrix用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, sphere->transformationMatrixResource->GetGPUVirtualAddress());
+    // 描画処理
+    DrawCommon(sphere);
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(sphere->kIndexCount, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(BillBoard *billboard) {
+    // 向きをカメラの向きに合わせる
+    billboard->transform.rotate = billboard->camera->GetRotate();
     // 法線を設定
     static Vector3 position[3];
     if (billboard->material.enableLighting == false) {
@@ -442,113 +376,80 @@ void Drawer::Draw(BillBoard *billboard) {
             }
         }
     }
-
-    // マテリアルを設定
-    billboard->materialMap->color = ConvertColor(billboard->material.color);
-    billboard->materialMap->enableLighting = billboard->material.enableLighting;
-    billboard->materialMap->uvTransform.MakeAffine(
-        billboard->uvTransform.scale,
-        billboard->uvTransform.rotate,
-        billboard->uvTransform.translate
-    );
-
-    // カメラと同じ向きにBillBoardを向ける
-    billboard->transform.rotate = billboard->camera->GetRotate();
-
-    // 行列を計算
-    billboard->worldMatrix.MakeAffine(
-        billboard->transform.scale,
-        billboard->transform.rotate,
-        billboard->transform.translate
-    );
-
-    // BillBoardはカメラを必ず設定しないとなのでnullptrの場合はエラー
-    if (billboard->camera == nullptr) {
-        Log("BillBoard camera is null.", kLogLevelFlagError);
-        assert(false);
-    }
-    if (isUseDebugCamera_) {
-        sDebugCamera->SetWorldMatrix(billboard->worldMatrix);
-        sDebugCamera->CalculateMatrix();
-        billboard->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
-    } else {
-        billboard->camera->SetWorldMatrix(billboard->worldMatrix);
-        billboard->camera->CalculateMatrix();
-        billboard->transformationMatrixMap->wvp = billboard->camera->GetWVPMatrix();
-    }
-    billboard->transformationMatrixMap->world = billboard->worldMatrix;
-
-    // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (billboard->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(billboard->useTextureIndex).srvHandleGPU);
-    } else {
-        // テクスチャを使用しない場合は0を設定
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
-    }
-
-    // VBVを設定
-    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &billboard->mesh->vertexBufferView);
-    // IBVを設定
-    dxCommon_->GetCommandList()->IASetIndexBuffer(&billboard->mesh->indexBufferView);
-    // マテリアルCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, billboard->materialResource->GetGPUVirtualAddress());
-    // TransformationMatrix用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, billboard->transformationMatrixResource->GetGPUVirtualAddress());
+    // 描画処理
+    DrawCommon(billboard);
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(ModelData *model) {
+    // 描画処理
+    DrawCommon(model);
+    // 描画
+    dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(model->vertices.size()), 1, 0, 0);
+}
+
+void Drawer::DrawCommon(Object *object) {
     // マテリアルを設定
-    model->materialMap->color = ConvertColor(model->material.color);
-    model->materialMap->enableLighting = model->material.enableLighting;
-    model->materialMap->uvTransform.MakeAffine(
-        model->uvTransform.scale,
-        model->uvTransform.rotate,
-        model->uvTransform.translate
+    object->materialMap->color = ConvertColor(object->material.color);
+    object->materialMap->enableLighting = object->material.enableLighting;
+    object->materialMap->uvTransform.MakeAffine(
+        object->uvTransform.scale,
+        object->uvTransform.rotate,
+        object->uvTransform.translate
     );
 
     // 行列を計算
-    model->worldMatrix.MakeAffine(
-        model->transform.scale,
-        model->transform.rotate,
-        model->transform.translate
+    object->worldMatrix.MakeAffine(
+        object->transform.scale,
+        object->transform.rotate,
+        object->transform.translate
     );
 
     // Cameraがnullptrの場合は2D描画
-    if (model->camera == nullptr) {
-        wvpMatrix2D_ = model->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
-        model->transformationMatrixMap->wvp = wvpMatrix2D_;
-        model->transformationMatrixMap->world = model->worldMatrix;
+    if (object->camera == nullptr) {
+        wvpMatrix2D_ = object->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
+        object->transformationMatrixMap->wvp = wvpMatrix2D_;
+        object->transformationMatrixMap->world = object->worldMatrix;
     } else {
         if (isUseDebugCamera_) {
-            sDebugCamera->SetWorldMatrix(model->worldMatrix);
+            sDebugCamera->SetWorldMatrix(object->worldMatrix);
             sDebugCamera->CalculateMatrix();
-            model->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+            object->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
         } else {
-            model->camera->SetWorldMatrix(model->worldMatrix);
-            model->camera->CalculateMatrix();
-            model->transformationMatrixMap->wvp = model->camera->GetWVPMatrix();
+            object->camera->SetWorldMatrix(object->worldMatrix);
+            object->camera->CalculateMatrix();
+            object->transformationMatrixMap->wvp = object->camera->GetWVPMatrix();
         }
-        model->transformationMatrixMap->world = model->worldMatrix;
+        object->transformationMatrixMap->world = object->worldMatrix;
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (model->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(model->useTextureIndex).srvHandleGPU);
+    if (object->useTextureIndex != -1) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(object->useTextureIndex).srvHandleGPU);
     } else {
         // テクスチャを使用しない場合は0を設定
         dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
     }
 
+    // 形状を設定
+    /*if (object->fillMode == kFillModeSolid) {
+        dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    } else if (object->fillMode == kFillModeWireframe) {
+        dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+    }*/
+    dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // ルートシグネチャを設定
+    dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet_[object->fillMode][blendMode_].rootSignature.Get());
+    dxCommon_->GetCommandList()->SetPipelineState(pipelineSet_[object->fillMode][blendMode_].pipelineState.Get());
     // VBVを設定
-    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &model->mesh->vertexBufferView);
+    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &object->mesh->vertexBufferView);
+    // IBVを設定
+    dxCommon_->GetCommandList()->IASetIndexBuffer(&object->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, model->materialResource->GetGPUVirtualAddress());
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, object->materialResource->GetGPUVirtualAddress());
     // TransformationMatrix用のCBufferの場所を指定
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, model->transformationMatrixResource->GetGPUVirtualAddress());
-    // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(model->vertices.size()), 1, 0, 0);
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, object->transformationMatrixResource->GetGPUVirtualAddress());
 }
 
 } // namespace MyEngine

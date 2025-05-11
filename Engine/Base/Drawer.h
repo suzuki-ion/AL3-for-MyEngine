@@ -1,15 +1,10 @@
 #pragma once
+#include <array>
 #include <vector>
 #include <memory>
 
-#include "Common/VertexData.h"
-#include "Common/Mesh.h"
 #include "Common/PipeLineSet.h"
-#include "Common/TransformationMatrix.h"
-#include "Common/Material.h"
-#include "3d/DirectionalLight.h"
-#include "Math/Transform.h"
-#include "Math/Vector4.h"
+#include "3d/PrimitiveDrawer.h"
 #include "Math/Matrix4x4.h"
 
 namespace MyEngine {
@@ -20,6 +15,8 @@ class DirectXCommon;
 class ImGuiManager;
 class TextureManager;
 
+struct DirectionalLight;
+struct Object;
 struct Triangle;
 struct Sprite;
 struct Sphere;
@@ -54,9 +51,28 @@ public:
         return isUseDebugCamera_;
     }
 
+    /// @brief ブレンドモードの設定
+    /// @param blendMode ブレンドモード
+    void SetBlendMode(BlendMode blendMode) {
+        blendMode_ = blendMode;
+    }
+
     /// @brief 平行光源の設定
     /// @param light 平行光源へのポインタ
-    void SetLight(DirectionalLight *light);
+    void SetLight(DirectionalLight *light) {
+        directionalLight_ = light;
+    }
+
+    /// @brief 描画するオブジェクトの設定
+    /// @param object 描画するオブジェクトへのポインタ
+    void DrawSet(Object *object) {
+        drawObjects_.push_back(object);
+    }
+
+private:
+    /// @brief 平行光源の設定
+    /// @param light 平行光源へのポインタ
+    void SetLightBuffer(DirectionalLight *light);
 
     /// @brief 三角形を描画する
     /// @param triangle 描画する三角形へのポインタ
@@ -78,7 +94,9 @@ public:
     /// @param model 描画するモデルへのポインタ
     void Draw(ModelData *model);
 
-private:
+    /// @brief 共通の描画処理
+    void DrawCommon(Object *object);
+
     /// @brief WinAppインスタンス
     WinApp *winApp_ = nullptr;
     /// @brief DirectXCommonインスタンス
@@ -88,10 +106,17 @@ private:
     /// @brief TextureManagerインスタンス
     TextureManager *textureManager_ = nullptr;
 
-    /// @brief ライトデータ設定用のポインタ
-    DirectionalLight *directionalLightData_ = nullptr;
+    /// @brief ブレンドモード
+    BlendMode blendMode_ = kBlendModeNormal;
+    /// @brief パイプラインセット
+    std::array<std::array<PipeLineSet, kBlendModeMax>, 2> pipelineSet_;
+
     /// @brief デバッグカメラ使用フラグ
     bool isUseDebugCamera_ = false;
+    /// @brief 平行光源へのポインタ
+    DirectionalLight *directionalLight_ = nullptr;
+    /// @brief 描画するオブジェクト
+    std::vector<Object *> drawObjects_;
 
     /// @brief 2D描画用のビュー行列
     Matrix4x4 viewMatrix2D_;
@@ -99,6 +124,11 @@ private:
     Matrix4x4 projectionMatrix2D_;
     /// @brief 2D描画用のWVP行列
     Matrix4x4 wvpMatrix2D_;
+
+    /// @brief ビューポートの設定
+    D3D12_VIEWPORT viewport_ = {};
+    /// @brief シザー矩形の設定
+    D3D12_RECT scissorRect_ = {};
 };
 
 } // namespace MyEngine

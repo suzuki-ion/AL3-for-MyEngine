@@ -30,7 +30,7 @@ struct Object {
             { 0.0f, 0.0f, 0.0f }
         };
     }
-    ~Object() {
+    virtual ~Object() {
         // マテリアルリソースのアンマップ
         materialResource->Unmap(0, nullptr);
         // TransformationMatrixリソースのアンマップ
@@ -55,9 +55,17 @@ struct Object {
     TransformationMatrix *transformationMatrixMap = nullptr;
 
     /// @brief 変形用のtransform
-    Transform transform;
+    Transform transform = {
+        { 1.0f, 1.0f, 1.0f },   // スケール
+        { 0.0f, 0.0f, 0.0f },   // 回転
+        { 0.0f, 0.0f, 0.0f }    // 平行移動
+    };
     /// @brief UV用のtransform
-    Transform uvTransform;
+    Transform uvTransform = {
+        { 1.0f, 1.0f, 1.0f },   // スケール
+        { 0.0f, 0.0f, 0.0f },   // 回転
+        { 0.0f, 0.0f, 0.0f }    // 平行移動
+    };
     /// @brief ワールド行列
     Matrix4x4 worldMatrix;
     /// @brief マテリアルデータ
@@ -67,6 +75,8 @@ struct Object {
     int useTextureIndex = -1;
     /// @brief 法線のタイプ
     NormalType normalType = kNormalTypeVertex;
+    /// @brief 塗りつぶしモード
+    FillMode fillMode = kFillModeSolid;
 };
 
 } // namespace MyEngine

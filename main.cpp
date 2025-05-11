@@ -6,11 +6,12 @@
 #include "Base/DirectXCommon.h"
 #include "Base/Drawer.h"
 #include "Base/TextureManager.h"
-#include "Base/InputManager.h"
+#include "Base/Input.h"
 
 #include "Math/Camera.h"
 #include "Common/ConvertColor.h"
 
+#include "3d/DirectionalLight.h"
 #include "Objects/Triangle.h"
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
@@ -36,9 +37,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // テクスチャを読み込む
     uint32_t textures[3];
-    textures[0] = textureManager->Load("Resources/white1x1.png");
     textures[1] = textureManager->Load("Resources/uvChecker.png");
     textures[2] = textureManager->Load("Resources/monsterBall.png");
+
+    // 塗りつぶしフラグ
+    bool isFillMode = true;
+    // ブレンドモード
+    BlendMode blendMode = kBlendModeNormal;
 
     //==================================================
     // カメラ
@@ -51,7 +56,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         Vector3( 1.0f, 1.0f, 1.0f )
     );
     // デバッグカメラの有効化フラグ
-    bool isUseDebugCamera = false;
+    bool isUseDebugCamera = true;
 
     //==================================================
     // 背景の色
@@ -94,8 +99,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     triangle1.mesh->vertexBufferMap[2].texCoord = { 1.0f, 1.0f };
     // カメラを設定
     triangle1.camera = camera.get();
+    // テクスチャを設定
+    triangle1.useTextureIndex = 0;
     // 法線の種類
-    triangle1.normalType = kNormalTypeVertex;
+    triangle1.normalType = kNormalTypeFace;
+    // 塗りつぶしモードを設定
+    triangle1.fillMode = kFillModeSolid;
 
     //--------- 三角形2 ---------//
 
@@ -118,8 +127,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     triangle2.mesh->vertexBufferMap[2].texCoord = { 1.0f, 1.0f };
     // カメラを設定
     triangle2.camera = camera.get();
+    // テクスチャを設定
+    triangle2.useTextureIndex = 0;
     // 法線の種類
     triangle2.normalType = kNormalTypeFace;
+    // 塗りつぶしモードを設定
+    triangle2.fillMode = kFillModeWireframe;
 
     //==================================================
     // スプライト
@@ -164,7 +177,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // テクスチャを設定
     sphere.useTextureIndex = 0;
     // 法線の種類
-    sphere.normalType = kNormalTypeVertex;
+    sphere.normalType = kNormalTypeFace;
+    // 塗りつぶしモードを設定
+    sphere.fillMode = kFillModeSolid;
 
     //==================================================
     // ビルボード
@@ -194,35 +209,56 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     billboard.useTextureIndex = 0;
     // 法線の種類
     billboard.normalType = kNormalTypeFace;
+    // 塗りつぶしモードを設定
+    billboard.fillMode = kFillModeSolid;
 
     //==================================================
     // モデル
     //==================================================
 
-    ModelData modelData(
-        "Resources",
-        "multiMesh.obj",
-        textureManager
-    );
-    modelData.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f }
-    };
-    modelData.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    modelData.material.enableLighting = true;
-    // カメラを設定
-    modelData.camera = camera.get();
+    //ModelData modelData(
+    //    "Resources",
+    //    "plane.obj",
+    //    textureManager
+    //);
+    //modelData.transform = {
+    //    { 1.0f, 1.0f, 1.0f },
+    //    { 0.0f, 0.0f, 0.0f },
+    //    { 0.0f, 0.0f, 0.0f }
+    //};
+    //modelData.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
+    //modelData.material.enableLighting = true;
+    //// カメラを設定
+    //modelData.camera = camera.get();
+    //// 塗りつぶしモードを設定
+    //modelData.fillMode = kFillModeSolid;
 
     // ウィンドウのxボタンが押されるまでループ
     while (engine->ProccessMessage() != -1) {
         engine->BeginFrame();
-        InputManager::Update();
+        Input::Update();
 
         // F3キーでデバッグカメラの有効化
-        if (InputManager::IsKeyDown(DIK_F3) && !InputManager::IsPreKeyDown(DIK_F3)) {
+        if (Input::IsKeyTrigger(DIK_F3)) {
             isUseDebugCamera = !isUseDebugCamera;
             drawer->ToggleDebugCamera();
+        }
+
+        // 1 ～ 7 でブレンドモードを変更
+        if (Input::IsKeyTrigger(DIK_1)) {
+            blendMode = kBlendModeNone;
+        } else if (Input::IsKeyTrigger(DIK_2)) {
+            blendMode = kBlendModeNormal;
+        } else if (Input::IsKeyTrigger(DIK_3)) {
+            blendMode = kBlendModeAdd;
+        } else if (Input::IsKeyTrigger(DIK_4)) {
+            blendMode = kBlendModeSubtract;
+        } else if (Input::IsKeyTrigger(DIK_5)) {
+            blendMode = kBlendModeMultiply;
+        } else if (Input::IsKeyTrigger(DIK_6)) {
+            blendMode = kBlendModeScreen;
+        } else if (Input::IsKeyTrigger(DIK_7)) {
+            blendMode = kBlendModeExclusion;
         }
 
         ImGui::Begin("Objects");
@@ -238,7 +274,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // 平行光源
         if (ImGui::TreeNode("Directional Light")) {
             ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
-            ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, ImGuiColorEditFlags_Uint8);
             ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f, 0.0f, 1.0f);
             ImGui::TreePop();
         }
@@ -325,7 +361,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // モデル
-        if (ImGui::TreeNode("ModelData")) {
+        /*if (ImGui::TreeNode("ModelData")) {
             ImGui::DragFloat3("ModelData Translate", &modelData.transform.translate.x, 0.01f);
             ImGui::DragFloat3("ModelData Rotate", &modelData.transform.rotate.x, 0.01f);
             ImGui::DragFloat3("ModelData Scale", &modelData.transform.scale.x, 0.01f);
@@ -338,27 +374,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 ImGui::TreePop();
             }
             ImGui::TreePop();
-        }
+        }*/
 
         ImGui::End();
 
         // カメラをいじれるようにする
-        /*if (!drawer->IsUseDebugCamera()) {
+        if (!drawer->IsUseDebugCamera()) {
             camera->MoveToMouse(0.01f, 0.01f, 0.1f);
-        }*/
+        }
 
         // 背景色を設定
         dxCommon->SetClearColor(ConvertColor(clearColor));
 
-        // 平行光源を設定
-        drawer->SetLight(&directionalLight);
+        // ブレンドモードを設定
+        drawer->SetBlendMode(blendMode);
 
-        drawer->Draw(&triangle1);
-        drawer->Draw(&triangle2);
-        drawer->Draw(&sphere);
-        drawer->Draw(&billboard);
-        //drawer->Draw(&sprite);
-        drawer->Draw(&modelData);
+        // 平行光源を設定
+        //drawer->SetLight(&directionalLight);
+
+        drawer->DrawSet(&triangle1);
+        drawer->DrawSet(&triangle2);
+        drawer->DrawSet(&sphere);
+        drawer->DrawSet(&billboard);
+        //drawer->DrawSet(&sprite);
+        //drawer->DrawSet(&modelData);
 
         engine->EndFrame();
     }

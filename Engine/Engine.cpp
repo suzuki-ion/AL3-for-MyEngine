@@ -15,7 +15,7 @@
 #include "Base/CrashHandler.h"
 #include "Base/ResourceLeakChecker.h"
 #include "Base/Drawer.h"
-#include "Base/InputManager.h"
+#include "Base/Input.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -71,7 +71,7 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     sDxCommon = std::make_unique<DirectXCommon>(enableDebugLayer, sWinApp.get());
 
     // InputManager初期化
-    InputManager::Initialize(sWinApp.get());
+    Input::Initialize(sWinApp.get());
 
     // プリミティブ描画クラス初期化
     PrimitiveDrawer::Initialize(sDxCommon.get());

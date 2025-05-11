@@ -216,7 +216,7 @@ std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, UINT indexCo
     return mesh;
 }
 
-std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, const bool isDepthEnable, const std::source_location &location) {
+PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
 
@@ -312,34 +312,76 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     inputLayoutDesc.NumElements = _countof(inputElementDescs);
 
     //==================================================
+    // RasterizerStateの設定
+    //==================================================
+
+    D3D12_RASTERIZER_DESC rasterizerDesc{};
+    if (topologyType == D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE) {
+        rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+        rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    } else {
+        rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+        rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    }
+
+    //==================================================
     // BlendStateの設定
     //==================================================
 
     D3D12_BLEND_DESC blendDesc{};
-    // すべての色要素を書き込む
-    blendDesc.RenderTarget[0].BlendEnable = TRUE;
-    blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-    blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    /*blendDesc.AlphaToCoverageEnable = false;
+    blendDesc.IndependentBlendEnable = false;*/
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
-    //==================================================
-    // RaseterizerStateの設定
-    //==================================================
-
-    /*今回は
-    ・裏面をカリング（ピクセルにしない）
-    ・内部を塗りつぶす
-    という設定をする*/
-
-    D3D12_RASTERIZER_DESC rasterizerDesc{};
-    // 裏面（時計回り）を表示しない
-    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
-    // 三角形の中を塗りつぶす
-    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    switch (blendMode) {
+        case kBlendModeNone:
+            blendDesc.RenderTarget[0].BlendEnable = false;
+            break;
+        case kBlendModeNormal:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+            /*blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;*/
+            break;
+        case kBlendModeAdd:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            break;
+        case kBlendModeSubtract:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            break;
+        case kBlendModeMultiply:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_COLOR;
+            break;
+        case kBlendModeScreen:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            break;
+        case kBlendModeExclusion:
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_COLOR;
+            break;
+        default:
+            break;
+    }
 
     //==================================================
     // Shaderをコンパイルする
@@ -398,9 +440,12 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;     // RasterizerState
     // 書き込むRTVの情報
     graphicsPipelineStateDesc.NumRenderTargets = 1;
-    graphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    graphicsPipelineStateDesc.RTVFormats[0] =
+        (blendMode != kBlendModeExclusion)
+        ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+        : DXGI_FORMAT_R8G8B8A8_UNORM;
     // 利用するトポロジ（形状）のタイプ
-    graphicsPipelineStateDesc.PrimitiveTopologyType = topologyType;
+    graphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; //topologyType;
     // どのように画面に色を打ち込むかの設定
     graphicsPipelineStateDesc.SampleDesc.Count = 1;
     graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
@@ -417,9 +462,9 @@ std::unique_ptr<PipeLineSet> PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMI
     // 生成したものをセットにして返す
     //==================================================
 
-    auto pipelineSet = std::make_unique<PipeLineSet>();
-    pipelineSet->rootSignature = rootSignature;
-    pipelineSet->pipelineState = pipelineState;
+    PipeLineSet pipelineSet;
+    pipelineSet.rootSignature = rootSignature;
+    pipelineSet.pipelineState = pipelineState;
 
     // ログに生成完了のメッセージを出力
     LogSimple("CreateGraphicsPipeline Succeeded.");

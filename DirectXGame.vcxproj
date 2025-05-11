@@ -131,12 +131,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="Engine\Base\InputManager.cpp" />
+    <ClCompile Include="Engine\Base\Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\3d\DiffuseLight.h" />
     <ClInclude Include="Engine\3d\DirectionalLight.h" />
+    <ClInclude Include="Engine\3d\EmissiveLight.h" />
+    <ClInclude Include="Engine\3d\SpecularLight.h" />
     <ClInclude Include="Engine\Base\Drawer.h" />
     <ClInclude Include="Engine\2d\ImGuiManager.h" />
     <ClInclude Include="Engine\Base\ResourceLeakChecker.h" />
@@ -163,6 +166,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Common\Material.h" />
     <ClInclude Include="Engine\Objects\BillBoard.h" />
     <ClInclude Include="Engine\Objects\MaterialData.h" />
+    <ClInclude Include="Engine\Objects\Model.h" />
     <ClInclude Include="Engine\Objects\Object.h" />
     <ClInclude Include="Engine\Common\PipeLineSet.h" />
     <ClInclude Include="Engine\Engine.h" />
@@ -178,6 +182,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Math\Vector4.h" />
     <ClInclude Include="Engine\Objects\Sphere.h" />
     <ClInclude Include="Engine\Objects\Sprite.h" />
+    <ClInclude Include="Engine\Objects\Tetrahedron.h" />
     <ClInclude Include="Engine\Objects\Triangle.h" />
     <ClInclude Include="Engine\Objects\ModelData.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
@@ -188,7 +193,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="Externals\imgui\imstb_truetype.h" />
-    <ClInclude Include="Engine\Base\InputManager.h" />
+    <ClInclude Include="Engine\Base\Input.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">

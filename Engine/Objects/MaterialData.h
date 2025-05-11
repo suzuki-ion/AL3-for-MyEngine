@@ -3,8 +3,6 @@
 
 namespace MyEngine {
 
-struct MaterialData {
-    std::string textureFilePath;
-};
+
 
 } // namespace MyEngine

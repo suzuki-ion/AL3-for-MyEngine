@@ -62,6 +62,9 @@ TextureManager::TextureManager(WinApp *winApp, DirectXCommon *dxCommon) {
     winApp_ = winApp;
     dxCommon_ = dxCommon;
 
+    // もしテクスチャが設定されていなかった時用のデフォルトテクスチャを読み込む
+    Load("Resources/white1x1.png");
+
     // 初期化完了のログを出力
     Log("TextureManager Initialized.");
     LogNewLine();

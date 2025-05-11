@@ -13,8 +13,8 @@ namespace MyEngine {
 
 namespace {
 
-MaterialData LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &fileName) {
-    MaterialData materialData;  // 構築するMaterialData
+ModelData::MaterialData LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &fileName) {
+    ModelData::MaterialData materialData;  // 構築するMaterialData
     std::string line;           // ファイルから読み込んだ1行を格納するもの
     std::ifstream file(directoryPath + "/" + fileName); // ファイルを開く
     if (!file.is_open()) {
@@ -87,30 +87,37 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             normals.push_back(normal);
 
         } else if (identifier == "f") {
-            VertexData triangle[3];
-            // 面は三角形限定。その他は未対応
-            for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
+            std::vector<VertexData> faceVertices;
+            while (true) {
+                // 読み込む頂点が無くなったら終了
+                if (s.eof()) {
+                    break;
+                }
                 std::string vertexDefinition;
                 s >> vertexDefinition;
                 // 頂点の要素へのindexは「位置/UV/法線」で格納されているので、分解してindexを取得する
                 std::istringstream v(vertexDefinition);
-                uint32_t elementIndices[3];
+                uint32_t elementIndices[3] = { 1, 1, 1 };
                 for (int32_t element = 0; element < 3; ++element) {
                     std::string index;
                     // 区切りでインデックスを読んでいく
                     std::getline(v, index, '/');
+                    // indexが空文字列の場合は、次の要素へ
+                    if (index.empty()) {
+                        continue;
+                    }
                     elementIndices[element] = std::stoi(index);
                 }
                 // 要素へのindexから、実際の要素の値を取得して、頂点を構成する
                 Vector4 position = positions[elementIndices[0] - 1];
                 Vector2 texCoord = texCoords[elementIndices[1] - 1];
                 Vector3 normal = normals[elementIndices[2] - 1];
-                triangle[faceVertex] = { position, texCoord, normal };
+                faceVertices.push_back({ position, texCoord, normal });
             }
             // 頂点を逆順で登録することで、周り順を逆にする
-            vertices.push_back(triangle[2]);
-            vertices.push_back(triangle[1]);
-            vertices.push_back(triangle[0]);
+            for (int32_t i = faceVertices.size() - 1; i >= 0; --i) {
+                vertices.push_back(faceVertices[i]);
+            }
 
         } else if (identifier == "mtllib") {
             std::string materialFileName;

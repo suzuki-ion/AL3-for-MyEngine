@@ -78,7 +78,7 @@ struct Vector3 {
     /// @brief ベクトル間の距離を計算する
     /// @param vector 距離を計算するベクトル
     /// @return ベクトル間の距離
-    [[nodiscard]] inline float Distance(const Vector3 &vector) const;
+    [[nodiscard]] float Distance(const Vector3 &vector) const;
 
     /// @brief ベクトルを行列で変換する
     /// @param mat 変換行列

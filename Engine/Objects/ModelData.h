@@ -11,6 +11,11 @@ namespace MyEngine {
 class TextureManager;
 
 struct ModelData : public Object {
+    /// @brief モデルのマテリアルデータ
+    struct MaterialData {
+        std::string textureFilePath;
+    };
+
     /// @brief 必ずモデルのデータを設定してもらいたいので、デフォルトコンストラクタは削除
     ModelData() = delete;
     /// @brief ModelDataのコンストラクタ

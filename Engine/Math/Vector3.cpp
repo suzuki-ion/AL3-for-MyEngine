@@ -138,7 +138,7 @@ inline constexpr const Vector3 Vector3::Refrection(const Vector3 &normal, const 
     return *this * eta + (eta * cosTheta - std::sqrt(k)) * normal;
 }
 
-inline float Vector3::Distance(const Vector3 &vector) const {
+float Vector3::Distance(const Vector3 &vector) const {
     return (vector - *this).Length();
 }
 

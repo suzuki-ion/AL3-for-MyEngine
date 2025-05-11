@@ -1,24 +1,24 @@
 #include <cassert>
 
-#include "InputManager.h"
+#include "Input.h"
 #include "Base/WinApp.h"
 #include "Common/Logs.h"
 
 namespace MyEngine {
 
-bool InputManager::isInitialized_ = false;
-IDirectInput8 *InputManager::directinput_ = nullptr;
-IDirectInputDevice8 *InputManager::keyboardDevice_ = nullptr;
-IDirectInputDevice8 *InputManager::mouseDevice_ = nullptr;
-BYTE InputManager::keyboardState_[256] = {};
-BYTE InputManager::preKeyboardState_[256] = {};
-DIMOUSESTATE InputManager::mouseState_ = {};
-DIMOUSESTATE InputManager::preMouseState_ = {};
+bool Input::isInitialized_ = false;
+IDirectInput8 *Input::directinput_ = nullptr;
+IDirectInputDevice8 *Input::keyboardDevice_ = nullptr;
+IDirectInputDevice8 *Input::mouseDevice_ = nullptr;
+BYTE Input::keyboardState_[256] = {};
+BYTE Input::preKeyboardState_[256] = {};
+DIMOUSESTATE Input::mouseState_ = {};
+DIMOUSESTATE Input::preMouseState_ = {};
 
-void InputManager::Initialize(WinApp *winApp) {
+void Input::Initialize(WinApp *winApp) {
     // 初期化済みフラグをチェック
     if (isInitialized_) {
-        Log("InputManager is already initialized.", kLogLevelFlagError);
+        Log("Input is already initialized.", kLogLevelFlagError);
         assert(false);
     }
 
@@ -57,26 +57,26 @@ void InputManager::Initialize(WinApp *winApp) {
     assert(SUCCEEDED(hr));
     
     // 初期化完了のログを出力
-    LogSimple("Complete Initialize InputManager.", kLogLevelFlagInfo);
+    LogSimple("Complete Initialize Input.", kLogLevelFlagInfo);
     // 初期化済みフラグを立てる
     isInitialized_ = true;
 }
 
-void InputManager::Finalize() {
+void Input::Finalize() {
     // 初期化済みフラグをチェック
     if (!isInitialized_) {
-        Log("InputManager is not initialized.", kLogLevelFlagError);
+        Log("Input is not initialized.", kLogLevelFlagError);
         assert(false);
     }
 
     // 終了処理完了のログを出力
-    Log("Complete Finalize InputManager.", kLogLevelFlagInfo);
+    Log("Complete Finalize Input.", kLogLevelFlagInfo);
 }
 
-void InputManager::Update() {
+void Input::Update() {
     // 初期化済みフラグをチェック
     if (!isInitialized_) {
-        Log("InputManager is not initialized.", kLogLevelFlagError);
+        Log("Input is not initialized.", kLogLevelFlagError);
         assert(false);
     }
 
