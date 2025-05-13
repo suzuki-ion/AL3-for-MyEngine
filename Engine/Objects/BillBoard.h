@@ -18,7 +18,6 @@ struct BillBoard : public Object {
         mesh->indexBufferMap[4] = 3;
         mesh->indexBufferMap[5] = 2;
     }
-
 };
 
 } // namespace MyEngine

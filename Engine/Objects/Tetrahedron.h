@@ -3,3 +3,8 @@
 
 namespace MyEngine {
 
+struct Tetrahedron : public Object {
+    Tetrahedron();
+};
+
+} // namespace MyEngine

@@ -22,6 +22,7 @@ struct Sprite;
 struct Sphere;
 struct BillBoard;
 struct ModelData;
+struct Tetrahedron;
 
 /// @brief 描画用クラス
 class Drawer {
@@ -65,9 +66,7 @@ public:
 
     /// @brief 描画するオブジェクトの設定
     /// @param object 描画するオブジェクトへのポインタ
-    void DrawSet(Object *object) {
-        drawObjects_.push_back(object);
-    }
+    void DrawSet(Object *object);
 
 private:
     /// @brief 平行光源の設定
@@ -94,6 +93,10 @@ private:
     /// @param model 描画するモデルへのポインタ
     void Draw(ModelData *model);
 
+    /// @brief 正四面体を描画する
+    /// @param tetrahedron 描画する正四面体へのポインタ
+    void Draw(Tetrahedron *tetrahedron);
+
     /// @brief 共通の描画処理
     void DrawCommon(Object *object);
 
@@ -117,6 +120,10 @@ private:
     DirectionalLight *directionalLight_ = nullptr;
     /// @brief 描画するオブジェクト
     std::vector<Object *> drawObjects_;
+    /// @brief 描画する半透明オブジェクト
+    std::vector<Object *> drawAlphaObjects_;
+    /// @brief 描画する2Dオブジェクト
+    std::vector<Object *> draw2DObjects_;
 
     /// @brief 2D描画用のビュー行列
     Matrix4x4 viewMatrix2D_;

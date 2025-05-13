@@ -174,7 +174,7 @@ void DirectXCommon::Resize() {
         DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
     );
     // スワップチェインのサイズ変更が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
     // スワップチェインからのリソースを再生成
     InitializeSwapChainResources();
     // RTVの初期化
@@ -191,7 +191,7 @@ void DirectXCommon::CommandExecute() {
     // コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
     HRESULT hr = commandList_->Close();
     // コマンドリストの内容を確定できたかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // GPUにコマンドリストの実行を行わせる
     ID3D12CommandList *commandLists[] = { commandList_.Get() };
@@ -219,9 +219,9 @@ void DirectXCommon::CommandExecute() {
 
     // 次のフレーム用のコマンドリストを準備
     hr = commandAllocator_->Reset();
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
     hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 }
 
 void DirectXCommon::CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> &descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
@@ -231,7 +231,7 @@ void DirectXCommon::CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12Descriptor
     descriptorHeapDesc.NumDescriptors = numDescriptors;
     descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     HRESULT hr = device_->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 }
 
 void DirectXCommon::InitializeDXGI() {
@@ -242,7 +242,7 @@ void DirectXCommon::InitializeDXGI() {
     HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory_));
     // 初期化の根本的な部分でエラーが出た場合はプログラムが間違っているか、
     // どうにもできない場合が多いのでassertにしておく
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // アダプタを初期化
     InitializeDXGIAdapter();
@@ -296,7 +296,7 @@ void DirectXCommon::InitializeDXGIAdapter() {
         HRESULT hr = useAdapter_->GetDesc3(&adapterDesc);
 
         // アダプタの情報を取得できたかどうかをチェック
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) assert(SUCCEEDED(hr));
 
         // ソフトウェアアダプタでなければ使用
         if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
@@ -356,7 +356,7 @@ void DirectXCommon::InitializeCommandQueue() {
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
     HRESULT hr = device_->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue_));
     // コマンドキューの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
     Log("Complete Initialize Command Queue.");
@@ -367,7 +367,7 @@ void DirectXCommon::InitializeCommandAllocator() {
     commandAllocator_ = nullptr;
     HRESULT hr = device_->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator_));
     // コマンドアロケータの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
     Log("Complete Initialize Command Allocator.");
@@ -378,7 +378,7 @@ void DirectXCommon::InitializeCommandList() {
     commandList_ = nullptr;
     HRESULT hr = device_->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator_.Get(), nullptr, IID_PPV_ARGS(&commandList_));
     // コマンドリストの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 }
 
 void DirectXCommon::InitializeSwapChain() {
@@ -397,7 +397,7 @@ void DirectXCommon::InitializeSwapChain() {
     // コマンドキュー、ウィンドウハンドル、設定を渡してスワップチェインを生成
     HRESULT hr = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winApp_->GetWindowHandle(), &swapChainDesc_, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf()));
     // スワップチェインの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // 初期化完了のログを出力
     Log("Complete Initialize SwapChain.");
@@ -427,7 +427,7 @@ void DirectXCommon::InitializeSwapChainResources() {
         swapChainResources_[i] = nullptr;
         HRESULT hr = swapChain_->GetBuffer(i, IID_PPV_ARGS(&swapChainResources_[i]));
         // リソースの生成が成功したかをチェック
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) assert(SUCCEEDED(hr));
     }
     
     if (!isInitialized) {
@@ -483,7 +483,7 @@ void DirectXCommon::InitializeFence() {
     fenceValue_ = 0;
     HRESULT hr = device_->CreateFence(fenceValue_, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_));
     // フェンスの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // フェンスのSignalを持つためのイベントを作成する
     fenceEvent_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);

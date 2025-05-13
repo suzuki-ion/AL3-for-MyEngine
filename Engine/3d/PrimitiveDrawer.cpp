@@ -35,7 +35,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     IDxcBlobEncoding *shaderSource = nullptr;
     HRESULT hr = dxcUtils->LoadFile(filePath.c_str(), nullptr, &shaderSource);
     // ファイルの読み込みに失敗した場合はエラーを出す
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // 読み込んだファイルの内容を設定する
     DxcBuffer shaderSourceBuffer;
@@ -66,7 +66,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
         IID_PPV_ARGS(&shaderResult) // コンパイル結果
     );
     // コンパイルエラーでなくdxcが起動できないなど致命的な状況
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     //==================================================
     // 3. 警告・エラーがでていないか確認する
@@ -89,7 +89,7 @@ IDxcBlob *CompileShader(const std::wstring &filePath, const wchar_t *profile,
     IDxcBlob *shaderBlob = nullptr;
     hr = shaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
     // コンパイル結果の取得に失敗した場合はエラーを出す
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
     // コンパイル完了のログを出力
     LogSimple(std::format(L"Compile Succeeded, path:{}, profile:{}", filePath, profile));
     // もう使わないリソースを解放
@@ -157,7 +157,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> PrimitiveDrawer::CreateBufferResources(UI
         &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
     // リソースの生成が成功したかをチェック
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // ログに生成したリソースのサイズを出力
     LogSimple(std::format("CreateBufferResources, size:{}", size));
@@ -287,7 +287,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
     hr = dxCommon_->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(),
         signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     //==================================================
     // InputLayoutの設定
@@ -391,14 +391,14 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     Microsoft::WRL::ComPtr<IDxcUtils> dxcUtils = nullptr;
     Microsoft::WRL::ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
     hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
     hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // includeに対応するための設定
     IDxcIncludeHandler *includeHandler = nullptr;
     hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // シェーダーコンパイル
     Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(
@@ -456,7 +456,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
     hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
         IID_PPV_ARGS(&pipelineState));
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     //==================================================
     // 生成したものをセットにして返す

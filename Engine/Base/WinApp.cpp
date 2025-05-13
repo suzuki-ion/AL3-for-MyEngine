@@ -131,9 +131,9 @@ int WinApp::ProccessMessage() {
         TranslateMessage(&msg_);
         DispatchMessage(&msg_);
 
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
 LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {

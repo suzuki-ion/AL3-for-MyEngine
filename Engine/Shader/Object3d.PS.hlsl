@@ -4,6 +4,7 @@ struct DirectionalLight {
 	float4 color;
 	float3 direction;
 	float intensity;
+	float4x4 viewProjectionMatrix;
 };
 
 struct Material {

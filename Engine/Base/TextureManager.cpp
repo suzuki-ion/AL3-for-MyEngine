@@ -24,7 +24,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
         nullptr,
         image
     );
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     // ミップマップの作成
     // サイズが1x1のテクスチャはミップマップを作成しない
@@ -40,7 +40,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath) {
         0,
         mipImages
     );
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
     
     // ミップマップ付きのデータを返す
     return mipImages;
@@ -144,10 +144,10 @@ uint32_t TextureManager::Load(const std::string &filePath) {
 }
 
 const Texture &TextureManager::GetTexture(uint32_t index) const {
-    // インデックスのオーバーフローをチェック
+    // インデックスが範囲外の場合は0を返す
     if (index >= textures_.size()) {
-        Log("Texture index overflow.", kLogLevelFlagError);
-        assert(false);
+        Log("Texture index out of range.", kLogLevelFlagWarning);
+        return textures_[0];
     }
     // テクスチャデータを返す
     return textures_[index];
@@ -187,7 +187,7 @@ void TextureManager::CreateTextureResource(const DirectX::TexMetadata &metadata)
         nullptr,                                    // Clear最適値。使わないのでnullptr
         IID_PPV_ARGS(&textures_.back().resource)    // 作成するResourceポインタへのポインタ
     );
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(ID3D12Resource *texture, const DirectX::ScratchImage &mipImages) {

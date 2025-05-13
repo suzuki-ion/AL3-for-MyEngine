@@ -4,6 +4,16 @@
 
 namespace MyEngine {
 
+/// @brief ビュー行列を生成する
+/// @param eyePos カメラの位置
+/// @param targetPos 注視点
+/// @param upVector 上方向ベクトル
+/// @return ビュー行列
+[[nodiscard]] Matrix4x4 MakeViewMatrix(
+    const Vector3 &eyePos,
+    const Vector3 &targetPos,
+    const Vector3 &upVector) noexcept;
+
 /// @brief 透視投影行列を生成する
 /// @param fovY 画角 Y
 /// @param aspectRatio アスペクト比

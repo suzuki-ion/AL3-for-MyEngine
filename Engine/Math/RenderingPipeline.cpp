@@ -2,6 +2,18 @@
 
 namespace MyEngine {
 
+Matrix4x4 MakeViewMatrix(const Vector3 &eyePos, const Vector3 &targetPos, const Vector3 &upVector) noexcept {
+    Vector3 zAxis = (eyePos - targetPos).Normalize();
+    Vector3 xAxis = upVector.Cross(zAxis).Normalize();
+    Vector3 yAxis = zAxis.Cross(xAxis).Normalize();
+    return Matrix4x4(
+        xAxis.x, yAxis.x, zAxis.x, 0.0f,
+        xAxis.y, yAxis.y, zAxis.y, 0.0f,
+        xAxis.z, yAxis.z, zAxis.z, 0.0f,
+        -xAxis.Dot(eyePos), -yAxis.Dot(eyePos), -zAxis.Dot(eyePos), 1.0f
+    );
+}
+
 Matrix4x4 MakePerspectiveFovMatrix(const float fovY, const float aspectRatio, const float nearClip, const float farClip) noexcept {
     const float cot = 1.0f / std::tan(fovY / 2.0f);
     return Matrix4x4(

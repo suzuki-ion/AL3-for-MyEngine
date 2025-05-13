@@ -115,7 +115,7 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
                 faceVertices.push_back({ position, texCoord, normal });
             }
             // 頂点を逆順で登録することで、周り順を逆にする
-            for (int32_t i = faceVertices.size() - 1; i >= 0; --i) {
+            for (size_t i = faceVertices.size() - 1; i >= 0; --i) {
                 vertices.push_back(faceVertices[i]);
             }
 

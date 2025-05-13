@@ -7,18 +7,20 @@
 
 namespace MyEngine {
 
+// ログはデバッグ時のみ出力する
+#ifdef _DEBUG
 namespace {
 
 // ログ出力用のストリーム
-std::ofstream logStream;
+std::ofstream sLogStream;
 // プロジェクトのルートディレクトリ
-std::string projectDir;
+std::string sProjectDir;
 // 出力するログのレベル
-LogLevelFlags outputLogLevel;
+LogLevelFlags sOutputLogLevel;
 // 出力するログの種類
-LogTypeFlags outputLogType;
+LogTypeFlags sOutputLogType;
 // ログレベルフラグの文字列
-const char *logLevelFlagStrings[] = {
+const char *kLogLevelFlagStrings[] = {
     "NONE",
     "INFO",
     "WARNING",
@@ -29,8 +31,8 @@ const char *logLevelFlagStrings[] = {
 /// @param fullPath フルパス
 /// @return 相対パス
 std::string GetRelativePath(const std::string &fullPath) {
-    if (fullPath.find(projectDir) == 0) {
-        return fullPath.substr(projectDir.length());
+    if (fullPath.find(sProjectDir) == 0) {
+        return fullPath.substr(sProjectDir.length());
     }
     return fullPath;
 }
@@ -88,46 +90,46 @@ std::string CreateLogText(const std::string &message, LogLevelFlags logLevelFlag
 void InitializeLog(const std::string &filePath, const std::string &projectDir,
     const LogLevelFlags outputLogLevel, const LogTypeFlags outputLogType) {
     // プロジェクトのルートディレクトリを保存
-    MyEngine::projectDir = projectDir;
+    sProjectDir = projectDir;
 
     // ログファイルのパスを作成
     std::filesystem::create_directory(filePath);
     // 時刻を使ってファイル名を決定
     std::string logFilePath = filePath + '/' + TimeGetString("{:%Y-%m-%d_%H-%M-%S}") + ".log";
     // ファイルを使って書き込み準備
-    logStream.open(logFilePath);
+    sLogStream.open(logFilePath);
 
     // 出力するログのレベルを保存
-    MyEngine::outputLogLevel = outputLogLevel;
+    sOutputLogLevel = outputLogLevel;
     // 出力するログの種類を保存
-    MyEngine::outputLogType = outputLogType;
+    sOutputLogType = outputLogType;
 
     // 初期化完了のログとプロジェクトのルートディレクトリと
     // 出力するログのレベルと種類を出力
-    logStream << "Log initialized." << std::endl;
-    logStream << "Project Directory: \"" << projectDir << "\"" << std::endl;
+    sLogStream << "Log initialized." << std::endl;
+    sLogStream << "Project Directory: \"" << projectDir << "\"" << std::endl;
     if (outputLogLevel & kLogLevelFlagInfo) {
-        logStream << "Output Log Level: [INFO]" << std::endl;
+        sLogStream << "Output Log Level: [INFO]" << std::endl;
     }
     if (outputLogLevel & kLogLevelFlagWarning) {
-        logStream << "Output Log Level: [WARNING]" << std::endl;
+        sLogStream << "Output Log Level: [WARNING]" << std::endl;
     }
     if (outputLogLevel & kLogLevelFlagError) {
-        logStream << "Output Log Level: [ERROR]" << std::endl;
+        sLogStream << "Output Log Level: [ERROR]" << std::endl;
     }
-    logStream << std::endl;
+    sLogStream << std::endl;
     if (outputLogType & kLogTypeFlagMessage) {
-        logStream << "Output Log Type: [MESSAGE]" << std::endl;
+        sLogStream << "Output Log Type: [MESSAGE]" << std::endl;
     }
     if (outputLogType & kLogTypeFlagLocation) {
-        logStream << "Output Log Type: [LOCATION]" << std::endl;
+        sLogStream << "Output Log Type: [LOCATION]" << std::endl;
     }
-    logStream << std::endl;
+    sLogStream << std::endl;
 }
 
 void Log(const std::string &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -136,14 +138,14 @@ void Log(const std::string &message, const LogLevelFlags logLevelFlags, const st
     std::string logText = CreateDetailLogText(location);
     logText += CreateLogText(message, logLevelFlags);
     // ログファイルに書き込み
-    logStream << logText << std::endl;
+    sLogStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
 }
 
 void Log(const std::wstring &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -154,7 +156,7 @@ void Log(const std::wstring &message, const LogLevelFlags logLevelFlags, const s
 
 void Log(const std::source_location &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -172,14 +174,14 @@ void Log(const std::source_location &message, const LogLevelFlags logLevelFlags,
         logLevelFlags
     );
     // ログファイルに書き込み
-    logStream << logText << std::endl;
+    sLogStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
 }
 
 void LogSimple(const std::string &message, const LogLevelFlags logLevelFlags) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -187,14 +189,14 @@ void LogSimple(const std::string &message, const LogLevelFlags logLevelFlags) {
     // ログテキストを作成
     std::string logText = '\t' + CreateLogText(message, logLevelFlags);
     // ログファイルに書き込み
-    logStream << logText << std::endl;
+    sLogStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
 }
 
 void LogSimple(const std::wstring &message, const LogLevelFlags logLevelFlags) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -205,7 +207,7 @@ void LogSimple(const std::wstring &message, const LogLevelFlags logLevelFlags) {
 
 void LogSimple(const std::source_location &message, const LogLevelFlags logLevelFlags) {
     // ログレベルフラグのチェック
-    if ((logLevelFlags & outputLogLevel) == 0) {
+    if ((logLevelFlags & sOutputLogLevel) == 0) {
         // 出力しないログレベルフラグの場合は何もしない
         return;
     }
@@ -222,19 +224,69 @@ void LogSimple(const std::source_location &message, const LogLevelFlags logLevel
         logLevelFlags
     );
     // ログファイルに書き込み
-    logStream << logText << std::endl;
+    sLogStream << logText << std::endl;
     // デバッグウィンドウに出力
     OutputDebugStringA((logText + '\n').c_str());
 }
 
 void LogNewLine() {
-    logStream << std::endl;
+    sLogStream << std::endl;
     OutputDebugStringA("\n");
 }
 
 void LogInsertPartition(const std::string &partition) {
-    logStream << partition << std::endl;
+    sLogStream << partition << std::endl;
     OutputDebugStringA((partition + "\n").c_str());
 }
+#else
+
+void InitializeLog(const std::string &filePath, const std::string &projectDir,
+    const LogLevelFlags outputLogLevel, const LogTypeFlags outputLogType) {
+    static_cast<void>(filePath);
+    static_cast<void>(projectDir);
+    static_cast<void>(outputLogLevel);
+    static_cast<void>(outputLogType);
+}
+
+void Log(const std::string &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+    static_cast<void>(location);
+}
+
+void Log(const std::wstring &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+    static_cast<void>(location);
+}
+
+void Log(const std::source_location &message, const LogLevelFlags logLevelFlags, const std::source_location &location) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+    static_cast<void>(location);
+}
+
+void LogSimple(const std::string &message, const LogLevelFlags logLevelFlags) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+}
+
+void LogSimple(const std::wstring &message, const LogLevelFlags logLevelFlags) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+}
+
+void LogSimple(const std::source_location &message, const LogLevelFlags logLevelFlags) {
+    static_cast<void>(message);
+    static_cast<void>(logLevelFlags);
+}
+
+void LogNewLine() {
+}
+
+void LogInsertPartition(const std::string &partition) {
+    static_cast<void>(partition);
+}
+#endif // _DEBUG
 
 } // namespace MyEngine

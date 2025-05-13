@@ -1,6 +1,8 @@
 #include "Camera.h"
 #include "RenderingPipeline.h"
+#include "Vector2.h"
 #include "Base/WinApp.h"
+#include "Base/Input.h"
 #include "Common/Logs.h"
 #include <imgui.h>
 #include <cmath>
@@ -58,12 +60,10 @@ void Camera::SetWorldMatrix(const Matrix4x4 &worldMatrix) noexcept {
 }
 
 void Camera::CalculateMatrix() noexcept {
-    cameraMatrix_.SetScale(cameraScale_);
-    cameraMatrix_.SetRotate(cameraRotate_);
-    cameraMatrix_.SetTranslate(cameraTranslate_);
+    cameraMatrix_.SetSRT(cameraScale_, cameraRotate_, cameraTranslate_);
     viewMatrix_ = cameraMatrix_.InverseScale() * cameraMatrix_.InverseRotate() * cameraMatrix_.InverseTranslate();
     projectionMatrix_ = MakePerspectiveFovMatrix(0.45f, static_cast<float>(winApp_->GetClientWidth()) / static_cast<float>(winApp_->GetClientHeight()), 0.1f, 100.0f);
-    wvpMatrix_ = worldMatrix_ * (viewMatrix_ * projectionMatrix_);
+    wvpMatrix_ = worldMatrix_ * viewMatrix_ * projectionMatrix_;
     viewportMatrix_ = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(winApp_->GetClientWidth()), static_cast<float>(winApp_->GetClientHeight()), 0.0f, 1.0f);
 }
 
@@ -73,21 +73,26 @@ void Camera::MoveToMouse(const float translateSpeed, const float rotateSpeed, co
         return;
     }
 
+    Vector2 mousePos = {
+        static_cast<float>(Input::GetMouseX()),
+        static_cast<float>(Input::GetMouseY())
+    };
+
     // 左クリックで平行移動
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
-        cameraTranslate_.x -= mouseDelta.x * translateSpeed;
-        cameraTranslate_.y += mouseDelta.y * translateSpeed;
+    if (Input::IsMouseButtonDown(0)) {
+        Vector3 rightDir(viewMatrix_.m[0][0], viewMatrix_.m[1][0], viewMatrix_.m[2][0]);
+        Vector3 upDir(0.0f, 1.0f, 0.0f);
+        Vector3 movement = rightDir * mousePos.x + -upDir * mousePos.y;
+        cameraTranslate_ += movement * translateSpeed;
     }
     // 右クリックで回転
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-        ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
-        cameraRotate_.x += mouseDelta.y * rotateSpeed;
-        cameraRotate_.y += mouseDelta.x * rotateSpeed;
+    if (Input::IsMouseButtonDown(1)) {
+        cameraRotate_.x += mousePos.y * rotateSpeed;
+        cameraRotate_.y += mousePos.x * rotateSpeed;
     }
     // ホイールで拡大縮小
-    if (ImGui::GetIO().MouseWheel != 0.0f) {
-        float mouseWheel = ImGui::GetIO().MouseWheel;
+    if (Input::GetMouseWheel() != 0) {
+        float mouseWheel = static_cast<float>(Input::GetMouseWheel());
         cameraScale_.x -= mouseWheel * scaleSpeed;
         cameraScale_.y -= mouseWheel * scaleSpeed;
         cameraScale_.z -= mouseWheel * scaleSpeed;

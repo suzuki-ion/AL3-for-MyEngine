@@ -1,5 +1,6 @@
 #include <cmath>
 #include <algorithm>
+#include <thread>
 
 #include "Drawer.h"
 #include "WinApp.h"
@@ -21,6 +22,7 @@
 #include "Objects/Sphere.h"
 #include "Objects/Billboard.h"
 #include "Objects/ModelData.h"
+#include "Objects/Tetrahedron.h"
 
 #define M_PI (4.0f * std::atanf(1.0f))
 
@@ -31,14 +33,20 @@ namespace {
 /// @brief デバッグカメラの初期化
 std::unique_ptr<Camera> sDebugCamera;
 
-bool ZSort(Object *a, Object *b) {
-    // Z値でソートする
-    if (a->camera == nullptr || b->camera == nullptr) {
-        // カメラが設定されていない場合はソートしない
-        return false;
-    }
+// 60fps固定用。エンジン側のプログラム実行の余裕を持たせて61fpsにする
+const float kFrameTime = 1000.0f / 61.0f;
+// フレーム開始時間
+std::chrono::high_resolution_clock::time_point sStartTime;
+// フレーム終了時間
+std::chrono::high_resolution_clock::time_point sEndTime;
+// フレーム時間
+float sFrameTime = 0.0f;
+// 待機時間
+float sWaitTime = 0.0f;
 
-    return a->transform.translate.Distance(a->camera->GetTranslate()) >
+bool ZSort(Object *a, Object *b) {
+    // カメラからの距離でソート
+    return a->transform.translate.Distance(a->camera->GetTranslate()) <
         b->transform.translate.Distance(b->camera->GetTranslate());
 }
 
@@ -135,9 +143,14 @@ Drawer::~Drawer() {
 }
 
 void Drawer::PreDraw() {
+    // フレーム開始時間を取得
+    sStartTime = std::chrono::high_resolution_clock::now();
+
     dxCommon_->PreDraw();
     imguiManager_->BeginFrame();
     drawObjects_.clear();
+    drawAlphaObjects_.clear();
+    draw2DObjects_.clear();
 
     static ID3D12DescriptorHeap *descriptorHeaps[] = { SRV::GetDescriptorHeap() };
     dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
@@ -194,8 +207,11 @@ void Drawer::PostDraw() {
         SetLightBuffer(directionalLight_);
     }
 
-    //std::sort(drawObjects_.begin(), drawObjects_.end(), ZSort);
-
+    // カメラとの距離でソート
+    // カメラの座標が正しく設定されてないから一旦コメントアウト
+    //std::sort(drawAlphaObjects_.begin(), drawAlphaObjects_.end(), ZSort);
+    
+    // 通常のオブジェクトの描画
     for (auto object : drawObjects_) {
         if (dynamic_cast<Triangle *>(object)) {
             Draw(static_cast<Triangle *>(object));
@@ -207,15 +223,78 @@ void Drawer::PostDraw() {
             Draw(static_cast<BillBoard *>(object));
         } else if (dynamic_cast<ModelData *>(object)) {
             Draw(static_cast<ModelData *>(object));
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            Draw(static_cast<Tetrahedron *>(object));
+        }
+    }
+    // 半透明オブジェクトの描画
+    for (auto object : drawAlphaObjects_) {
+        if (dynamic_cast<Triangle *>(object)) {
+            Draw(static_cast<Triangle *>(object));
+        } else if (dynamic_cast<Sprite *>(object)) {
+            Draw(static_cast<Sprite *>(object));
+        } else if (dynamic_cast<Sphere *>(object)) {
+            Draw(static_cast<Sphere *>(object));
+        } else if (dynamic_cast<BillBoard *>(object)) {
+            Draw(static_cast<BillBoard *>(object));
+        } else if (dynamic_cast<ModelData *>(object)) {
+            Draw(static_cast<ModelData *>(object));
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            Draw(static_cast<Tetrahedron *>(object));
+        }
+    }
+    // 2Dオブジェクトの描画
+    for (auto object : draw2DObjects_) {
+        if (dynamic_cast<Triangle *>(object)) {
+            Draw(static_cast<Triangle *>(object));
+        } else if (dynamic_cast<Sprite *>(object)) {
+            Draw(static_cast<Sprite *>(object));
+        } else if (dynamic_cast<Sphere *>(object)) {
+            Draw(static_cast<Sphere *>(object));
+        } else if (dynamic_cast<BillBoard *>(object)) {
+            Draw(static_cast<BillBoard *>(object));
+        } else if (dynamic_cast<ModelData *>(object)) {
+            Draw(static_cast<ModelData *>(object));
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            Draw(static_cast<Tetrahedron *>(object));
         }
     }
     imguiManager_->EndFrame();
     dxCommon_->PostDraw();
+
+    // フレーム終了時間を取得
+    sEndTime = std::chrono::high_resolution_clock::now();
+    // フレーム時間を計算
+    sFrameTime = std::chrono::duration<float, std::milli>(sEndTime - sStartTime).count();
+    sWaitTime = kFrameTime - sFrameTime;
+    // フレーム時間が0.0fより大きい場合は待機時間を設定
+    if (sWaitTime > 0.0f) {
+        // 待機時間を設定
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(sWaitTime)));
+    }
 }
 
 void Drawer::ToggleDebugCamera() {
     // デバッグカメラのトグル
     isUseDebugCamera_ = !isUseDebugCamera_;
+}
+
+void Drawer::DrawSet(Object *object) {
+    drawObjects_.push_back(object);
+    return;
+
+    // カメラが設定されていないものは2Dオブジェクトとして扱う
+    if (object->camera == nullptr) {
+        draw2DObjects_.push_back(object);
+    } else {
+        // カメラが設定されているものは3Dオブジェクトとして扱う
+        if (object->material.color.w < 255.0f) {
+            // アルファ値が255.0f未満のものは半透明オブジェクトとして扱う
+            drawAlphaObjects_.push_back(object);
+        } else {
+            drawObjects_.push_back(object);
+        }
+    }
 }
 
 void Drawer::SetLightBuffer(DirectionalLight *light) {
@@ -230,6 +309,11 @@ void Drawer::SetLightBuffer(DirectionalLight *light) {
     directionalLightData->color = ConvertColor(light->color);
     directionalLightData->direction = light->direction;
     directionalLightData->intensity = light->intensity;
+    // 光源のビューと射影行列
+    directionalLightData->viewProjectionMatrix =
+        MakeViewMatrix(Vector3(0.0f, 0.0f, 0.0f), light->direction, Vector3(0.0f, 1.0f, 0.0f)) *
+        MakeOrthographicMatrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+
     // CBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 }
@@ -298,8 +382,6 @@ void Drawer::Draw(Sphere *sphere) {
     for (uint32_t latIndex = 0; latIndex < sphere->kSubdivision; latIndex++) {
         // 経度の方向に分割
         for (uint32_t lonIndex = 0; lonIndex < sphere->kSubdivision; lonIndex++) {
-            // インデックスを計算
-            const uint32_t startIndex = (latIndex * sphere->kSubdivision + lonIndex) * 6;
             // 頂点位置を計算
             const uint32_t vertexIndex = (latIndex * sphere->kSubdivision + lonIndex) * 4;
 
@@ -339,8 +421,8 @@ void Drawer::Draw(Sphere *sphere) {
             position[0] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 1].position);
             position[1] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 3].position);
             position[2] = Vector3(sphere->mesh->vertexBufferMap[vertexIndex + 2].position);
-            for (int i = 0; i < 4; i++) {
-                sphere->mesh->vertexBufferMap[vertexIndex + i].normal =
+            for (int j = 0; j < 4; j++) {
+                sphere->mesh->vertexBufferMap[vertexIndex + j].normal =
                     (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
             }
         }
@@ -387,6 +469,37 @@ void Drawer::Draw(ModelData *model) {
     DrawCommon(model);
     // 描画
     dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(model->vertices.size()), 1, 0, 0);
+}
+
+void Drawer::Draw(Tetrahedron *tetrahedron) {
+    // 法線を設定
+    static Vector3 position[3];
+    if (tetrahedron->camera == nullptr || tetrahedron->material.enableLighting == false) {
+        for (int i = 0; i < 12; i++) {
+            tetrahedron->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
+        }
+    } else {
+        if (tetrahedron->normalType == kNormalTypeVertex) {
+            for (int i = 0; i < 12; i++) {
+                tetrahedron->mesh->vertexBufferMap[i].normal =
+                    Vector3(tetrahedron->mesh->vertexBufferMap[i].position);
+            }
+        } else if (tetrahedron->normalType == kNormalTypeFace) {
+            for (int i = 0; i < 4; i++) {
+                position[0] = Vector3(tetrahedron->mesh->vertexBufferMap[i * 3 + 0].position);
+                position[1] = Vector3(tetrahedron->mesh->vertexBufferMap[i * 3 + 1].position);
+                position[2] = Vector3(tetrahedron->mesh->vertexBufferMap[i * 3 + 2].position);
+                for (int j = 0; j < 3; j++) {
+                    tetrahedron->mesh->vertexBufferMap[i * 3 + j].normal =
+                        (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+                }
+            }
+        }
+    }
+    // 描画処理
+    DrawCommon(tetrahedron);
+    // 描画
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(12, 1, 0, 0, 0);
 }
 
 void Drawer::DrawCommon(Object *object) {
@@ -448,6 +561,7 @@ void Drawer::DrawCommon(Object *object) {
     dxCommon_->GetCommandList()->IASetIndexBuffer(&object->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, object->materialResource->GetGPUVirtualAddress());
+
     // TransformationMatrix用のCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, object->transformationMatrixResource->GetGPUVirtualAddress());
 }

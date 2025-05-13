@@ -1,4 +1,5 @@
 #include <cassert>
+#include <d3dx12.h>
 
 #include "DSV.h"
 #include "Base/WinApp.h"
@@ -61,7 +62,7 @@ namespace {
         &depthClearValue,                   // Clear最適値
         IID_PPV_ARGS(&resource)             // 作成するResourceポインタへのポインタ
     );
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
 
     return resource;
 }

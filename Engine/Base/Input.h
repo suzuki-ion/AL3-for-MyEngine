@@ -55,6 +55,64 @@ public:
         return (keyboardState_[key] & 0x80) == 0 && (preKeyboardState_[key] & 0x80) != 0;
     }
 
+    /// @brief マウスのボタンの押下状態を取得
+    /// @param button マウスボタンコード
+    /// @return 押下状態
+    static bool IsMouseButtonDown(int button) {
+        return (mouseState_.rgbButtons[button] & 0x80) != 0;
+    }
+
+    /// @brief 前回のマウスのボタンの押下状態を取得
+    /// @param button マウスボタンコード
+    /// @return 前回の押下状態
+    static bool IsPreMouseButtonDown(int button) {
+        return (preMouseState_.rgbButtons[button] & 0x80) != 0;
+    }
+
+    /// @brief マウスのボタンのトリガー状態を取得
+    /// @param button マウスボタンコード
+    /// @return トリガー状態
+    static bool IsMouseButtonTrigger(int button) {
+        return (mouseState_.rgbButtons[button] & 0x80) != 0 && (preMouseState_.rgbButtons[button] & 0x80) == 0;
+    }
+
+    /// @brief マウスのボタンのリリース状態を取得
+    /// @param button マウスボタンコード
+    /// @return リリース状態
+    static bool IsMouseButtonRelease(int button) {
+        return (mouseState_.rgbButtons[button] & 0x80) == 0 && (preMouseState_.rgbButtons[button] & 0x80) != 0;
+    }
+
+    /// @brief マウスカーソルのX座標を取得
+    /// @return マウスカーソルのX座標
+    static int GetMouseX() {
+        return mouseState_.lX;
+    }
+
+    /// @brief マウスカーソルのY座標を取得
+    /// @return マウスカーソルのY座標
+    static int GetMouseY() {
+        return mouseState_.lY;
+    }
+
+    /// @brief マウスカーソルのX座標の移動量を取得
+    /// @return マウスカーソルのX座標の移動量
+    static int GetMouseDeltaX() {
+        return mouseState_.lX - preMouseState_.lX;
+    }
+
+    /// @brief マウスカーソルのY座標の移動量を取得
+    /// @return マウスカーソルのY座標の移動量
+    static int GetMouseDeltaY() {
+        return mouseState_.lY - preMouseState_.lY;
+    }
+
+    /// @brief マウスホイールの回転量を取得
+    /// @return マウスホイールの回転量
+    static int GetMouseWheel() {
+        return mouseState_.lZ;
+    }
+
 private:
     /// @brief 初期化済みフラグ
     static bool isInitialized_;
