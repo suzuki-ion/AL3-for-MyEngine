@@ -24,6 +24,8 @@ public:
 
     /// @brief レンダーターゲットのクリア
     void ClearRenderTarget();
+    /// @brief 深度バッファのクリア
+    void ClearDepthStencil();
 
     /// @brief バリアを張る
     /// @param barrier バリアの設定
@@ -44,7 +46,8 @@ public:
     void Resize();
 
     /// @brief コマンドの実行
-    void CommandExecute();
+    /// @param isSwapChain スワップチェインの実行かどうか
+    void CommandExecute(bool isSwapChain);
 
     /// @brief ディスクリプタヒープの作成
     /// @param descriptorHeap ディスクリプタヒープへのポインタ
@@ -52,6 +55,14 @@ public:
     /// @param numDescriptors ディスクリプタの数
     /// @param shaderVisible シェーダーから見えるかどうか
     void CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> &descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible = false);
+
+    /// @brief 深度バッファのリソースを作成
+    /// @param width 深度バッファの幅
+    /// @param height 深度バッファの高さ
+    /// @param format フォーマット
+    /// @param initialState 初期状態
+    /// @return 深度バッファのリソース
+    Microsoft::WRL::ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(int32_t width, int32_t height, DXGI_FORMAT format, D3D12_RESOURCE_STATES initialState);
 
     /// @brief D3D12デバイス取得
     /// @return D3D12デバイス

@@ -111,6 +111,9 @@
     <ClCompile Include="Engine\Objects\Tetrahedron.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\ShadowMap.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Engine.h">
@@ -287,10 +290,18 @@
     <ClInclude Include="Engine\Objects\Tetrahedron.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Objects\Plane.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\3d\ShadowMap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.VS.hlsl" />
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl" />
+    <FxCompile Include="Engine\Shader\ShadowMap.VS.hlsl" />
+    <FxCompile Include="Engine\Shader\ShadowMap.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Externals\imgui\LICENSE.txt" />

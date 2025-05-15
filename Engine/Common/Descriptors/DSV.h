@@ -98,7 +98,7 @@ private:
     static DirectXCommon *dxCommon_;
 
     /// @brief ディスクリプタの数
-    static const int numDescriptors_ = 1;
+    static const int numDescriptors_ = 2;
     /// @brief ディスクリプタヒープ
     static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap_;
     /// @brief 深度ステンシルビュー用のリソース

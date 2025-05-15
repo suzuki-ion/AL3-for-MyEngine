@@ -62,9 +62,13 @@ public:
     
     /// @brief グラフィックパイプライン生成
     /// @param topologyType トポロジータイプ
-    /// @param rasterizerDesc ラスタライザ設定
+    /// @param blendMode ブレンドモード
     /// @return パイプラインセット
     static PipeLineSet CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable = true, const std::source_location &location = std::source_location::current());
+
+    /// @brief シャドウマップ用のパイプライン生成
+    /// @return シャドウマップ用のパイプラインセット
+    static PipeLineSet CreateShadowMapPipeline(const std::source_location &location = std::source_location::current());
 
 private:
     PrimitiveDrawer() = default;

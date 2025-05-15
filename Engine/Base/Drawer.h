@@ -14,6 +14,7 @@ class WinApp;
 class DirectXCommon;
 class ImGuiManager;
 class TextureManager;
+class ShadowMap;
 
 struct DirectionalLight;
 struct Object;
@@ -23,6 +24,12 @@ struct Sphere;
 struct BillBoard;
 struct ModelData;
 struct Tetrahedron;
+struct Plane;
+
+enum DrawType {
+    kDrawTypeNormal,
+    kDrawTypeShadowMap,
+};
 
 /// @brief 描画用クラス
 class Drawer {
@@ -37,11 +44,8 @@ public:
     /// @brief デストラクタ
     ~Drawer();
 
-    /// @brief 描画開始前処理
-    void PreDraw();
-
-    /// @brief 描画終了処理
-    void PostDraw();
+    /// @brief 通常の描画処理の開始
+    void DrawExecute();
 
     /// @brief デバッグカメラの切り替え
     void ToggleDebugCamera();
@@ -50,6 +54,12 @@ public:
     /// @return 有効ならtrue、無効ならfalse
     bool IsUseDebugCamera() const {
         return isUseDebugCamera_;
+    }
+
+    /// @brief シャドウマップの設定
+    /// @param shadowMap シャドウマップへのポインタ
+    void SetShadowMap(ShadowMap *shadowMap) {
+        shadowMap_ = shadowMap;
     }
 
     /// @brief ブレンドモードの設定
@@ -69,6 +79,16 @@ public:
     void DrawSet(Object *object);
 
 private:
+    /// @brief シャドウマップの描画処理
+    void DrawShadowMap();
+
+    /// @brief 通常の描画処理
+    void DrawNormal();
+
+    /// @brief シャドウマップの光源の設定
+    /// @param light 平行光源へのポインタ
+    void SetShadowMapLightBuffer(DirectionalLight *light);
+
     /// @brief 平行光源の設定
     /// @param light 平行光源へのポインタ
     void SetLightBuffer(DirectionalLight *light);
@@ -97,6 +117,19 @@ private:
     /// @param tetrahedron 描画する正四面体へのポインタ
     void Draw(Tetrahedron *tetrahedron);
 
+    /// @brief 平面を描画する
+    /// @param plane 描画する平面へのポインタ
+    void Draw(Plane *plane);
+
+    /// @brief 影の共通の描画処理
+    void DrawShadowMapCommon(std::vector<Object *> &objects);
+
+    /// @brief 影の共通の描画処理
+    void DrawShadowMapCommon(Object *object);
+
+    /// @brief 共通の描画処理
+    void DrawCommon(std::vector<Object *> &objects);
+
     /// @brief 共通の描画処理
     void DrawCommon(Object *object);
 
@@ -108,6 +141,8 @@ private:
     ImGuiManager *imguiManager_ = nullptr;
     /// @brief TextureManagerインスタンス
     TextureManager *textureManager_ = nullptr;
+    /// @brief ShadowMapインスタンス
+    ShadowMap *shadowMap_ = nullptr;
 
     /// @brief ブレンドモード
     BlendMode blendMode_ = kBlendModeNormal;

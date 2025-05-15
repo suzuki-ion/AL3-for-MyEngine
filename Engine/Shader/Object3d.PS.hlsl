@@ -1,12 +1,5 @@
 #include "Object3d.hlsli"
 
-struct DirectionalLight {
-	float4 color;
-	float3 direction;
-	float intensity;
-	float4x4 viewProjectionMatrix;
-};
-
 struct Material {
 	float4 color;
 	int enableLighting;
@@ -34,7 +27,7 @@ PixelShaderOutput main(VertexShaderOutput input) {
 	if (gMaterial.enableLighting != 0) {
 		float NdotL = dot(normalize(input.normal), -gDirectionalLight.direction);
 		float cos = pow(NdotL * 0.5 + 0.5, gDirectionalLight.color.a * 2.0f);
-		output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
+		output.color.rgb = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
 		output.color.a = gMaterial.color.a * textureColor.a;
 
 	} else {

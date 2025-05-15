@@ -252,7 +252,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;              // Tableの中身の配列を指定
     rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);  // Tableで利用する数
 
-    // 平行光源用
+    // 平行光源
     rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;    // CBVを使う
     rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderを使う
     rootParameters[3].Descriptor.ShaderRegister = 1;                    // レジスタ番号1を使う
@@ -270,6 +270,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;                       // ありったけのMipmapを使う
     staticSamplers[0].ShaderRegister = 0;                               // レジスタ番号0を使う
     staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderで使う
+
     descriptionRootSignature.pStaticSamplers = staticSamplers;
     descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
 
@@ -330,8 +331,6 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
 
     D3D12_BLEND_DESC blendDesc{};
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-    /*blendDesc.AlphaToCoverageEnable = false;
-    blendDesc.IndependentBlendEnable = false;*/
     blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
@@ -345,9 +344,6 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
             blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
             blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
             blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-            /*blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;*/
             break;
         case kBlendModeAdd:
             blendDesc.RenderTarget[0].BlendEnable = true;
@@ -452,6 +448,134 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     // 深度バッファの設定
     graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
     graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    // 生成
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
+    hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
+        IID_PPV_ARGS(&pipelineState));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
+
+    //==================================================
+    // 生成したものをセットにして返す
+    //==================================================
+
+    PipeLineSet pipelineSet;
+    pipelineSet.rootSignature = rootSignature;
+    pipelineSet.pipelineState = pipelineState;
+
+    // ログに生成完了のメッセージを出力
+    LogSimple("CreateGraphicsPipeline Succeeded.");
+    return pipelineSet;
+}
+
+PipeLineSet PrimitiveDrawer::CreateShadowMapPipeline(const std::source_location &location) {
+    // 呼び出された場所のログを出力
+    Log(location);
+
+    //==================================================
+    // ルートシグネチャの生成
+    //==================================================
+
+    D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+    rootSignatureDesc.Flags =
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+    //--------- RootParameter作成 ---------//
+
+    D3D12_ROOT_PARAMETER rootParameters[2]{};
+    // 光源視点の行列
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+    rootParameters[0].Descriptor.ShaderRegister = 0;
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+    rootParameters[1].Descriptor.ShaderRegister = 1;
+    
+    rootSignatureDesc.pParameters = rootParameters;              // ルートパラメータ配列へのポインタ
+    rootSignatureDesc.NumParameters = _countof(rootParameters);  // 配列の長さ
+
+    // Samplerの設定
+    D3D12_STATIC_SAMPLER_DESC staticSamplers[1]{};
+    staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    staticSamplers[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
+    staticSamplers[0].ShaderRegister = 0;
+    staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    rootSignatureDesc.pStaticSamplers = staticSamplers;
+    rootSignatureDesc.NumStaticSamplers = _countof(staticSamplers);
+
+    // シリアライズしてバイナリにする
+    Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob = nullptr;
+    Microsoft::WRL::ComPtr<ID3DBlob> errorBlob = nullptr;
+    HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc,
+        D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+    if (FAILED(hr)) {
+        Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()), kLogLevelFlagError);
+        assert(false);
+    }
+
+    // バイナリを元に生成
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
+    hr = dxCommon_->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(),
+        signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
+    
+    //==================================================
+    // InputLayoutの設定
+    //==================================================
+
+    D3D12_INPUT_ELEMENT_DESC inputElementDescs[1] = {};
+    inputElementDescs[0].SemanticName = "POSITION";
+    inputElementDescs[0].SemanticIndex = 0;
+    inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    inputElementDescs[0].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+
+    //==================================================
+    // Shaderをコンパイルする
+    //==================================================
+
+    //dxcCompilerを初期化
+    Microsoft::WRL::ComPtr<IDxcUtils> dxcUtils = nullptr;
+    Microsoft::WRL::ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
+    hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
+    hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
+
+    // includeに対応するための設定
+    IDxcIncludeHandler *includeHandler = nullptr;
+    hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
+    if (FAILED(hr)) assert(SUCCEEDED(hr));
+
+    // シェーダーコンパイル
+    Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(
+        L"Engine/Shader/ShadowMap.VS.hlsl", L"vs_6_0",
+        dxcUtils.Get(), dxcCompiler.Get(), includeHandler);
+
+    //==================================================
+    // PSOを生成する
+    //==================================================
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
+    graphicsPipelineStateDesc.pRootSignature = rootSignature.Get();
+    graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
+    graphicsPipelineStateDesc.PS = { nullptr, 0 };
+    graphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    graphicsPipelineStateDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+    graphicsPipelineStateDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+    graphicsPipelineStateDesc.DepthStencilState.DepthEnable = true;
+    graphicsPipelineStateDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    graphicsPipelineStateDesc.NumRenderTargets = 0;
+    graphicsPipelineStateDesc.SampleDesc.Count = 1;
+    graphicsPipelineStateDesc.SampleMask = UINT_MAX;
+    graphicsPipelineStateDesc.InputLayout.pInputElementDescs = inputElementDescs;
+    graphicsPipelineStateDesc.InputLayout.NumElements = _countof(inputElementDescs);
+
     // 生成
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
     hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,

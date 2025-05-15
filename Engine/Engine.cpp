@@ -1,6 +1,7 @@
 #include <cassert>
 #include <vector>
 #include <memory>
+#include <thread>
 
 #include "Common/ConvertString.h"
 #include "Common/VertexData.h"
@@ -27,6 +28,7 @@
 using namespace MyEngine;
 
 namespace {
+
 /// @brief 終了処理チェック用構造体
 struct FinalizeChecker {
     ~FinalizeChecker();
@@ -42,6 +44,18 @@ std::unique_ptr<DirectXCommon> sDxCommon;
 std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
 std::unique_ptr<Drawer> sDrawer;
+
+// 60fps固定用。エンジン側のプログラム実行の余裕を持たせて61fpsにする
+const float kFrameTime = 1000.0f / 61.0f;
+// フレーム開始時間
+std::chrono::high_resolution_clock::time_point sStartTime;
+// フレーム終了時間
+std::chrono::high_resolution_clock::time_point sEndTime;
+// フレーム時間
+float sFrameTime = 0.0f;
+// 待機時間
+float sWaitTime = 0.0f;
+
 } // namespace
 
 Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
@@ -111,11 +125,21 @@ void Engine::BeginFrame() {
     if (sWinApp->IsSizing()) {
         sDxCommon->Resize();
     }
-    sDrawer->PreDraw();
+    // フレーム開始時間を取得
+    sStartTime = std::chrono::high_resolution_clock::now();
 }
 
 void Engine::EndFrame() {
-    sDrawer->PostDraw();
+    // フレーム終了時間を取得
+    sEndTime = std::chrono::high_resolution_clock::now();
+    // フレーム時間を計算
+    sFrameTime = std::chrono::duration<float, std::milli>(sEndTime - sStartTime).count();
+    sWaitTime = kFrameTime - sFrameTime;
+    // フレーム時間が0.0fより大きい場合は待機時間を設定
+    if (sWaitTime > 0.0f) {
+        // 待機時間を設定
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(sWaitTime)));
+    }
 }
 
 MyEngine::WinApp *Engine::GetWinApp() const {

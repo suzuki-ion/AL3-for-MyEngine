@@ -105,7 +105,7 @@ uint32_t TextureManager::Load(const std::string &filePath) {
     );
 
     // コマンドを実行
-    dxCommon_->CommandExecute();
+    dxCommon_->CommandExecute(false);
 
     // metadataを基にSRVの設定
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};

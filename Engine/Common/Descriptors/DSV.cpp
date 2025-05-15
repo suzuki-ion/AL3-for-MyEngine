@@ -7,6 +7,7 @@
 #include "Common/Logs.h"
 
 namespace MyEngine {
+
 bool DSV::isInitialized_ = false;
 DirectXCommon *DSV::dxCommon_ = nullptr;
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DSV::descriptorHeap_ = nullptr;
@@ -14,67 +15,14 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DSV::depthStencilResource_ = nullptr;
 uint32_t DSV::nextIndexCPU_ = 0;
 uint32_t DSV::nextIndexGPU_ = 0;
 
-namespace {
-
-/// @brief 深度バッファ用のテクスチャリソースを生成する
-/// @param width テクスチャの幅
-/// @param height テクスチャの高さ
-[[nodiscard]] Microsoft::WRL::ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(ID3D12Device *device, int32_t width, int32_t height) {
-    //==================================================
-    // Resourceの設定
-    //==================================================
-
-    D3D12_RESOURCE_DESC resourceDesc{};
-    resourceDesc.Width = width;                                     // Textureの幅
-    resourceDesc.Height = height;                                   // Textureの高さ
-    resourceDesc.MipLevels = 1;                                     // mipmapの数
-    resourceDesc.DepthOrArraySize = 1;                              // 奥行き or 配列Textureの配列数
-    resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;            // DepthStencilとして利用可能なフォーマット
-    resourceDesc.SampleDesc.Count = 1;                              // サンプリングカウント数。1固定
-    resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;    // 2次元
-    resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;   // DepthStencilとして使う通知
-
-    //==================================================
-    // 利用するHeapの設定
-    //==================================================
-
-    D3D12_HEAP_PROPERTIES heapProperties{};
-    heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    //==================================================
-    // 深度値のクリア最適化設定
-    //==================================================
-
-    D3D12_CLEAR_VALUE depthClearValue{};
-    depthClearValue.DepthStencil.Depth = 1.0f;              // 1.0f（最大値）でクリア
-    depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // フォーマット。Resourceと合わせる
-
-    //==================================================
-    // Resourceの生成
-    //==================================================
-
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-    HRESULT hr = device->CreateCommittedResource(
-        &heapProperties,                    // Heapの設定
-        D3D12_HEAP_FLAG_NONE,               // Heapの特殊な設定
-        &resourceDesc,                      // Resourceの設定
-        D3D12_RESOURCE_STATE_DEPTH_WRITE,   // 深度値を書き込む状態にしておく
-        &depthClearValue,                   // Clear最適値
-        IID_PPV_ARGS(&resource)             // 作成するResourceポインタへのポインタ
-    );
-    if (FAILED(hr)) assert(SUCCEEDED(hr));
-
-    return resource;
-}
-
-} // namespace
-
 void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_location &location) {
+    static bool isDSVInitialized = false;
+
     // 呼び出された場所のログを出力
     Log(location);
 
     // 初回だけnullチェックと変数の初期化をする
-    if (!isInitialized_) {
+    if (!isDSVInitialized) {
         // nullチェック
         if (dxCommon == nullptr) {
             Log("dxCommon is null.", kLogLevelFlagError);
@@ -83,23 +31,26 @@ void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_
 
         // 引数をメンバ変数に格納
         dxCommon_ = dxCommon;
+        
     }
 
     //==================================================
     // 深度ステンシルビュー用のリソースを生成
     //==================================================
 
-    depthStencilResource_ = CreateDepthStencilTextureResource(
-        dxCommon_->GetDevice(),
+    depthStencilResource_ = dxCommon->CreateDepthStencilTextureResource(
         winApp->GetClientWidth(),
-        winApp->GetClientHeight()
+        winApp->GetClientHeight(),
+        DXGI_FORMAT_D24_UNORM_S8_UINT,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE
     );
+    isInitialized_ = true;
 
     //==================================================
     // DSV用のヒープを生成
     //==================================================
 
-    // DSV用のヒープでディスクリプタの数は1。DSVはShader内で触るものではないので、ShaderVisibleはfalse
+    // DSV用のヒープ。DSVはShader内で触るものではないので、ShaderVisibleはfalse
     dxCommon_->CreateDescriptorHeap(
         descriptorHeap_,
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
@@ -116,14 +67,14 @@ void DSV::Initialize(WinApp *winApp, DirectXCommon *dxCommon, const std::source_
     dxCommon_->GetDevice()->CreateDepthStencilView(
         depthStencilResource_.Get(),
         &dsvDesc,
-        descriptorHeap_->GetCPUDescriptorHandleForHeapStart()
+        GetCPUDescriptorHandle(0)
     );
 
     // 初期化完了のログを出力
-    if (!isInitialized_) {
+    if (!isDSVInitialized) {
         LogSimple("Complete Initialize DSV.", kLogLevelFlagInfo);
         // 初期化済みフラグを立てる
-        isInitialized_ = true;
+        isDSVInitialized = true;
     } else {
         LogSimple("Reinitialize DSV.", kLogLevelFlagInfo);
     }

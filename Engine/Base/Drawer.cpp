@@ -1,6 +1,5 @@
 #include <cmath>
 #include <algorithm>
-#include <thread>
 
 #include "Drawer.h"
 #include "WinApp.h"
@@ -11,10 +10,12 @@
 #include "Math/Camera.h"
 #include "Math/RenderingPipeline.h"
 #include "3d/DirectionalLight.h"
+#include "3d/ShadowMap.h"
 
 #include "Common/Logs.h"
 #include "Common/ConvertColor.h"
 #include "Common/Descriptors/SRV.h"
+#include "Common/Descriptors/DSV.h"
 
 #include "Objects/Object.h"
 #include "Objects/Triangle.h"
@@ -23,6 +24,7 @@
 #include "Objects/Billboard.h"
 #include "Objects/ModelData.h"
 #include "Objects/Tetrahedron.h"
+#include "Objects/Plane.h"
 
 #define M_PI (4.0f * std::atanf(1.0f))
 
@@ -32,17 +34,12 @@ namespace {
 
 /// @brief デバッグカメラの初期化
 std::unique_ptr<Camera> sDebugCamera;
-
-// 60fps固定用。エンジン側のプログラム実行の余裕を持たせて61fpsにする
-const float kFrameTime = 1000.0f / 61.0f;
-// フレーム開始時間
-std::chrono::high_resolution_clock::time_point sStartTime;
-// フレーム終了時間
-std::chrono::high_resolution_clock::time_point sEndTime;
-// フレーム時間
-float sFrameTime = 0.0f;
-// 待機時間
-float sWaitTime = 0.0f;
+/// @brief デフォルトの平行光源
+DirectionalLight sDefaultDirectionalLight = {
+    { 255.0f, 255.0f, 255.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f },
+    1.0f
+};
 
 bool ZSort(Object *a, Object *b) {
     // カメラからの距離でソート
@@ -95,7 +92,10 @@ Drawer::Drawer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManag
         Vector3(1.0f, 1.0f, 1.0f)
     );
 
+    //==================================================
     // パイプラインセットの初期化
+    //==================================================
+
     pipelineSet_[kFillModeSolid][kBlendModeNone] =
         PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNone);
     pipelineSet_[kFillModeSolid][kBlendModeNormal] =
@@ -142,28 +142,7 @@ Drawer::~Drawer() {
     Log("Drawer Finalized.");
 }
 
-void Drawer::PreDraw() {
-    // フレーム開始時間を取得
-    sStartTime = std::chrono::high_resolution_clock::now();
-
-    dxCommon_->PreDraw();
-    imguiManager_->BeginFrame();
-    drawObjects_.clear();
-    drawAlphaObjects_.clear();
-    draw2DObjects_.clear();
-
-    static ID3D12DescriptorHeap *descriptorHeaps[] = { SRV::GetDescriptorHeap() };
-    dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
-
-    //==================================================
-    // 描画の準備
-    //==================================================
-
-    // 平行光源をリセット
-    directionalLight_ = nullptr;
-    // ブレンドモードを設定
-    blendMode_ = kBlendModeNormal;
-
+void Drawer::DrawExecute() {
     // ビューポートの設定
     viewport_.Width = static_cast<FLOAT>(winApp_->GetClientWidth());
     viewport_.Height = static_cast<FLOAT>(winApp_->GetClientHeight());
@@ -178,100 +157,40 @@ void Drawer::PreDraw() {
     scissorRect_.top = 0;
     scissorRect_.bottom = static_cast<LONG>(winApp_->GetClientHeight());
 
-    // コマンドを積む
-    dxCommon_->GetCommandList()->RSSetViewports(1, &viewport_);         // ビューポートを設定
-    dxCommon_->GetCommandList()->RSSetScissorRects(1, &scissorRect_);   // シザー矩形を設定
-    // 形状を設定
-    dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    // シグネチャを設定
-    dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet_[kFillModeSolid][blendMode_].rootSignature.Get());
-    // パイプラインを設定
-    dxCommon_->GetCommandList()->SetPipelineState(pipelineSet_[kFillModeSolid][blendMode_].pipelineState.Get());
-
-    // デバッグカメラが有効ならデバッグカメラの処理
-    if (isUseDebugCamera_) {
-        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.1f);
-    }
-}
-
-void Drawer::PostDraw() {
-    static DirectionalLight defaultDirectionalLight = {
-        { 255.0f, 255.0f, 255.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f },
-        1.0f
-    };
-    // もし光源が設定されていなければデフォルトの光源を設定
+    // 光源が設定されていなければデフォルトの光源を設定
     if (directionalLight_ == nullptr) {
-        SetLightBuffer(&defaultDirectionalLight);
-    } else {
-        SetLightBuffer(directionalLight_);
+        directionalLight_ = &sDefaultDirectionalLight;
     }
+    directionalLight_->viewProjectionMatrix =
+        MakeViewMatrix(Vector3(0.0f, 0.0f, 0.0f), directionalLight_->direction, Vector3(0.0f, 1.0f, 0.0f)) *
+        MakeOrthographicMatrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 
-    // カメラとの距離でソート
-    // カメラの座標が正しく設定されてないから一旦コメントアウト
-    //std::sort(drawAlphaObjects_.begin(), drawAlphaObjects_.end(), ZSort);
-    
-    // 通常のオブジェクトの描画
-    for (auto object : drawObjects_) {
-        if (dynamic_cast<Triangle *>(object)) {
-            Draw(static_cast<Triangle *>(object));
-        } else if (dynamic_cast<Sprite *>(object)) {
-            Draw(static_cast<Sprite *>(object));
-        } else if (dynamic_cast<Sphere *>(object)) {
-            Draw(static_cast<Sphere *>(object));
-        } else if (dynamic_cast<BillBoard *>(object)) {
-            Draw(static_cast<BillBoard *>(object));
-        } else if (dynamic_cast<ModelData *>(object)) {
-            Draw(static_cast<ModelData *>(object));
-        } else if (dynamic_cast<Tetrahedron *>(object)) {
-            Draw(static_cast<Tetrahedron *>(object));
-        }
-    }
-    // 半透明オブジェクトの描画
-    for (auto object : drawAlphaObjects_) {
-        if (dynamic_cast<Triangle *>(object)) {
-            Draw(static_cast<Triangle *>(object));
-        } else if (dynamic_cast<Sprite *>(object)) {
-            Draw(static_cast<Sprite *>(object));
-        } else if (dynamic_cast<Sphere *>(object)) {
-            Draw(static_cast<Sphere *>(object));
-        } else if (dynamic_cast<BillBoard *>(object)) {
-            Draw(static_cast<BillBoard *>(object));
-        } else if (dynamic_cast<ModelData *>(object)) {
-            Draw(static_cast<ModelData *>(object));
-        } else if (dynamic_cast<Tetrahedron *>(object)) {
-            Draw(static_cast<Tetrahedron *>(object));
-        }
-    }
-    // 2Dオブジェクトの描画
-    for (auto object : draw2DObjects_) {
-        if (dynamic_cast<Triangle *>(object)) {
-            Draw(static_cast<Triangle *>(object));
-        } else if (dynamic_cast<Sprite *>(object)) {
-            Draw(static_cast<Sprite *>(object));
-        } else if (dynamic_cast<Sphere *>(object)) {
-            Draw(static_cast<Sphere *>(object));
-        } else if (dynamic_cast<BillBoard *>(object)) {
-            Draw(static_cast<BillBoard *>(object));
-        } else if (dynamic_cast<ModelData *>(object)) {
-            Draw(static_cast<ModelData *>(object));
-        } else if (dynamic_cast<Tetrahedron *>(object)) {
-            Draw(static_cast<Tetrahedron *>(object));
-        }
-    }
-    imguiManager_->EndFrame();
-    dxCommon_->PostDraw();
+    //==================================================
+    // シャドウマップの描画
+    //==================================================
 
-    // フレーム終了時間を取得
-    sEndTime = std::chrono::high_resolution_clock::now();
-    // フレーム時間を計算
-    sFrameTime = std::chrono::duration<float, std::milli>(sEndTime - sStartTime).count();
-    sWaitTime = kFrameTime - sFrameTime;
-    // フレーム時間が0.0fより大きい場合は待機時間を設定
-    if (sWaitTime > 0.0f) {
-        // 待機時間を設定
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(sWaitTime)));
-    }
+    DrawShadowMap();
+
+    //==================================================
+    // 通常の描画
+    //==================================================
+
+    DrawNormal();
+
+    //==================================================
+    // リセット
+    //==================================================
+
+    // シャドウマップをリセット
+    shadowMap_ = nullptr;
+    // 平行光源をリセット
+    directionalLight_ = nullptr;
+    // ブレンドモードを初期化
+    blendMode_ = kBlendModeNormal;
+    // 描画オブジェクトのクリア
+    drawObjects_.clear();
+    drawAlphaObjects_.clear();
+    draw2DObjects_.clear();
 }
 
 void Drawer::ToggleDebugCamera() {
@@ -297,6 +216,59 @@ void Drawer::DrawSet(Object *object) {
     }
 }
 
+void Drawer::DrawShadowMap() {
+    // シャドウマップの描画
+    if (shadowMap_) {
+        // シャドウマップの描画を開始
+        shadowMap_->PreDraw();
+        // シャドウマップの描画を実行
+        shadowMap_->Draw(drawObjects_);
+        shadowMap_->Draw(drawAlphaObjects_);
+        // シャドウマップの描画を終了
+        shadowMap_->PostDraw();
+    }
+}
+
+void Drawer::DrawNormal() {
+    dxCommon_->PreDraw();
+    dxCommon_->ClearDepthStencil();
+    imguiManager_->BeginFrame();
+
+    static ID3D12DescriptorHeap *descriptorHeaps[] = { SRV::GetDescriptorHeap() };
+    dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
+
+    // コマンドを積む
+    dxCommon_->GetCommandList()->RSSetViewports(1, &viewport_);         // ビューポートを設定
+    dxCommon_->GetCommandList()->RSSetScissorRects(1, &scissorRect_);   // シザー矩形を設定
+    // 形状を設定
+    dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // シグネチャを設定
+    dxCommon_->GetCommandList()->SetGraphicsRootSignature(pipelineSet_[kFillModeSolid][blendMode_].rootSignature.Get());
+    // パイプラインを設定
+    dxCommon_->GetCommandList()->SetPipelineState(pipelineSet_[kFillModeSolid][blendMode_].pipelineState.Get());
+
+    // デバッグカメラが有効ならデバッグカメラの処理
+    if (isUseDebugCamera_) {
+        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.1f);
+    }
+
+    // 平行光源の設定
+    SetLightBuffer(directionalLight_);
+
+    // 通常のオブジェクトの描画
+    DrawCommon(drawObjects_);
+    // 半透明オブジェクトの描画
+    DrawCommon(drawAlphaObjects_);
+    // 2Dオブジェクトの描画
+    DrawCommon(draw2DObjects_);
+
+    imguiManager_->EndFrame();
+    dxCommon_->PostDraw();
+}
+
+void Drawer::SetShadowMapLightBuffer(DirectionalLight *light) {
+}
+
 void Drawer::SetLightBuffer(DirectionalLight *light) {
     // 光源のリソースを生成
     static auto directionalLightResource = PrimitiveDrawer::CreateBufferResources(sizeof(DirectionalLight));
@@ -310,9 +282,7 @@ void Drawer::SetLightBuffer(DirectionalLight *light) {
     directionalLightData->direction = light->direction;
     directionalLightData->intensity = light->intensity;
     // 光源のビューと射影行列
-    directionalLightData->viewProjectionMatrix =
-        MakeViewMatrix(Vector3(0.0f, 0.0f, 0.0f), light->direction, Vector3(0.0f, 1.0f, 0.0f)) *
-        MakeOrthographicMatrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+    directionalLightData->viewProjectionMatrix = light->viewProjectionMatrix;
 
     // CBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
@@ -410,6 +380,8 @@ void Drawer::Draw(Sphere *sphere) {
                 for (int i = 0; i < 4; i++) {
                     sphere->mesh->vertexBufferMap[vertexIndex + i].normal =
                         (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+                    // 現在の頂点座標を参照して法線を少し傾ける
+                    sphere->mesh->vertexBufferMap[vertexIndex + i].normal -= Vector3(sphere->mesh->vertexBufferMap[i].position).Normalize() / 2.0f;
                 }
             }
         }
@@ -500,6 +472,103 @@ void Drawer::Draw(Tetrahedron *tetrahedron) {
     DrawCommon(tetrahedron);
     // 描画
     dxCommon_->GetCommandList()->DrawIndexedInstanced(12, 1, 0, 0, 0);
+}
+
+void Drawer::Draw(Plane *plane) {
+    // 法線を設定
+    static Vector3 position[3];
+    if (plane->camera == nullptr || plane->material.enableLighting == false) {
+        for (int i = 0; i < 4; i++) {
+            plane->mesh->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
+        }
+    } else {
+        if (plane->normalType == kNormalTypeVertex) {
+            for (int i = 0; i < 4; i++) {
+                plane->mesh->vertexBufferMap[i].normal =
+                    Vector3(plane->mesh->vertexBufferMap[i].position);
+            }
+        } else if (plane->normalType == kNormalTypeFace) {
+            position[0] = Vector3(plane->mesh->vertexBufferMap[0].position);
+            position[1] = Vector3(plane->mesh->vertexBufferMap[1].position);
+            position[2] = Vector3(plane->mesh->vertexBufferMap[2].position);
+            for (int i = 0; i < 4; i++) {
+                plane->mesh->vertexBufferMap[i].normal =
+                    (position[1] - position[0]).Cross(position[2] - position[1]).Normalize();
+                // 現在の頂点座標を参照して法線を少し傾ける
+                plane->mesh->vertexBufferMap[i].normal += Vector3(plane->mesh->vertexBufferMap[i].position).Normalize();
+            }
+        }
+    }
+    // 描画処理
+    DrawCommon(plane);
+    // 描画
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+}
+
+void Drawer::DrawShadowMapCommon(std::vector<Object *> &objects) {
+    // 描画処理
+    for (auto object : objects) {
+        // 共通設定
+        dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &object->mesh->vertexBufferView);
+        dxCommon_->GetCommandList()->IASetIndexBuffer(&object->mesh->indexBufferView);
+        object->worldMatrix.MakeAffine(
+            object->transform.scale,
+            object->transform.rotate,
+            object->transform.translate
+        );
+        if (isUseDebugCamera_) {
+            sDebugCamera->SetWorldMatrix(object->worldMatrix);
+            sDebugCamera->CalculateMatrix();
+            object->transformationMatrixMap->wvp = sDebugCamera->GetWVPMatrix();
+        } else {
+            object->camera->SetWorldMatrix(object->worldMatrix);
+            object->camera->CalculateMatrix();
+            object->transformationMatrixMap->wvp = object->camera->GetWVPMatrix();
+        }
+        object->transformationMatrixMap->world = object->worldMatrix;
+        dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, object->transformationMatrixResource->GetGPUVirtualAddress());
+        
+        // 個々のオブジェクトの描画
+        if (dynamic_cast<Triangle *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(3, 1, 0, 0, 0);
+        } else if (dynamic_cast<Sprite *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+        } else if (dynamic_cast<Sphere *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(dynamic_cast<Sphere *>(object)->kVertexCount, 1, 0, 0, 0);
+        } else if (dynamic_cast<BillBoard *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+        } else if (dynamic_cast<ModelData *>(object)) {
+            dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(dynamic_cast<ModelData *>(object)->vertices.size()), 1, 0, 0);
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(12, 1, 0, 0, 0);
+        } else if (dynamic_cast<Plane *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+        }
+    }
+}
+
+void Drawer::DrawShadowMapCommon(Object *object) {
+}
+
+void Drawer::DrawCommon(std::vector<Object *> &objects) {
+    // 描画処理
+    for (auto object : objects) {
+        if (dynamic_cast<Triangle *>(object)) {
+            Draw(static_cast<Triangle *>(object));
+        } else if (dynamic_cast<Sprite *>(object)) {
+            Draw(static_cast<Sprite *>(object));
+        } else if (dynamic_cast<Sphere *>(object)) {
+            Draw(static_cast<Sphere *>(object));
+        } else if (dynamic_cast<BillBoard *>(object)) {
+            Draw(static_cast<BillBoard *>(object));
+        } else if (dynamic_cast<ModelData *>(object)) {
+            Draw(static_cast<ModelData *>(object));
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            Draw(static_cast<Tetrahedron *>(object));
+        } else if (dynamic_cast<Plane *>(object)) {
+            Draw(static_cast<Plane *>(object));
+        }
+    }
 }
 
 void Drawer::DrawCommon(Object *object) {
