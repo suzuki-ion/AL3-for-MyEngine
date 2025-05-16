@@ -65,6 +65,8 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
 
         // identifierに応じた処理
         if (identifier == "v") {
+            //--------- 頂点読み込み ---------//
+
             Vector4 position;
             s >> position.x >> position.y >> position.z;
             position.w = 1.0f;
@@ -73,6 +75,8 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             positions.push_back(position);
 
         } else if (identifier == "vt") {
+            //--------- テクスチャ座標読み込み ---------//
+
             Vector2 texCoord;
             s >> texCoord.x >> texCoord.y;
             // テクスチャ座標はY軸反転
@@ -80,6 +84,8 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             texCoords.push_back(texCoord);
 
         } else if (identifier == "vn") {
+            //--------- 法線ベクトル読み込み ---------//
+
             Vector3 normal;
             s >> normal.x >> normal.y >> normal.z;
             // モデルは右手系なので左手系に変換
@@ -87,12 +93,15 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             normals.push_back(normal);
 
         } else if (identifier == "f") {
+            //--------- 面の頂点データ読み込み ---------//
+
             std::vector<VertexData> faceVertices;
             while (true) {
                 // 読み込む頂点が無くなったら終了
                 if (s.eof()) {
                     break;
                 }
+
                 std::string vertexDefinition;
                 s >> vertexDefinition;
                 // 頂点の要素へのindexは「位置/UV/法線」で格納されているので、分解してindexを取得する
@@ -115,7 +124,7 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
                 faceVertices.push_back({ position, texCoord, normal });
             }
             // 頂点を逆順で登録することで、周り順を逆にする
-            for (size_t i = faceVertices.size() - 1; i >= 0; --i) {
+            for (int32_t i = static_cast<int32_t>(faceVertices.size()) - 1; i >= 0; --i) {
                 vertices.push_back(faceVertices[i]);
             }
 

@@ -163,6 +163,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Common\Logs.h" />
     <ClInclude Include="Engine\Common\DescriptorHeap\RTV.h" />
     <ClInclude Include="Engine\Common\DescriptorHeap\SRV.h" />
+    <ClInclude Include="Engine\Common\ScreenBuffer.h" />
     <ClInclude Include="Engine\Common\Texture.h" />
     <ClInclude Include="Engine\Common\TimeGet.h" />
     <ClInclude Include="Engine\Common\TransformationMatrix.h" />

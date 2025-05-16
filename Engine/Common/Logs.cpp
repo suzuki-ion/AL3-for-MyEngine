@@ -124,6 +124,14 @@ void InitializeLog(const std::string &filePath, const std::string &projectDir,
     if (outputLogType & kLogTypeFlagLocation) {
         sLogStream << "Output Log Type: [LOCATION]" << std::endl;
     }
+
+    // ビルドがDebugかReleaseかを出力
+#ifdef _DEBUG
+    sLogStream << "Build Type: [DEBUG]" << std::endl;
+#else
+    sLogStream << "Build Type: [RELEASE]" << std::endl;
+#endif
+
     sLogStream << std::endl;
 }
 

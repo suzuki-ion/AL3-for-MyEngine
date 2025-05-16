@@ -80,8 +80,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 正四面体が消えるまでの時間
     const int kAliveTime = 600;
     // 正四面体が出現するまでの時間
-    const int kWaitTime = 30;
-    // 正四面体の出現タイマー
+    const int kWaitTime = 20;
+    // 正四面体の出現タイマ\ー
     int spawnTimer = 0;
 
     //==================================================
@@ -191,6 +191,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // ウィンドウのxボタンが押されるまでループ
     while (myGameEngine->ProccessMessage() != -1) {
         myGameEngine->BeginFrame();
+        drawer->PreDraw();
         Input::Update();
 
         //==================================================
@@ -218,80 +219,82 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             blendMode = kBlendModeScreen;
         }
 
-        //ImGuiManager::Begin("オブジェクト");
+        ImGuiManager::Begin("オブジェクト");
 
-        //// カメラ位置の表示
-        //ImGui::Text("カメラ位置: (%.2f, %.2f, %.2f)", camera->GetTranslate().x, camera->GetTranslate().y, camera->GetTranslate().z);
-        //// カメラの回転の表示
-        //ImGui::Text("カメラの回転: (%.2f, %.2f, %.2f)", camera->GetRotate().x, camera->GetRotate().y, camera->GetRotate().z);
-        //// ブレンドモードの表示
-        //ImGui::Text("ブレンドモード: %d", static_cast<int>(blendMode));
+        // カメラ位置の表示
+        ImGui::Text("カメラ位置: (%.2f, %.2f, %.2f)", camera->GetTranslate().x, camera->GetTranslate().y, camera->GetTranslate().z);
+        // カメラの回転の表示
+        ImGui::Text("カメラの回転: (%.2f, %.2f, %.2f)", camera->GetRotate().x, camera->GetRotate().y, camera->GetRotate().z);
+        // ブレンドモードの表示
+        ImGui::Text("ブレンドモード: %d", static_cast<int>(blendMode));
+        // 現在の正四面体の数
+        ImGui::Text("正四面体の数: %d", static_cast<int>(tetrahedrons.size()));
 
-        //// デバッグカメラの有効化
-        //if (ImGui::Checkbox("デバッグカメラ有効化", &isUseDebugCamera)) {
-        //    drawer->ToggleDebugCamera();
-        //}
+        // デバッグカメラの有効化
+        if (ImGui::Checkbox("デバッグカメラ有効化", &isUseDebugCamera)) {
+            drawer->ToggleDebugCamera();
+        }
 
-        //// 背景色
-        //ImGui::DragFloat4("背景色", &clearColor.x, 1.0f, 0.0f, 255.0f);
+        // 背景色
+        ImGui::DragFloat4("背景色", &clearColor.x, 1.0f, 0.0f, 255.0f);
 
-        //// 平行光源
-        //if (ImGui::TreeNode("平行光源")) {
-        //    ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
-        //    ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, 1.0f, 0.0f, 255.0f);
-        //    ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f);
-        //    ImGui::TreePop();
-        //}
+        // 平行光源
+        if (ImGui::TreeNode("平行光源")) {
+            ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
+            ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f);
+            ImGui::TreePop();
+        }
 
-        //// 球体
-        //if (ImGui::TreeNode("球体")) {
-        //    ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.01f);
-        //    ImGui::DragFloat3("Sphere Rotate", &sphere.transform.rotate.x, 0.01f);
-        //    ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
-        //    ImGui::DragFloat4("Sphere MaterialColor", &sphere.material.color.x, 1.0f, 0.0f, 255.0f);
-        //    ImGui::InputInt("Sphere TextureIndex", &sphere.useTextureIndex);
-        //    if (ImGui::TreeNode("Sphere uvTransform")) {
-        //        ImGui::DragFloat2("Sphere uvTransform Translate", &sphere.uvTransform.translate.x, 0.01f);
-        //        ImGui::DragFloat3("Sphere uvTransform Rotate", &sphere.uvTransform.rotate.x, 0.01f);
-        //        ImGui::DragFloat2("Sphere uvTransform Scale", &sphere.uvTransform.scale.x, 0.01f);
-        //        ImGui::TreePop();
-        //    }
-        //    ImGui::TreePop();
-        //}
+        // 球体
+        if (ImGui::TreeNode("球体")) {
+            ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.01f);
+            ImGui::DragFloat3("Sphere Rotate", &sphere.transform.rotate.x, 0.01f);
+            ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
+            ImGui::DragFloat4("Sphere MaterialColor", &sphere.material.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::InputInt("Sphere TextureIndex", &sphere.useTextureIndex);
+            if (ImGui::TreeNode("Sphere uvTransform")) {
+                ImGui::DragFloat2("Sphere uvTransform Translate", &sphere.uvTransform.translate.x, 0.01f);
+                ImGui::DragFloat3("Sphere uvTransform Rotate", &sphere.uvTransform.rotate.x, 0.01f);
+                ImGui::DragFloat2("Sphere uvTransform Scale", &sphere.uvTransform.scale.x, 0.01f);
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
 
-        //// 正四面体
-        //if (ImGui::TreeNode("正四面体")) {
-        //    ImGui::DragFloat3("Tetrahedron Translate", &defaultTetrahedron.transform.translate.x, 0.01f);
-        //    ImGui::DragFloat3("Tetrahedron Rotate", &defaultTetrahedron.transform.rotate.x, 0.01f);
-        //    ImGui::DragFloat3("Tetrahedron Scale", &defaultTetrahedron.transform.scale.x, 0.01f);
-        //    ImGui::DragFloat4("Tetrahedron MaterialColor", &defaultTetrahedron.material.color.x, 1.0f, 0.0f, 255.0f);
-        //    ImGui::InputInt("Tetrahedron TextureIndex", &defaultTetrahedron.useTextureIndex);
-        //    if (ImGui::TreeNode("Tetrahedron uvTransform")) {
-        //        ImGui::DragFloat2("Tetrahedron uvTransform Translate", &defaultTetrahedron.uvTransform.translate.x, 0.01f);
-        //        ImGui::DragFloat3("Tetrahedron uvTransform Rotate", &defaultTetrahedron.uvTransform.rotate.x, 0.01f);
-        //        ImGui::DragFloat2("Tetrahedron uvTransform Scale", &defaultTetrahedron.uvTransform.scale.x, 0.01f);
-        //        ImGui::TreePop();
-        //    }
-        //    ImGui::TreePop();
-        //}
+        // 正四面体
+        if (ImGui::TreeNode("正四面体")) {
+            ImGui::DragFloat3("Tetrahedron Translate", &defaultTetrahedron.transform.translate.x, 0.01f);
+            ImGui::DragFloat3("Tetrahedron Rotate", &defaultTetrahedron.transform.rotate.x, 0.01f);
+            ImGui::DragFloat3("Tetrahedron Scale", &defaultTetrahedron.transform.scale.x, 0.01f);
+            ImGui::DragFloat4("Tetrahedron MaterialColor", &defaultTetrahedron.material.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::InputInt("Tetrahedron TextureIndex", &defaultTetrahedron.useTextureIndex);
+            if (ImGui::TreeNode("Tetrahedron uvTransform")) {
+                ImGui::DragFloat2("Tetrahedron uvTransform Translate", &defaultTetrahedron.uvTransform.translate.x, 0.01f);
+                ImGui::DragFloat3("Tetrahedron uvTransform Rotate", &defaultTetrahedron.uvTransform.rotate.x, 0.01f);
+                ImGui::DragFloat2("Tetrahedron uvTransform Scale", &defaultTetrahedron.uvTransform.scale.x, 0.01f);
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
 
-        //// 板
-        //if (ImGui::TreeNode("板")) {
-        //    ImGui::DragFloat3("Plane Translate", &floor.transform.translate.x, 0.01f);
-        //    ImGui::DragFloat3("Plane Rotate", &floor.transform.rotate.x, 0.01f);
-        //    ImGui::DragFloat3("Plane Scale", &floor.transform.scale.x, 0.01f);
-        //    ImGui::DragFloat4("Plane MaterialColor", &floor.material.color.x, 1.0f, 0.0f, 255.0f);
-        //    ImGui::InputInt("Plane TextureIndex", &floor.useTextureIndex);
-        //    if (ImGui::TreeNode("Plane uvTransform")) {
-        //        ImGui::DragFloat2("Plane uvTransform Translate", &floor.uvTransform.translate.x, 0.01f);
-        //        ImGui::DragFloat3("Plane uvTransform Rotate", &floor.uvTransform.rotate.x, 0.01f);
-        //        ImGui::DragFloat2("Plane uvTransform Scale", &floor.uvTransform.scale.x, 0.01f);
-        //        ImGui::TreePop();
-        //    }
-        //    ImGui::TreePop();
-        //}
+        // 板
+        if (ImGui::TreeNode("板")) {
+            ImGui::DragFloat3("Plane Translate", &floor.transform.translate.x, 0.01f);
+            ImGui::DragFloat3("Plane Rotate", &floor.transform.rotate.x, 0.01f);
+            ImGui::DragFloat3("Plane Scale", &floor.transform.scale.x, 0.01f);
+            ImGui::DragFloat4("Plane MaterialColor", &floor.material.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::InputInt("Plane TextureIndex", &floor.useTextureIndex);
+            if (ImGui::TreeNode("Plane uvTransform")) {
+                ImGui::DragFloat2("Plane uvTransform Translate", &floor.uvTransform.translate.x, 0.01f);
+                ImGui::DragFloat3("Plane uvTransform Rotate", &floor.uvTransform.rotate.x, 0.01f);
+                ImGui::DragFloat2("Plane uvTransform Scale", &floor.uvTransform.scale.x, 0.01f);
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
 
-        //ImGui::End();
+        ImGui::End();
 
         // カメラを常に回転
         if (!drawer->IsUseDebugCamera()) {
@@ -373,14 +376,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // 球体の描画
         drawer->DrawSet(&sphere);
-        // 板の描画
-        drawer->DrawSet(&floor);
         // 正四面体の描画
         for (auto &tetrahedron : tetrahedrons) {
             drawer->DrawSet(&tetrahedron->tetrahedron);
         }
-        drawer->DrawExecute();
+        // 板の描画
+        drawer->DrawSet(&floor);
         
+        drawer->PostDraw();
         myGameEngine->EndFrame();
 
         // ESCで終了

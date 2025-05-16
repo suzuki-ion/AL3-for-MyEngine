@@ -134,6 +134,30 @@ void ShadowMap::PostDraw() {
 }
 
 void ShadowMap::Draw(std::vector<Object *> &objects) {
+    // 描画処理
+    for (auto object : objects) {
+        // 共通設定
+        dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &object->mesh->vertexBufferView);
+        dxCommon_->GetCommandList()->IASetIndexBuffer(&object->mesh->indexBufferView);
+        object->worldMatrix.MakeAffine(
+            object->transform.scale,
+            object->transform.rotate,
+            object->transform.translate
+        );
+        object->transformationMatrixMap->wvp = directionalLight_->viewProjectionMatrix * object->worldMatrix;
+        object->transformationMatrixMap->world = object->worldMatrix;
+        dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, object->transformationMatrixResource->GetGPUVirtualAddress());
+        // 個々のオブジェクトの描画
+        if (dynamic_cast<Triangle *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(3, 1, 0, 0, 0);
+        } else if (dynamic_cast<Plane *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+        } else if (dynamic_cast<Sphere *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(12, 1, 0, 0, 0);
+        } else if (dynamic_cast<Tetrahedron *>(object)) {
+            dxCommon_->GetCommandList()->DrawIndexedInstanced(12, 1, 0, 0, 0);
+        }
+    }
 }
 
 void ShadowMap::SetLight(DirectionalLight *light) {

@@ -44,8 +44,11 @@ public:
     /// @brief デストラクタ
     ~Drawer();
 
-    /// @brief 通常の描画処理の開始
-    void DrawExecute();
+    /// @brief 描画前処理
+    void PreDraw();
+
+    /// @brief 描画後処理
+    void PostDraw();
 
     /// @brief デバッグカメラの切り替え
     void ToggleDebugCamera();
@@ -79,16 +82,6 @@ public:
     void DrawSet(Object *object);
 
 private:
-    /// @brief シャドウマップの描画処理
-    void DrawShadowMap();
-
-    /// @brief 通常の描画処理
-    void DrawNormal();
-
-    /// @brief シャドウマップの光源の設定
-    /// @param light 平行光源へのポインタ
-    void SetShadowMapLightBuffer(DirectionalLight *light);
-
     /// @brief 平行光源の設定
     /// @param light 平行光源へのポインタ
     void SetLightBuffer(DirectionalLight *light);
@@ -120,12 +113,6 @@ private:
     /// @brief 平面を描画する
     /// @param plane 描画する平面へのポインタ
     void Draw(Plane *plane);
-
-    /// @brief 影の共通の描画処理
-    void DrawShadowMapCommon(std::vector<Object *> &objects);
-
-    /// @brief 影の共通の描画処理
-    void DrawShadowMapCommon(Object *object);
 
     /// @brief 共通の描画処理
     void DrawCommon(std::vector<Object *> &objects);

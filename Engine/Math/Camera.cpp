@@ -80,10 +80,8 @@ void Camera::MoveToMouse(const float translateSpeed, const float rotateSpeed, co
 
     // 左クリックで平行移動
     if (Input::IsMouseButtonDown(0)) {
-        Vector3 rightDir(viewMatrix_.m[0][0], viewMatrix_.m[1][0], viewMatrix_.m[2][0]);
-        Vector3 upDir(0.0f, 1.0f, 0.0f);
-        Vector3 movement = rightDir * mousePos.x + -upDir * mousePos.y;
-        cameraTranslate_ += movement * translateSpeed;
+        cameraTranslate_.x -= mousePos.x * translateSpeed;
+        cameraTranslate_.y += mousePos.y * translateSpeed;
     }
     // 右クリックで回転
     if (Input::IsMouseButtonDown(1)) {

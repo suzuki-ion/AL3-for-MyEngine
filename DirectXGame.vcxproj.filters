@@ -296,6 +296,9 @@
     <ClInclude Include="Engine\3d\ShadowMap.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Common\ScreenBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.VS.hlsl" />
