@@ -414,7 +414,7 @@ void Drawer::Draw(ModelData *model) {
     // 描画処理
     DrawCommon(model);
     // 描画
-    dxCommon_->GetCommandList()->DrawInstanced(static_cast<UINT>(model->vertices.size()), 1, 0, 0);
+    dxCommon_->GetCommandList()->DrawIndexedInstanced(model->indexCount, 1, 0, 0, 0);
 }
 
 void Drawer::Draw(Tetrahedron *tetrahedron) {

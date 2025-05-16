@@ -26,6 +26,8 @@ struct ModelData : public Object {
 
     /// @brief モデルの頂点データ
     std::vector<VertexData> vertices;
+    /// @brief インデックス数
+    UINT indexCount = 0;
     /// @brief モデルのマテリアル
     MaterialData materialData;
 };

@@ -47,6 +47,7 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
     std::vector<Vector4> positions; // 位置
     std::vector<Vector3> normals;   // 法線
     std::vector<Vector2> texCoords; // テクスチャ座標
+    std::vector<uint32_t> index;    // インデックスデータ
     std::string line;               // ファイルから読み込んだ1行を格納するもの
 
     // ファイルを開く
@@ -72,6 +73,7 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             position.w = 1.0f;
             // モデルは右手系なので左手系に変換
             position.x *= -1.0f;
+            position.z *= -1.0f;
             positions.push_back(position);
 
         } else if (identifier == "vt") {
@@ -90,6 +92,7 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
             s >> normal.x >> normal.y >> normal.z;
             // モデルは右手系なので左手系に変換
             normal.x *= -1.0f;
+            normal.z *= -1.0f;
             normals.push_back(normal);
 
         } else if (identifier == "f") {
@@ -123,9 +126,21 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
                 Vector3 normal = normals[elementIndices[2] - 1];
                 faceVertices.push_back({ position, texCoord, normal });
             }
-            // 頂点を逆順で登録することで、周り順を逆にする
-            for (int32_t i = static_cast<int32_t>(faceVertices.size()) - 1; i >= 0; --i) {
+            for (size_t i = 0; i < faceVertices.size(); ++i) {
                 vertices.push_back(faceVertices[i]);
+            }
+            // インデックスを設定する
+            size_t indexOffset = vertices.size() - faceVertices.size();
+            for (size_t i = 0; i <= faceVertices.size() - 3; ++i) {
+                if (i % 2 == 0) {
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i + 0)));
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i + 1)));
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i + 2)));
+                } else {
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i + 1)));
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i + 2)));
+                    index.push_back(static_cast<uint32_t>(indexOffset + (i - 1)));
+                }
             }
 
         } else if (identifier == "mtllib") {
@@ -136,10 +151,14 @@ ModelData::ModelData(std::string directoryPath, std::string fileName, TextureMan
         }
     }
 
+    // インデックスの数を設定
+    indexCount = static_cast<UINT>(index.size());
     // メッシュの生成
-    mesh = PrimitiveDrawer::CreateMesh(static_cast<UINT>(vertices.size()), static_cast<UINT>(vertices.size()));
+    mesh = PrimitiveDrawer::CreateMesh(static_cast<UINT>(vertices.size()), indexCount);
     // メッシュの頂点バッファにデータをコピー
     std::memcpy(mesh->vertexBufferMap, vertices.data(), sizeof(VertexData) * vertices.size());
+    // メッシュのインデックスバッファにデータをコピー
+    std::memcpy(mesh->indexBufferMap, index.data(), sizeof(uint32_t) * index.size());
 
     // テクスチャの読み込み
     if (materialData.textureFilePath.empty()) {

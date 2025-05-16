@@ -1,6 +1,5 @@
 #include <Engine.h>
 #include <memory>
-#include <random>
 #include <imgui.h>
 
 #include "Base/WinApp.h"
@@ -16,27 +15,10 @@
 
 #include "3d/DirectionalLight.h"
 #include "Objects/Sphere.h"
-#include "Objects/Tetrahedron.h"
+#include "Objects/ModelData.h"
 #include "Objects/Plane.h"
 
 using namespace MyEngine;
-
-struct AnimationTetrahedron {
-    AnimationTetrahedron() = default;
-    AnimationTetrahedron(const AnimationTetrahedron &other) {
-        tetrahedron.transform = other.tetrahedron.transform;
-        tetrahedron.material = other.tetrahedron.material;
-        tetrahedron.camera = other.tetrahedron.camera;
-        tetrahedron.useTextureIndex = other.tetrahedron.useTextureIndex;
-        tetrahedron.normalType = other.tetrahedron.normalType;
-        tetrahedron.fillMode = other.tetrahedron.fillMode;
-        animationTransform = other.animationTransform;
-    }
-
-    Tetrahedron tetrahedron;
-    Transform animationTransform;
-    int aliveTimer = 0;
-};
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -66,25 +48,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     BlendMode blendMode = kBlendModeNormal;
 
     //==================================================
-    // 乱数
-    //==================================================
-
-    std::random_device seedGen;
-    std::mt19937 engine(seedGen());
-    std::uniform_real_distribution<float> rand(-1.0f, 1.0f);
-
-    //==================================================
-    // タイマー
-    //==================================================
-
-    // 正四面体が消えるまでの時間
-    const int kAliveTime = 600;
-    // 正四面体が出現するまでの時間
-    const int kWaitTime = 20;
-    // 正四面体の出現タイマ\ー
-    int spawnTimer = 0;
-
-    //==================================================
     // カメラ
     //==================================================
 
@@ -95,7 +58,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         Vector3( 1.0f, 1.0f, 1.0f )
     );
     // デバッグカメラの有効化フラグ
-    bool isUseDebugCamera = false;
+    bool isUseDebugCamera = true;
 
     //==================================================
     // 背景の色
@@ -117,45 +80,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 球体
     //==================================================
 
-    Sphere sphere(8);
-    sphere.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 2.0f, 0.0f }
-    };
-    sphere.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    sphere.material.enableLighting = true;
-    // カメラを設定
+    Sphere sphere(16);
+    sphere.transform.translate.y = 4.0f;
+    sphere.radius = 1.0f;
     sphere.camera = camera.get();
-    // テクスチャを設定
-    sphere.useTextureIndex = -1;
-    // 法線の種類
     sphere.normalType = kNormalTypeFace;
-    // 塗りつぶしモードを設定
-    sphere.fillMode = kFillModeSolid;
 
     //==================================================
-    // 正四面体
+    // モデル
     //==================================================
 
-    std::vector<std::unique_ptr<AnimationTetrahedron>> tetrahedrons;
-    // 正四面体のデフォルトの設定
-    Tetrahedron defaultTetrahedron;
-    defaultTetrahedron.transform = {
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 2.0f, 0.0f }
-    };
-    defaultTetrahedron.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
-    defaultTetrahedron.material.enableLighting = true;
+    ModelData modelData("Resources", "monkey.obj", textureManager);
+    modelData.transform.translate.y = 2.0f;
     // カメラを設定
-    defaultTetrahedron.camera = camera.get();
-    // テクスチャを設定
-    defaultTetrahedron.useTextureIndex = -1;
-    // 法線の種類
-    defaultTetrahedron.normalType = kNormalTypeFace;
-    // 塗りつぶしモードを設定
-    defaultTetrahedron.fillMode = kFillModeSolid;
+    modelData.camera = camera.get();
 
     //==================================================
     // 床用の板
@@ -179,7 +117,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         { 0.0f, 0.0f, 0.0f },
         { 0.0f, 0.0f, 0.0f }
     };
-    floor.material.color = { 255.0f, 255.0f, 255.0f, 255.0f };
     floor.material.enableLighting = true;
     // テクスチャを設定
     floor.useTextureIndex = textures[0];
@@ -227,8 +164,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::Text("カメラの回転: (%.2f, %.2f, %.2f)", camera->GetRotate().x, camera->GetRotate().y, camera->GetRotate().z);
         // ブレンドモードの表示
         ImGui::Text("ブレンドモード: %d", static_cast<int>(blendMode));
-        // 現在の正四面体の数
-        ImGui::Text("正四面体の数: %d", static_cast<int>(tetrahedrons.size()));
 
         // デバッグカメラの有効化
         if (ImGui::Checkbox("デバッグカメラ有効化", &isUseDebugCamera)) {
@@ -246,35 +181,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             ImGui::TreePop();
         }
 
-        // 球体
-        if (ImGui::TreeNode("球体")) {
-            ImGui::DragFloat3("Sphere Translate", &sphere.transform.translate.x, 0.01f);
-            ImGui::DragFloat3("Sphere Rotate", &sphere.transform.rotate.x, 0.01f);
-            ImGui::DragFloat3("Sphere Scale", &sphere.transform.scale.x, 0.01f);
-            ImGui::DragFloat4("Sphere MaterialColor", &sphere.material.color.x, 1.0f, 0.0f, 255.0f);
-            ImGui::InputInt("Sphere TextureIndex", &sphere.useTextureIndex);
-            if (ImGui::TreeNode("Sphere uvTransform")) {
-                ImGui::DragFloat2("Sphere uvTransform Translate", &sphere.uvTransform.translate.x, 0.01f);
-                ImGui::DragFloat3("Sphere uvTransform Rotate", &sphere.uvTransform.rotate.x, 0.01f);
-                ImGui::DragFloat2("Sphere uvTransform Scale", &sphere.uvTransform.scale.x, 0.01f);
-                ImGui::TreePop();
-            }
-            ImGui::TreePop();
-        }
-
-        // 正四面体
-        if (ImGui::TreeNode("正四面体")) {
-            ImGui::DragFloat3("Tetrahedron Translate", &defaultTetrahedron.transform.translate.x, 0.01f);
-            ImGui::DragFloat3("Tetrahedron Rotate", &defaultTetrahedron.transform.rotate.x, 0.01f);
-            ImGui::DragFloat3("Tetrahedron Scale", &defaultTetrahedron.transform.scale.x, 0.01f);
-            ImGui::DragFloat4("Tetrahedron MaterialColor", &defaultTetrahedron.material.color.x, 1.0f, 0.0f, 255.0f);
-            ImGui::InputInt("Tetrahedron TextureIndex", &defaultTetrahedron.useTextureIndex);
-            if (ImGui::TreeNode("Tetrahedron uvTransform")) {
-                ImGui::DragFloat2("Tetrahedron uvTransform Translate", &defaultTetrahedron.uvTransform.translate.x, 0.01f);
-                ImGui::DragFloat3("Tetrahedron uvTransform Rotate", &defaultTetrahedron.uvTransform.rotate.x, 0.01f);
-                ImGui::DragFloat2("Tetrahedron uvTransform Scale", &defaultTetrahedron.uvTransform.scale.x, 0.01f);
-                ImGui::TreePop();
-            }
+        // モデル
+        if (ImGui::TreeNode("モデル")) {
+            ImGui::DragFloat3("Model Translate", &modelData.transform.translate.x, 0.01f);
+            ImGui::DragFloat3("Model Rotate", &modelData.transform.rotate.x, 0.01f);
+            ImGui::DragFloat3("Model Scale", &modelData.transform.scale.x, 0.01f);
+            ImGui::DragFloat4("Model MaterialColor", &modelData.material.color.x, 1.0f, 0.0f, 255.0f);
+            ImGui::InputInt("Model TextureIndex", &modelData.useTextureIndex);
             ImGui::TreePop();
         }
 
@@ -296,73 +209,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         ImGui::End();
 
-        // カメラを常に回転
-        if (!drawer->IsUseDebugCamera()) {
-            camera->GetRotatePtr()->y -= 0.01f;
-        }
-
-        //--------- 正四面体の更新 ---------//
-
-        for (auto tetrahedron = tetrahedrons.begin(); tetrahedron != tetrahedrons.end(); ) {
-            // 移動
-            (*tetrahedron)->tetrahedron.transform.translate +=
-                (*tetrahedron)->animationTransform.translate * 0.01f;
-            // 回転
-            (*tetrahedron)->tetrahedron.transform.rotate +=
-                (*tetrahedron)->animationTransform.rotate * 0.01f;
-            // 生存時間によってスケールを小さくする
-            (*tetrahedron)->tetrahedron.transform.scale.x =
-                1.0f - (static_cast<float>((*tetrahedron)->aliveTimer) / static_cast<float>(kAliveTime));
-            (*tetrahedron)->tetrahedron.transform.scale.y =
-                1.0f - (static_cast<float>((*tetrahedron)->aliveTimer) / static_cast<float>(kAliveTime));
-            (*tetrahedron)->tetrahedron.transform.scale.z =
-                1.0f - (static_cast<float>((*tetrahedron)->aliveTimer) / static_cast<float>(kAliveTime));
-
-            // 生存時間をカウント
-            (*tetrahedron)->aliveTimer++;
-            // 生存時間が経過したら削除
-            if ((*tetrahedron)->aliveTimer >= kAliveTime) {
-                tetrahedron = tetrahedrons.erase(tetrahedron);
-            } else {
-                ++tetrahedron;
-            }
-        }
-
-        //--------- 正四面体の生成 ---------//
-
-        // 正四面体の出現タイマーをカウント
-        spawnTimer++;
-        // 正四面体の出現タイマーが経過したら生成
-        if (spawnTimer >= kWaitTime) {
-            // 正四面体を生成
-            AnimationTetrahedron animationTetrahedron;
-            animationTetrahedron.tetrahedron.transform = defaultTetrahedron.transform;
-            animationTetrahedron.tetrahedron.material = defaultTetrahedron.material;
-            animationTetrahedron.tetrahedron.useTextureIndex = defaultTetrahedron.useTextureIndex;
-            animationTetrahedron.tetrahedron.fillMode = defaultTetrahedron.fillMode;
-            animationTetrahedron.tetrahedron.normalType = defaultTetrahedron.normalType;
-            animationTetrahedron.tetrahedron.camera = camera.get();
-            animationTetrahedron.aliveTimer = 0;
-
-            // 正四面体の進行方向と回転をランダムに設定
-            animationTetrahedron.animationTransform.translate = {
-                rand(engine),
-                rand(engine),
-                rand(engine)
-            };
-            animationTetrahedron.animationTransform.translate =
-                animationTetrahedron.animationTransform.translate.Normalize();
-            animationTetrahedron.animationTransform.rotate = {
-                rand(engine),
-                rand(engine),
-                rand(engine)
-            };
-            tetrahedrons.push_back(std::make_unique<AnimationTetrahedron>(animationTetrahedron));
-
-            // 正四面体の出現タイマーをリセット
-            spawnTimer = 0;
-        }
-
         //==================================================
         // 描画処理
         //==================================================
@@ -376,10 +222,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // 球体の描画
         drawer->DrawSet(&sphere);
-        // 正四面体の描画
-        for (auto &tetrahedron : tetrahedrons) {
-            drawer->DrawSet(&tetrahedron->tetrahedron);
-        }
+        // モデルの描画
+        drawer->DrawSet(&modelData);
         // 板の描画
         drawer->DrawSet(&floor);
         
