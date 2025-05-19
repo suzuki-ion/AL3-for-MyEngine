@@ -128,7 +128,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\Math\RenderingPipeline.cpp" />
     <ClCompile Include="Engine\Math\Vector3.cpp" />
     <ClCompile Include="Engine\Objects\Model.cpp" />
-    <ClCompile Include="Engine\Objects\ModelData.cpp" />
     <ClCompile Include="Engine\Objects\Tetrahedron.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />
     <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
@@ -173,7 +172,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Common\Mesh.h" />
     <ClInclude Include="Engine\Common\Material.h" />
     <ClInclude Include="Engine\Objects\BillBoard.h" />
-    <ClInclude Include="Engine\Objects\MaterialData.h" />
     <ClInclude Include="Engine\Objects\Model.h" />
     <ClInclude Include="Engine\Objects\Object.h" />
     <ClInclude Include="Engine\Common\PipeLineSet.h" />
@@ -193,7 +191,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Objects\Sprite.h" />
     <ClInclude Include="Engine\Objects\Tetrahedron.h" />
     <ClInclude Include="Engine\Objects\Triangle.h" />
-    <ClInclude Include="Engine\Objects\ModelData.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />

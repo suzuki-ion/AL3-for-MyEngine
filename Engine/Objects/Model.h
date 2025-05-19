@@ -2,8 +2,6 @@
 #include <vector>
 #include <string>
 #include "Object.h"
-#include "Common/VertexData.h"
-#include "Objects/MaterialData.h"
 
 namespace MyEngine {
 

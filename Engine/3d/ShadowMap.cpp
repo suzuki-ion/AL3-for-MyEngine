@@ -10,7 +10,6 @@
 #include "Common/Descriptors/DSV.h"
 
 #include "Objects/Object.h"
-#include "Objects/ModelData.h"
 #include "Objects/Plane.h"
 #include "Objects/Tetrahedron.h"
 #include "Objects/Sphere.h"
