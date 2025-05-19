@@ -28,8 +28,20 @@ public:
     /// @brief フレーム開始処理
     void BeginFrame();
 
+    /// @brief ゲームループ開始処理
+    /// @return ゲームループを開始するかどうか
+    bool BeginGameLoop();
+
     /// @brief フレーム終了処理
     void EndFrame();
+
+    /// @brief デルタタイム取得
+    /// @return デルタタイム
+    float GetDeltaTime() const;
+
+    /// @brief フレームレート取得
+    /// @return フレームレート
+    unsigned int GetFPS() const;
 
     /// @brief WinAppクラスのポインタ取得
     /// @return WinAppクラスのポインタ

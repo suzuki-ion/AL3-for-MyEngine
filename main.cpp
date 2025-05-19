@@ -15,7 +15,7 @@
 
 #include "3d/DirectionalLight.h"
 #include "Objects/Sphere.h"
-#include "Objects/ModelData.h"
+#include "Objects/Model.h"
 #include "Objects/Plane.h"
 
 using namespace MyEngine;
@@ -90,10 +90,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // モデル
     //==================================================
 
-    ModelData modelData("Resources", "monkey.obj", textureManager);
-    modelData.transform.translate.y = 2.0f;
-    // カメラを設定
-    modelData.camera = camera.get();
+    Model model("Resources", "plane.obj", textureManager);
+    for (auto &modelData : model.models) {
+        // 位置を設定
+        modelData.transform.translate.y = 0.0f;
+        // カメラを設定
+        modelData.camera = camera.get();
+    }
 
     //==================================================
     // 床用の板
@@ -128,6 +131,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // ウィンドウのxボタンが押されるまでループ
     while (myGameEngine->ProccessMessage() != -1) {
         myGameEngine->BeginFrame();
+        if (myGameEngine->BeginGameLoop() == false) {
+            continue;
+        }
         drawer->PreDraw();
         Input::Update();
 
@@ -158,6 +164,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         ImGuiManager::Begin("オブジェクト");
 
+        // FPSの表示
+        ImGui::Text("FPS: %d", myGameEngine->GetFPS());
+        // デルタタイムの表示
+        ImGui::Text("DeltaTime: %.2f", myGameEngine->GetDeltaTime());
+
         // カメラ位置の表示
         ImGui::Text("カメラ位置: (%.2f, %.2f, %.2f)", camera->GetTranslate().x, camera->GetTranslate().y, camera->GetTranslate().z);
         // カメラの回転の表示
@@ -178,16 +189,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
             ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, 1.0f, 0.0f, 255.0f);
             ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f);
-            ImGui::TreePop();
-        }
-
-        // モデル
-        if (ImGui::TreeNode("モデル")) {
-            ImGui::DragFloat3("Model Translate", &modelData.transform.translate.x, 0.01f);
-            ImGui::DragFloat3("Model Rotate", &modelData.transform.rotate.x, 0.01f);
-            ImGui::DragFloat3("Model Scale", &modelData.transform.scale.x, 0.01f);
-            ImGui::DragFloat4("Model MaterialColor", &modelData.material.color.x, 1.0f, 0.0f, 255.0f);
-            ImGui::InputInt("Model TextureIndex", &modelData.useTextureIndex);
             ImGui::TreePop();
         }
 
@@ -223,7 +224,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // 球体の描画
         drawer->DrawSet(&sphere);
         // モデルの描画
-        drawer->DrawSet(&modelData);
+        for (auto &modelData : model.models) {
+            drawer->DrawSet(&modelData);
+        }
         // 板の描画
         drawer->DrawSet(&floor);
         

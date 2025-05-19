@@ -32,9 +32,30 @@ struct Object {
     }
     virtual ~Object() {
         // マテリアルリソースのアンマップ
-        materialResource->Unmap(0, nullptr);
+        if (materialMap != nullptr) {
+            materialResource->Unmap(0, nullptr);
+        }
         // TransformationMatrixリソースのアンマップ
-        transformationMatrixResource->Unmap(0, nullptr);
+        if (transformationMatrixMap != nullptr) {
+            transformationMatrixResource->Unmap(0, nullptr);
+        }
+    }
+    Object(Object &&other) noexcept {
+        mesh = std::move(other.mesh);
+        // マテリアルリソースのマップを取得
+        materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialMap));
+        // TransformationMatrixリソースのマップを取得
+        transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixMap));
+        // UVTransformの初期化
+        material.uvTransform.MakeIdentity();
+        uvTransform = {
+            { 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 0.0f },
+            { 0.0f, 0.0f, 0.0f }
+        };
+        useTextureIndex = other.useTextureIndex;
+        normalType = other.normalType;
+        fillMode = other.fillMode;
     }
 
     /// @brief カメラへのポインタ

@@ -1,13 +1,29 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "ModelData.h"
+#include "Object.h"
 #include "Common/VertexData.h"
+#include "Objects/MaterialData.h"
 
 namespace MyEngine {
 
 // 前方宣言
 class TextureManager;
+
+/// @brief モデルのマテリアルデータ
+struct MaterialData {
+    std::string textureFilePath;
+};
+
+/// @brief モデルデータ
+struct ModelData : public Object {
+    /// @brief モデルの頂点データ
+    std::vector<VertexData> vertices;
+    /// @brief インデックス数
+    UINT indexCount = 0;
+    /// @brief モデルのマテリアル
+    MaterialData materialData;
+};
 
 struct Model {
     /// @brief 必ずモデルのデータを設定してもらいたいので、デフォルトコンストラクタは削除

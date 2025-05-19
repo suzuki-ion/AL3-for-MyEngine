@@ -127,6 +127,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Engine\Math\RenderingPipeline.cpp" />
     <ClCompile Include="Engine\Math\Vector3.cpp" />
+    <ClCompile Include="Engine\Objects\Model.cpp" />
     <ClCompile Include="Engine\Objects\ModelData.cpp" />
     <ClCompile Include="Engine\Objects\Tetrahedron.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />

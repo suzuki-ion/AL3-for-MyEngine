@@ -1,7 +1,10 @@
+#define NOMINMAX
+
 #include <cassert>
 #include <vector>
 #include <memory>
 #include <thread>
+#include <algorithm>
 
 #include "Common/ConvertString.h"
 #include "Common/VertexData.h"
@@ -45,16 +48,15 @@ std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
 std::unique_ptr<Drawer> sDrawer;
 
-// 60fps固定用。エンジン側のプログラム実行の余裕を持たせて61fpsにする
-const float kFrameTime = 1000.0f / 61.0f;
-// フレーム開始時間
-std::chrono::high_resolution_clock::time_point sStartTime;
-// フレーム終了時間
-std::chrono::high_resolution_clock::time_point sEndTime;
-// フレーム時間
-float sFrameTime = 0.0f;
-// 待機時間
-float sWaitTime = 0.0f;
+// フレーム時間計算用変数
+LONGLONG sFrequency = 0;
+LONGLONG sElapsedTime = 0;
+LONGLONG sLastTime = 0;
+LARGE_INTEGER sNowTime;
+unsigned int sCountFps = 0;
+float sElapsedSeconds = 0.0f;
+float sDeltaTime = 0.0f;
+const float kMaxDeltaTime = 0.1f;
 
 } // namespace
 
@@ -63,6 +65,11 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     // ログの初期化
     InitializeLog("Logs", projectDir.string());
     LogInsertPartition("\n================ Engine Initialize ===============\n");
+
+    // フレーム時間の初期化
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    sFrequency = freq.QuadPart;
 
     // COMの初期化
     CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -125,21 +132,33 @@ void Engine::BeginFrame() {
     if (sWinApp->IsSizing()) {
         sDxCommon->Resize();
     }
-    // フレーム開始時間を取得
-    sStartTime = std::chrono::high_resolution_clock::now();
+    // 時間取得
+    QueryPerformanceCounter(&sNowTime);
+    // 時間計算
+    sElapsedTime = sNowTime.QuadPart - sLastTime;
+    sElapsedSeconds = static_cast<float>(sElapsedTime) / sFrequency;
+    sDeltaTime = std::min(sElapsedSeconds, kMaxDeltaTime);
+}
+
+bool Engine::BeginGameLoop() {
+    if (sDeltaTime > 1.0f / 60.0f) {
+        sLastTime = sNowTime.QuadPart;
+        sCountFps = static_cast<unsigned int>(1.0f / sDeltaTime);
+        return true;
+    }
+    return false;
 }
 
 void Engine::EndFrame() {
-    // フレーム終了時間を取得
-    sEndTime = std::chrono::high_resolution_clock::now();
-    // フレーム時間を計算
-    sFrameTime = std::chrono::duration<float, std::milli>(sEndTime - sStartTime).count();
-    sWaitTime = kFrameTime - sFrameTime;
-    // フレーム時間が0.0fより大きい場合は待機時間を設定
-    if (sWaitTime > 0.0f) {
-        // 待機時間を設定
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(sWaitTime)));
-    }
+}
+
+float Engine::GetDeltaTime() const {
+    return sDeltaTime;
+}
+
+unsigned int Engine::GetFPS() const {
+    // 補正値として1を入れておく
+    return sCountFps + 1;
 }
 
 MyEngine::WinApp *Engine::GetWinApp() const {

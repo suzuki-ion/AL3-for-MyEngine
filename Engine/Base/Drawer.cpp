@@ -22,7 +22,7 @@
 #include "Objects/Sprite.h"
 #include "Objects/Sphere.h"
 #include "Objects/Billboard.h"
-#include "Objects/ModelData.h"
+#include "Objects/Model.h"
 #include "Objects/Tetrahedron.h"
 #include "Objects/Plane.h"
 
@@ -185,7 +185,7 @@ void Drawer::PreDraw() {
 
     // デバッグカメラが有効ならデバッグカメラの処理
     if (isUseDebugCamera_) {
-        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.01f);
+        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.001f);
     }
 }
 
