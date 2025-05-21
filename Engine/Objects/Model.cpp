@@ -13,14 +13,15 @@ namespace MyEngine {
 
 namespace {
 
-/// @brief 指定のマテリアル情報を取得する
-/// @param materialFile 読み込んだマテリアルファイル
-/// @param usemtl 使うマテリアル
+/// @brief 指定のマテリアル情報を取得
+/// @param directoryPath ディレクトリのパス
+/// @param fileName マテリアルのファイル名
+/// @param usemtl 取得したいマテリアル名
 /// @return マテリアル情報
 MaterialData LoadMaterialFile(const std::string &directoryPath, const std::string &fileName, const std::string &usemtl) {
-    MaterialData materialData;   // 構築するMaterialData
-    std::string line;                   // ファイルから読み込んだ1行を格納するもの
-    std::ifstream materialFile(directoryPath + "/" + fileName);         // マテリアルファイル読み込み用
+    MaterialData materialData;                                  // 構築するMaterialData
+    std::string line;                                           // ファイルから読み込んだ1行を格納するもの
+    std::ifstream materialFile(directoryPath + "/" + fileName); // マテリアルファイル読み込み用
     bool isFound = false;
     
     // ファイルを1行ずつ読み込む
@@ -42,7 +43,7 @@ MaterialData LoadMaterialFile(const std::string &directoryPath, const std::strin
         if (mtlName != usemtl) {
             continue;
         }
-        // あってるならフラグを立てて一度ループを抜ける
+        // あってるならフラグを立ててループを抜ける
         isFound = true;
         break;
     };
@@ -187,28 +188,33 @@ Model::Model(std::string directoryPath, std::string fileName, TextureManager *te
 
                 std::string vertexDefinition;
                 s >> vertexDefinition;
+
                 // 頂点の要素へのindexは「位置/UV/法線」で格納されているので、分解してindexを取得する
                 std::istringstream v(vertexDefinition);
                 uint32_t elementIndices[3] = { 1, 1, 1 };
                 for (int32_t element = 0; element < 3; ++element) {
-                    std::string index;
+                    std::string indexNum;
                     // 区切りでインデックスを読んでいく
-                    std::getline(v, index, '/');
+                    std::getline(v, indexNum, '/');
                     // indexが空文字列の場合は、次の要素へ
-                    if (index.empty()) {
+                    if (indexNum.empty()) {
                         continue;
                     }
-                    elementIndices[element] = std::stoi(index);
+                    elementIndices[element] = std::stoi(indexNum);
                 }
+
                 // 要素へのindexから、実際の要素の値を取得して、頂点を構成する
                 Vector4 position = positions[elementIndices[0] - 1];
                 Vector2 texCoord = texCoords[elementIndices[1] - 1];
                 Vector3 normal = normals[elementIndices[2] - 1];
                 faceVertices.push_back({ position, texCoord, normal });
             }
+
+            // 元々は逆順に格納するための部分だったけど、たぶんここもう意味ないかも
             for (size_t i = 0; i < faceVertices.size(); ++i) {
                 models.back().vertices.push_back(faceVertices[i]);
             }
+            
             // インデックスを設定する
             size_t indexOffset = models.back().vertices.size() - faceVertices.size();
             for (size_t i = 0; i <= faceVertices.size() - 3; ++i) {

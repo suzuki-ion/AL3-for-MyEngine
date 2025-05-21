@@ -141,7 +141,7 @@ void Engine::BeginFrame() {
 }
 
 bool Engine::BeginGameLoop() {
-    if (sDeltaTime > 1.0f / 60.0f) {
+    if (sDeltaTime > 1.0f / 24.0f) {
         sLastTime = sNowTime.QuadPart;
         sCountFps = static_cast<unsigned int>(1.0f / sDeltaTime);
         return true;

@@ -5,6 +5,8 @@
 namespace MyEngine {
 
 struct Texture {
+    /// @brief テクスチャの名前
+    std::string name;
     /// @brief テクスチャリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> resource;
     /// @brief 中間リソース

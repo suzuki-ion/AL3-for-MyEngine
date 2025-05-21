@@ -77,6 +77,14 @@ TextureManager::~TextureManager() {
 }
 
 uint32_t TextureManager::Load(const std::string &filePath) {
+    // 読み込む前に同じ名前のテクスチャがあるか確認
+    for (const auto &texture : textures_) {
+        if (texture.name == filePath) {
+            // すでに読み込まれている場合はそのインデックスを返す
+            return static_cast<uint32_t>(&texture - &textures_[0]);
+        }
+    }
+
     // テクスチャファイルを読み込んで扱えるようにする
     DirectX::ScratchImage mipImages = LoadTexture(filePath);
     // ミップマップのメタデータを取得
@@ -84,6 +92,7 @@ uint32_t TextureManager::Load(const std::string &filePath) {
 
     // テクスチャデータを作成
     Texture texture = {
+        filePath,
         nullptr,
         nullptr,
         // SRVを作成するDescriptorHeapの場所を決める

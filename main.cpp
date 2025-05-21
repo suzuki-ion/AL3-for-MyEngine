@@ -90,7 +90,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // モデル
     //==================================================
 
-    Model model("Resources", "plane.obj", textureManager);
+    Model model("Resources/nahida", "nahida.obj", textureManager);
     for (auto &modelData : model.models) {
         // 位置を設定
         modelData.transform.translate.y = 0.0f;
@@ -189,6 +189,52 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             ImGui::DragFloat3("DirectionalLight Direction", &directionalLight.direction.x, 0.01f);
             ImGui::DragFloat4("DirectionalLight Color", &directionalLight.color.x, 1.0f, 0.0f, 255.0f);
             ImGui::DragFloat("DirectionalLight Intensity", &directionalLight.intensity, 0.01f);
+            ImGui::TreePop();
+        }
+
+        // モデル
+        if (ImGui::TreeNode("モデル")) {
+            // モデル内のモデルデータの選択
+            static int modelIndex = 0;
+            ImGui::Combo("モデルデータ", &modelIndex, {
+                "モデルデータ0\0"
+                "モデルデータ1\0"
+                "モデルデータ2\0"
+                "モデルデータ3\0"
+                "モデルデータ4\0"
+                "モデルデータ5\0"
+                "モデルデータ6\0"
+                "モデルデータ7\0"
+                "モデルデータ8\0"
+                "モデルデータ9\0"
+                "モデルデータ10\0"
+                "モデルデータ11\0"
+                "モデルデータ12\0"
+                "モデルデータ13\0"
+                "モデルデータ14\0"
+                "モデルデータ15\0"
+                "モデルデータ16\0"
+                "モデルデータ17\0"
+                "モデルデータ18\0"
+                "モデルデータ19\0"
+                "モデルデータ20\0"
+                "モデルデータ21\0"
+                "モデルデータ22\0"
+            }, static_cast<int>(model.models.size()));
+            // モデルの選択が変更されたら、モデルを変更
+            if (modelIndex >= 0 && modelIndex < model.models.size()) {
+                // モデルの位置
+                ImGui::DragFloat3("Model Translate", &model.models[modelIndex].transform.translate.x, 0.01f);
+                // モデルの回転
+                ImGui::DragFloat3("Model Rotate", &model.models[modelIndex].transform.rotate.x, 0.01f);
+                // モデルのスケール
+                ImGui::DragFloat3("Model Scale", &model.models[modelIndex].transform.scale.x, 0.01f);
+                // モデルのマテリアルカラー
+                ImGui::DragFloat4("Model MaterialColor", &model.models[modelIndex].material.color.x, 1.0f, 0.0f, 255.0f);
+                // モデルのテクスチャインデックス
+                ImGui::InputInt("Model TextureIndex", &model.models[modelIndex].useTextureIndex);
+            }
+
             ImGui::TreePop();
         }
 
