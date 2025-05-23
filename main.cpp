@@ -7,6 +7,7 @@
 #include "Base/Drawer.h"
 #include "Base/TextureManager.h"
 #include "Base/Input.h"
+#include "Base/Sound.h"
 
 #include "2d/ImGuiManager.h"
 
@@ -90,7 +91,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // モデル
     //==================================================
 
-    Model model("Resources/nahida", "nahida.obj", textureManager);
+    Model model("Resources", "monkey.obj", textureManager);
     for (auto &modelData : model.models) {
         // 位置を設定
         modelData.transform.translate.y = 0.0f;
@@ -127,6 +128,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     floor.normalType = kNormalTypeFace;
     // 塗りつぶしモードを設定
     floor.fillMode = kFillModeSolid;
+
+    //==================================================
+    // 音声
+    //==================================================
+
+    int soundIndex = Sound::Load("C:\\Windows\\Media\\chord.wav");
+    float volume = 1.0f;
+    float pitch = 0.0f;
+    bool isPlay = false;
+    bool isLoop = false;
 
     // ウィンドウのxボタンが押されるまでループ
     while (myGameEngine->ProccessMessage() != -1) {
@@ -183,6 +194,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // 背景色
         ImGui::DragFloat4("背景色", &clearColor.x, 1.0f, 0.0f, 255.0f);
+
+        // 音声
+        if (ImGui::TreeNode("音声")) {
+            ImGui::DragFloat("音量", &volume, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("ピッチ", &pitch, 0.01f, -24.0f, 24.0f);
+            ImGui::Checkbox("ループ再生", &isLoop);
+            if (ImGui::Button("再生")) {
+                Sound::Play(soundIndex, volume, pitch, isLoop);
+            }
+            if (ImGui::Button("停止")) {
+                Sound::Stop(soundIndex);
+            }
+            ImGui::TreePop();
+        }
 
         // 平行光源
         if (ImGui::TreeNode("平行光源")) {

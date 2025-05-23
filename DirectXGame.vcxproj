@@ -139,6 +139,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\Base\Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
+    <ClCompile Include="Engine\Base\Sound.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\3d\DiffuseLight.h" />
@@ -200,6 +201,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="Engine\Base\Input.h" />
+    <ClInclude Include="Engine\Base\Sound.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">

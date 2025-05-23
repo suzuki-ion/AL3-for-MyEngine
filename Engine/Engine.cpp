@@ -20,6 +20,7 @@
 #include "Base/ResourceLeakChecker.h"
 #include "Base/Drawer.h"
 #include "Base/Input.h"
+#include "Base/Sound.h"
 #include "2d/ImGuiManager.h"
 #include "3d/PrimitiveDrawer.h"
 #include "Math/Vector4.h"
@@ -106,6 +107,9 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     // 描画用クラス初期化
     sDrawer = std::make_unique<Drawer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
 
+    // 音声初期化
+    Sound::Initialize();
+
     // 初期化完了のログを出力
     Log("Engine Initialized.");
     LogInsertPartition("\n============ Engine Initialize Finish ============\n");
@@ -113,6 +117,7 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
 
 Engine::~Engine() {
     LogInsertPartition("\n================= Engine Finalize ================\n");
+    Sound::Finalize();
     sTextureManager.reset();
     sImGuiManager.reset();
     sDxCommon.reset();
