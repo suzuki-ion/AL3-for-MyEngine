@@ -49,7 +49,7 @@
     <IncludePath>$(ProjectDir)Externals/imgui;$(ProjectDir)Engine;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)Externals/imgui;$(ProjectDir)Engine;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)GameProgram;$(ProjectDir)Externals/imgui;$(ProjectDir)KashipanEngine;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -137,6 +137,27 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Base\Input.cpp" />
+    <ClCompile Include="GameProgram\Block.cpp" />
+    <ClCompile Include="GameProgram\CameraController.cpp" />
+    <ClCompile Include="GameProgram\Easings.cpp" />
+    <ClCompile Include="GameProgram\GameScene.cpp" />
+    <ClCompile Include="GameProgram\MapChipField.cpp" />
+    <ClCompile Include="GameProgram\Player.cpp" />
+    <ClCompile Include="GameProgram\Skydome.cpp" />
+    <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Math\AffineMatrix.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Camera.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
+    <ClCompile Include="KashipanEngine\Math\RenderingPipeline.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\BillBoard.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Model.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Object.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Plane.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Sphere.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Sprite.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Tetrahedron.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Triangle.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Engine\3d\PrimitiveDrawer.cpp" />
     <ClCompile Include="Engine\Base\Sound.cpp" />
@@ -202,6 +223,31 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="Engine\Base\Input.h" />
     <ClInclude Include="Engine\Base\Sound.h" />
+    <ClInclude Include="GameProgram\Block.h" />
+    <ClInclude Include="GameProgram\CameraController.h" />
+    <ClInclude Include="GameProgram\Easings.h" />
+    <ClInclude Include="GameProgram\GameScene.h" />
+    <ClInclude Include="GameProgram\MapChipField.h" />
+    <ClInclude Include="GameProgram\Player.h" />
+    <ClInclude Include="GameProgram\Skydome.h" />
+    <ClInclude Include="KashipanEngine\KashipanEngine.h" />
+    <ClInclude Include="KashipanEngine\Math\AffineMatrix.h" />
+    <ClInclude Include="KashipanEngine\Math\Camera.h" />
+    <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
+    <ClInclude Include="KashipanEngine\Math\RenderingPipeline.h" />
+    <ClInclude Include="KashipanEngine\Math\Transform.h" />
+    <ClInclude Include="KashipanEngine\Math\Vector2.h" />
+    <ClInclude Include="KashipanEngine\Math\Vector3.h" />
+    <ClInclude Include="KashipanEngine\Math\Vector4.h" />
+    <ClInclude Include="KashipanEngine\Objects.h" />
+    <ClInclude Include="KashipanEngine\Objects\BillBoard.h" />
+    <ClInclude Include="KashipanEngine\Objects\Model.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object.h" />
+    <ClInclude Include="KashipanEngine\Objects\Plane.h" />
+    <ClInclude Include="KashipanEngine\Objects\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Objects\Sprite.h" />
+    <ClInclude Include="KashipanEngine\Objects\Tetrahedron.h" />
+    <ClInclude Include="KashipanEngine\Objects\Triangle.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">
