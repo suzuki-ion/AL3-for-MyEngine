@@ -11,6 +11,8 @@ Skydome::Skydome(KashipanEngine::Model *model) {
 }
 
 void Skydome::Update() {
+    // ワールド変換の転送
+    worldTransform_.TransferMatrix();
 }
 
 void Skydome::Draw() {

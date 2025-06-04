@@ -78,7 +78,6 @@ Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiM
 
     // デバッグカメラの初期化
     sDebugCamera = std::make_unique<Camera>(
-        winApp_,
         Vector3(0.0f, 0.0f, -5.0f),
         Vector3(0.0f, 0.0f, 0.0f),
         Vector3(1.0f, 1.0f, 1.0f)
@@ -210,7 +209,7 @@ void Renderer::SetCamera(Camera *camera) {
     sCameraPtr = camera;
 }
 
-void Renderer::DrawSet(ObjectState objectState, bool isUseCamera, bool isSemitransparent) {
+void Renderer::DrawSet(const ObjectState &objectState, bool isUseCamera, bool isSemitransparent) {
     // カメラが設定されていないものは2Dオブジェクトとして扱う
     if (isUseCamera == false) {
         draw2DObjects_.push_back(objectState);
@@ -257,7 +256,6 @@ void Renderer::DrawCommon(ObjectState *objectState) {
     if (sCameraPtr == nullptr) {
         wvpMatrix2D_ = *objectState->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
         objectState->transformationMatrixMap->wvp = wvpMatrix2D_;
-        objectState->transformationMatrixMap->world = *objectState->worldMatrix;
     } else {
         if (isUseDebugCamera_) {
             sDebugCamera->SetWorldMatrix(*objectState->worldMatrix);
@@ -268,7 +266,6 @@ void Renderer::DrawCommon(ObjectState *objectState) {
             sCameraPtr->CalculateMatrix();
             objectState->transformationMatrixMap->wvp = sCameraPtr->GetWVPMatrix();
         }
-        objectState->transformationMatrixMap->world = *objectState->worldMatrix;
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
@@ -289,7 +286,6 @@ void Renderer::DrawCommon(ObjectState *objectState) {
     dxCommon_->GetCommandList()->IASetIndexBuffer(&objectState->mesh->indexBufferView);
     // マテリアルCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, objectState->materialResource->GetGPUVirtualAddress());
-
     // TransformationMatrix用のCBufferの場所を指定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, objectState->transformationMatrixResource->GetGPUVirtualAddress());
 

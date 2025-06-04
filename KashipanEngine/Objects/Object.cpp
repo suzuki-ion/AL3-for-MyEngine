@@ -54,7 +54,7 @@ void Object::DrawCommon() {
     renderer_->DrawSet(objectState, isUseCamera_, isSemitransparent);
 }
 
-void Object::DrawCommon(const Transform &transform) {
+void Object::DrawCommon(WorldTransform &worldTransform) {
     // マテリアルを設定
     materialMap_->color = ConvertColor(material_.color);
     materialMap_->enableLighting = material_.enableLighting;
@@ -64,19 +64,15 @@ void Object::DrawCommon(const Transform &transform) {
         uvTransform_.translate
     );
 
-    // 行列を計算
-    worldMatrix_.MakeAffine(
-        transform.scale,
-        transform.rotate,
-        transform.translate
-    );
+    // ワールド行列を転送
+    worldTransform.TransferMatrix();
 
     Renderer::ObjectState objectState;
     objectState.mesh = mesh_.get();
     objectState.materialResource = materialResource_.Get();
-    objectState.transformationMatrixResource = transformationMatrixResource_.Get();
-    objectState.transformationMatrixMap = transformationMatrixMap_;
-    objectState.worldMatrix = &worldMatrix_;
+    objectState.transformationMatrixResource = worldTransform.GetTransformationMatrixResource();
+    objectState.transformationMatrixMap = worldTransform.GetTransformationMatrixMap();
+    objectState.worldMatrix = &worldTransform.worldMatrix_;
     objectState.vertexCount = vertexCount_;
     objectState.indexCount = indexCount_;
     objectState.useTextureIndex = useTextureIndex_;
@@ -84,7 +80,6 @@ void Object::DrawCommon(const Transform &transform) {
     objectState.isUseCamera = isUseCamera_;
     bool isSemitransparent = (material_.color.w < 255.0f);
     renderer_->DrawSet(objectState, isUseCamera_, isSemitransparent);
-
 }
 
 void Object::Create(UINT vertexCount, UINT indexCount) {

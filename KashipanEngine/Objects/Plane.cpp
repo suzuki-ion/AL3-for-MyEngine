@@ -41,7 +41,7 @@ void Plane::Draw() {
     DrawCommon();
 }
 
-void Plane::Draw(const Transform &transform) {
+void Plane::Draw(WorldTransform &worldTransform) {
     // 法線を設定
     if (material_.enableLighting == false) {
         for (int i = 0; i < 4; i++) {
@@ -65,7 +65,7 @@ void Plane::Draw(const Transform &transform) {
         }
     }
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
 
 } // namespace KashipanEngine

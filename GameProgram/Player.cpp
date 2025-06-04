@@ -46,9 +46,9 @@ Player::Player(KashipanEngine::Model *model, const KashipanEngine::Vector3 &posi
 	model_ = model;
 
 	// ワールド変換の初期化
-	worldTransform_.translate = position;
+	worldTransform_.translate_ = position;
 	// 初期で横向きにする
-	worldTransform_.rotate.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransform_.rotate_.y = std::numbers::pi_v<float> / 2.0f;
 }
 
 void Player::Update() {
@@ -58,6 +58,8 @@ void Player::Update() {
 	CollisionCheck();
 	// 旋回処理
 	Turn();
+    // ワールド行列の転送
+    worldTransform_.TransferMatrix();
 }
 
 void Player::Draw() {
@@ -85,7 +87,7 @@ void Player::Move() {
 
 	// 接地状態フラグ
 	if (velocity_.y <= 0.0f) {
-		if (worldTransform_.translate.y <= kBlockHeight) {
+		if (worldTransform_.translate_.y <= kBlockHeight) {
 			isLanding = true;
 		}
 	}
@@ -104,7 +106,7 @@ void Player::Move() {
 				acceleration.x += kAcceleration;
 				if (lrDirection_ != LRDirection::kRight) {
 					lrDirection_ = LRDirection::kRight;
-					turnFirstRotationY_ = worldTransform_.rotate.y;
+					turnFirstRotationY_ = worldTransform_.rotate_.y;
 					turnTimer_ = 0.0f;
 				}
 			}
@@ -116,7 +118,7 @@ void Player::Move() {
 				acceleration.x -= kAcceleration;
 				if (lrDirection_ != LRDirection::kLeft) {
 					lrDirection_ = LRDirection::kLeft;
-					turnFirstRotationY_ = worldTransform_.rotate.y;
+					turnFirstRotationY_ = worldTransform_.rotate_.y;
 					turnTimer_ = 0.0f;
 				}
 			}
@@ -146,7 +148,7 @@ void Player::Move() {
 		// 着地
 		if (isLanding) {
 			// めり込み対策
-			worldTransform_.translate.y = kBlockHeight;
+			worldTransform_.translate_.y = kBlockHeight;
 			// 摩擦で速度を減衰
 			velocity_.x *= (1.0f - kAttenuation);
 			// 下方向速度をリセット
@@ -182,9 +184,9 @@ void Player::CollisionCheckUp(CollisionMapInfo &collisionMapInfo) {
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
 			KashipanEngine::Vector3(
-				worldTransform_.translate.x,
-				worldTransform_.translate.y + Player::kHeight / 2.0f,
-				worldTransform_.translate.z),
+				worldTransform_.translate_.x,
+				worldTransform_.translate_.y + Player::kHeight / 2.0f,
+				worldTransform_.translate_.z),
 			static_cast<Player::Corner>(i)
 		);
 	};
@@ -204,7 +206,7 @@ void Player::CollisionCheckUp(CollisionMapInfo &collisionMapInfo) {
 		Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
 		collisionMapInfo.velocity.y = std::max(
 			0.0f,
-			(rect.bottom - worldTransform_.translate.y) - (Player::kHeight / 2.0f + 1.0f)
+			(rect.bottom - worldTransform_.translate_.y) - (Player::kHeight / 2.0f + 1.0f)
 		);
 		// 天井に当たったことを記録する
 		collisionMapInfo.isHitUp = true;
@@ -221,7 +223,7 @@ void Player::CollisionCheckDown(CollisionMapInfo &collisionMapInfo) {
 	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-		    KashipanEngine::Vector3(worldTransform_.translate.x, worldTransform_.translate.y - Player::kHeight / 2.0f, worldTransform_.translate.z), static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(worldTransform_.translate_.x, worldTransform_.translate_.y - Player::kHeight / 2.0f, worldTransform_.translate_.z), static_cast<Player::Corner>(i));
 	};
 
 	MapChipType mapChipType;
@@ -237,7 +239,7 @@ void Player::CollisionCheckDown(CollisionMapInfo &collisionMapInfo) {
 		indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]);
 		// めり込み先ブロックの範囲矩形
 		Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-		collisionMapInfo.velocity.y = std::min(0.0f, rect.bottom - worldTransform_.translate.y + (Player::kHeight / 2.0f + 1.0f));
+		collisionMapInfo.velocity.y = std::min(0.0f, rect.bottom - worldTransform_.translate_.y + (Player::kHeight / 2.0f + 1.0f));
 		collisionMapInfo.isHitGround = true;
 	}
 }
@@ -251,7 +253,7 @@ void Player::CollisionCheckLeft(CollisionMapInfo& collisionMapInfo) {
 	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-		    KashipanEngine::Vector3(worldTransform_.translate.x - Player::kWidth / 2.0f, worldTransform_.translate.y, worldTransform_.translate.z), static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(worldTransform_.translate_.x - Player::kWidth / 2.0f, worldTransform_.translate_.y, worldTransform_.translate_.z), static_cast<Player::Corner>(i));
 	};
 	MapChipType mapChipType;
 	bool isHit = false;
@@ -266,7 +268,7 @@ void Player::CollisionCheckLeft(CollisionMapInfo& collisionMapInfo) {
 		indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]);
 		// めり込み先ブロックの範囲矩形
 		Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-		collisionMapInfo.velocity.x = std::max(0.0f, rect.left - worldTransform_.translate.x + (Player::kWidth / 2.0f + 1.0f));
+		collisionMapInfo.velocity.x = std::max(0.0f, rect.left - worldTransform_.translate_.x + (Player::kWidth / 2.0f + 1.0f));
 		collisionMapInfo.isHitWall = true;
 	}
 }
@@ -280,7 +282,7 @@ void Player::CollisionCheckRight(CollisionMapInfo &collisionMapInfo) {
 	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-		    KashipanEngine::Vector3(worldTransform_.translate.x + Player::kWidth / 2.0f, worldTransform_.translate.y, worldTransform_.translate.z), static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(worldTransform_.translate_.x + Player::kWidth / 2.0f, worldTransform_.translate_.y, worldTransform_.translate_.z), static_cast<Player::Corner>(i));
 	};
 	MapChipType mapChipType;
 	bool isHit = false;
@@ -295,16 +297,16 @@ void Player::CollisionCheckRight(CollisionMapInfo &collisionMapInfo) {
 		indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kRightBottom]);
 		// めり込み先ブロックの範囲矩形
 		Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-		collisionMapInfo.velocity.x = std::min(0.0f, rect.right - worldTransform_.translate.x - (Player::kWidth / 2.0f + 1.0f));
+		collisionMapInfo.velocity.x = std::min(0.0f, rect.right - worldTransform_.translate_.x - (Player::kWidth / 2.0f + 1.0f));
 		collisionMapInfo.isHitWall = true;
 	}
 }
 
 void Player::ApplyCollisionResult(const CollisionMapInfo& collisionMapInfo) {
 	// 速度を適用する
-	worldTransform_.translate.x += collisionMapInfo.velocity.x;
-	worldTransform_.translate.y += collisionMapInfo.velocity.y;
-	worldTransform_.translate.z += collisionMapInfo.velocity.z;
+	worldTransform_.translate_.x += collisionMapInfo.velocity.x;
+	worldTransform_.translate_.y += collisionMapInfo.velocity.y;
+	worldTransform_.translate_.z += collisionMapInfo.velocity.z;
 	// 速度を反映する
 	velocity_.x = collisionMapInfo.velocity.x;
 	velocity_.y = collisionMapInfo.velocity.y;
@@ -334,6 +336,6 @@ void Player::Turn() {
 		// 状態に応じた角度を取得する
 		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
 		// 自キャラの角度を設定する
-		worldTransform_.rotate.y = Ease::OutCubic(turnTimer_ / kTimeTurn, turnFirstRotationY_, destinationRotationY);
+		worldTransform_.rotate_.y = Ease::OutCubic(turnTimer_ / kTimeTurn, turnFirstRotationY_, destinationRotationY);
 	}
 }

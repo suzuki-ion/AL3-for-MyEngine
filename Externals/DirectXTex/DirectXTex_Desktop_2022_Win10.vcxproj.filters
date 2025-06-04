@@ -111,11 +111,5 @@
     <None Include="Shaders\CompileShaders.cmd">
       <Filter>Source Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\BC7Encode.hlsl">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\BC6HEncode.hlsl">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

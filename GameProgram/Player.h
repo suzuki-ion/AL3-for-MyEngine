@@ -44,13 +44,13 @@ public:
     void Draw();
 
     // 座標の設定
-    void SetPosition(const KashipanEngine::Vector3 &position) { worldTransform_.translate = position; }
+    void SetPosition(const KashipanEngine::Vector3 &position) { worldTransform_.translate_ = position; }
 
     // デバッグカメラ切り替え
     void ToggleDebugCamera() { isDebugCameraActive_ = !isDebugCameraActive_; }
 
     // ワールドトランスフォームの取得
-    KashipanEngine::Transform &GetWorldTransform() { return worldTransform_; }
+    KashipanEngine::WorldTransform &GetWorldTransform() { return worldTransform_; }
 
     // 速度の取得
     const KashipanEngine::Vector3 &GetVelocity() const { return velocity_; }
@@ -77,7 +77,7 @@ private:
     void Turn();
 
     // ワールド変換データ
-    KashipanEngine::Transform worldTransform_;
+    KashipanEngine::WorldTransform worldTransform_;
     // モデル
     KashipanEngine::Model *model_ = nullptr;
     // マップチップフィールド

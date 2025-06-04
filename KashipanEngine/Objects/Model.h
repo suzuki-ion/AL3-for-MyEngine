@@ -18,6 +18,8 @@ struct MaterialData {
 class ModelData : public Object {
 public:
     ModelData() = default;
+    ~ModelData();
+    ModelData(ModelData &&other);
 
     /// @brief モデルデータの作成
     /// @param vertexData 頂点データ
@@ -31,27 +33,22 @@ public:
         return mesh_.get() != nullptr;
     }
 
-    /// @brief 親のワールド行列を設定
-    /// @param parentWorldMatrix 親のワールド行列
-    void SetParentWorldMatrix(const Matrix4x4 &parentWorldMatrix) {
-        parentWorldMatrix_ = parentWorldMatrix;
+    /// @brief 親のワールド変換データを設定する
+    /// @param parentTransform 親のワールド変換データ
+    void SetParentTransform(WorldTransform *parentTransform) {
+        worldTransform_ = parentTransform;
     }
 
     /// @brief 描画処理
     void Draw();
-
-    /// @brief 描画処理
-    /// @param transform 変形用のTransform
-    void Draw(const Transform &transform);
 
 private:
     /// @brief インデックス数
     UINT indexCount_ = 0;
     /// @brief モデルのマテリアル
     MaterialData materialData_;
-
-    /// @brief 親のワールド行列
-    Matrix4x4 parentWorldMatrix_;
+    /// @brief ワールド変換データ
+    WorldTransform *worldTransform_ = nullptr;
 };
 
 /// @brief モデルクラス
@@ -70,8 +67,8 @@ public:
     void Draw();
 
     /// @brief 描画処理
-    /// @param transform 変形用のTransform
-    void Draw(const Transform &transform);
+    /// @param worldTransform ワールド変換データ
+    void Draw(WorldTransform &worldTransform);
 
     /// @brief レンダラーの設定
     /// @param renderer レンダラーへのポインタ
@@ -80,23 +77,23 @@ public:
     /// @brief transformへのアクセス
     /// @return モデル全体のtransform
     Transform &GetTransform() {
-        return transform;
+        return transform_;
     }
 
     /// @brief modelデータへのアクセス
     /// @return モデルデータの参照
     std::vector<ModelData> &GetModels() {
-        return models;
+        return models_;
     }
 
 private:
     /// @brief モデルデータ全体のtransform
-    Transform transform;
+    Transform transform_;
     /// @brief ワールド行列
-    AffineMatrix worldMatrix;
+    AffineMatrix worldMatrix_;
 
     /// @brief モデルデータ
-    std::vector<ModelData> models;
+    std::vector<ModelData> models_;
 };
 
 } // namespace KashipanEngine

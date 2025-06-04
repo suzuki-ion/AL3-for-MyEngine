@@ -15,8 +15,8 @@ public:
     void Draw();
 
     /// @brief 描画処理
-    /// @param transform 変形用のTransform
-    void Draw(const Transform &transform);
+    /// @param worldTransform ワールド変換データ
+    void Draw(WorldTransform &worldTransform);
 
     /// @brief 球体の半径を取得
     /// @return 半径

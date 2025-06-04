@@ -3,7 +3,8 @@
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    std::unique_ptr<GameScene> gameScene = std::make_unique<GameScene>();
+    auto kashipanEngine = std::make_unique<Engine>("Kashipan Engine Game", 1280, 720, true);
+    auto gameScene = std::make_unique<GameScene>(kashipanEngine.get());
     gameScene->GameLoop();
     return 0;
 }

@@ -38,7 +38,7 @@ void Triangle::Draw() {
     DrawCommon();
 }
 
-void Triangle::Draw(const Transform &transform) {
+void Triangle::Draw(WorldTransform &worldTransform) {
     // 法線を設定
     if (material_.enableLighting == false) {
         for (int i = 0; i < 3; i++) {
@@ -63,7 +63,7 @@ void Triangle::Draw(const Transform &transform) {
     }
 
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
 
 } // namespace KashipanEngine

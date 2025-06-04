@@ -6,3 +6,4 @@
 #include "Objects/Sprite.h"
 #include "Objects/Tetrahedron.h"
 #include "Objects/Triangle.h"
+#include "Objects/WorldTransform.h"

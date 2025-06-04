@@ -12,6 +12,7 @@ BillBoard::BillBoard(Vector3 *cameraRotete) {
     mesh_->indexBufferMap[3] = 1;
     mesh_->indexBufferMap[4] = 3;
     mesh_->indexBufferMap[5] = 2;
+    cameraRotate_ = cameraRotete;
 }
 
 void BillBoard::Draw() {
@@ -58,22 +59,22 @@ void BillBoard::Draw() {
     DrawCommon();
 }
 
-void BillBoard::Draw(Transform &transform) {
+void BillBoard::Draw(WorldTransform &worldTransform) {
     // 向きをカメラの向きに合わせる
     if (isUseX_) {
-        transform.rotate.x = cameraRotate_->x;
+        worldTransform.rotate_.x = cameraRotate_->x;
     } else {
-        transform.rotate.x = 0.0f;
+        worldTransform.rotate_.x = 0.0f;
     }
     if (isUseY_) {
-        transform.rotate.y = cameraRotate_->y;
+        worldTransform.rotate_.y = cameraRotate_->y;
     } else {
-        transform.rotate.y = 0.0f;
+        worldTransform.rotate_.y = 0.0f;
     }
     if (isUseZ_) {
-        transform.rotate.z = cameraRotate_->z;
+        worldTransform.rotate_.z = cameraRotate_->z;
     } else {
-        transform.rotate.z = 0.0f;
+        worldTransform.rotate_.z = 0.0f;
     }
 
     if (material_.enableLighting == false) {
@@ -99,7 +100,7 @@ void BillBoard::Draw(Transform &transform) {
     }
 
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
 
 } // namespace KashipanEngine

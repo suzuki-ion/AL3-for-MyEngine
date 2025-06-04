@@ -101,23 +101,23 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     // プリミティブ描画クラス初期化
     PrimitiveDrawer::Initialize(sDxCommon.get());
 
+    // 音声初期化
+    Sound::Initialize();
+
+    // カメラの初期化
+    Camera::Initialize(sWinApp.get());
+
     // ImGui初期化
     sImGuiManager = std::make_unique<ImGuiManager>(sWinApp.get(), sDxCommon.get());
 
     // テクスチャ管理クラス初期化
     sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get());
 
-    // 描画用クラス初期化
-    sRenderer = std::make_unique<Renderer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
-
-    // 音声初期化
-    Sound::Initialize();
-
     // モデルの初期化
     Model::SetTextureManager(sTextureManager.get());
 
-    // カメラの初期化
-    Camera::Initialize(sWinApp.get());
+    // 描画用クラス初期化
+    sRenderer = std::make_unique<Renderer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
 
     // 初期化完了のログを出力
     Log("Engine Initialized.");

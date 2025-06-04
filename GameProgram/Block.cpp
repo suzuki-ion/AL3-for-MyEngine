@@ -46,13 +46,22 @@ void Block::SetMapChipFieldBlocks(MapChipField* mapChipField) {
 			if (mapChipField->GetMapChipType(j, i) == MapChipType::kBlank) {
 				continue;
 			}
-            worldTransforms_[i][j] = std::make_unique<KashipanEngine::Transform>();
-			worldTransforms_[i][j]->translate = mapChipField->GetMapChipPosition(j, i);
+            worldTransforms_[i][j] = new KashipanEngine::WorldTransform();
+			worldTransforms_[i][j]->translate_ = mapChipField->GetMapChipPosition(j, i);
 		}
 	}
 }
 
 void Block::Update() {
+    // ワールド行列の転送
+    for (auto &worldTransformBlockLine : worldTransforms_) {
+        for (auto &worldTransformBlock : worldTransformBlockLine) {
+            if (!worldTransformBlock) {
+                continue;
+            }
+            worldTransformBlock->TransferMatrix();
+        }
+    }
 }
 
 void Block::Draw() {
@@ -62,7 +71,7 @@ void Block::Draw() {
 			if (!worldTransformBlock) {
 				continue;
 			}
-			model_->Draw(*worldTransformBlock);
+            model_->Draw(*worldTransformBlock);
 		}
 	}
 }
@@ -72,7 +81,7 @@ void Block::ResetWorldTransforms() {
     for (auto &worldTransformBlockLine : worldTransforms_) {
         for (auto &worldTransformBlock : worldTransformBlockLine) {
             if (worldTransformBlock) {
-                worldTransformBlock.reset();
+                delete worldTransformBlock;
             }
         }
     }

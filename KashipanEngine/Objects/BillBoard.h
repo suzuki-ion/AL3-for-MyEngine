@@ -15,7 +15,8 @@ public:
     void Draw();
 
     /// @brief 描画処理
-    void Draw(Transform &transform);
+    /// @param worldTransform ワールド変換データ
+    void Draw(WorldTransform &worldTransform);
 
 private:
     /// @brief カメラの回転角

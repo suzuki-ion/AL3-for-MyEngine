@@ -97,7 +97,7 @@ public:
     /// @param object 描画するオブジェクト情報へのポインタ
     /// @brief isUseCamera カメラを使用しているかどうか
     /// @param isSemitransparent 半透明オブジェクトかどうか
-    void DrawSet(ObjectState objectState, bool isUseCamera, bool isSemitransparent);
+    void DrawSet(const ObjectState &objectState, bool isUseCamera, bool isSemitransparent);
 
 private:
     /// @brief 平行光源の設定

@@ -11,8 +11,10 @@
 
 class GameScene {
 public:
-    // コンストラクタ
-    GameScene();
+    GameScene() = delete;
+    /// @brief コンストラクタ
+    /// @param engine KashipanEngineへのポインタ
+	GameScene(Engine *engine);
     // デストラクタ
     ~GameScene();
 
@@ -26,9 +28,6 @@ public:
 	void Draw();
 
 private:
-	// マップチップに合わせてブロックを生成
-	void GenerateBlocks();
-
 	// プレイヤーの3Dモデルデータ
 	std::unique_ptr<KashipanEngine::Model> modelPlayer_;
 	// ブロックの3Dモデルデータ

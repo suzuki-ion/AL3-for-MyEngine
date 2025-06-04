@@ -77,6 +77,33 @@ MaterialData LoadMaterialFile(const std::string &directoryPath, const std::strin
 
 } // namespace
 
+ModelData::~ModelData() {
+    if (worldTransform_ != nullptr) {
+        delete worldTransform_;
+        worldTransform_ = nullptr;
+    }
+}
+
+ModelData::ModelData(ModelData &&other) {
+    if (other.worldTransform_ != nullptr) {
+        worldTransform_ = other.worldTransform_;
+        other.worldTransform_ = nullptr;
+    }
+
+    if (!other.mesh_) {
+        return;
+    }
+
+    mesh_ = std::move(other.mesh_);
+    materialResource_ = other.materialResource_;
+    transformationMatrixResource_ = other.transformationMatrixResource_;
+    materialMap_ = other.materialMap_;
+    transformationMatrixMap_ = other.transformationMatrixMap_;
+    vertexCount_ = other.vertexCount_;
+    indexCount_ = other.indexCount_;
+    useTextureIndex_ = other.useTextureIndex_;
+}
+
 void ModelData::CreateData(std::vector<VertexData> &vertexData, std::vector<uint32_t> &indexData, MaterialData &materialData) {
     isUseCamera_ = true;
     // メッシュの生成
@@ -94,14 +121,14 @@ void ModelData::CreateData(std::vector<VertexData> &vertexData, std::vector<uint
     } else {
         useTextureIndex_ = sTextureManager->Load(materialData_.textureFilePath);
     }
+
+    // ワールド変換データの生成
+    worldTransform_ = new WorldTransform();
 }
 
 void ModelData::Draw() {
-    DrawCommon();
-}
-
-void ModelData::Draw(const Transform &transform) {
-    DrawCommon(transform);
+    isUseCamera_ = true;
+    DrawCommon(*worldTransform_);
 }
 
 void Model::SetTextureManager(TextureManager *textureManager) {
@@ -144,7 +171,7 @@ Model::Model(std::string directoryPath, std::string fileName) {
         // かつ今は面情報じゃない行を読み込んでいたらモデルデータに書き込み
         if (preIdentifier == "f" && identifier != "f") {
             MaterialData materialData = LoadMaterialFile(directoryPath, materialFileName, usemtl);
-            models.back().CreateData(vertices, index, materialData);
+            models_.back().CreateData(vertices, index, materialData);
 
             // 読み込んだデータを一部リセット
             vertices.clear();
@@ -198,7 +225,7 @@ Model::Model(std::string directoryPath, std::string fileName) {
 
             // 前までのIDがfでなければ新しくモデルデータを追加
             if (preIdentifier != "f") {
-                models.push_back(ModelData());
+                models_.emplace_back();
             }
 
             std::vector<VertexData> faceVertices;
@@ -262,35 +289,39 @@ Model::Model(std::string directoryPath, std::string fileName) {
     }
 
     // モデルデータの最後の要素のmeshがemptyなら書き込み
-    if (!models.back().isMeshExist()) {
+    if (!models_.back().isMeshExist()) {
         MaterialData materialData = LoadMaterialFile(directoryPath, materialFileName, usemtl);
-        models.back().CreateData(vertices, index, materialData);
+        models_.back().CreateData(vertices, index, materialData);
     }
 }
 
 void Model::Draw() {
     // ワールド行列の計算
-    worldMatrix.SetSRT(
-        transform.scale,
-        transform.rotate,
-        transform.translate
+    worldMatrix_.SetSRT(
+        transform_.scale,
+        transform_.rotate,
+        transform_.translate
     );
 
-    // 親のワールド行列を設定
-    for (auto &model : models) {
-        model.SetParentWorldMatrix(worldMatrix.GetWorldMatrix());
-    }
     // 各モデルデータの描画
-    for (auto &model : models) {
+    for (auto &model : models_) {
         model.Draw();
     }
 }
 
-void Model::Draw(const Transform &transform) {
+void Model::Draw(WorldTransform &worldTransform) {
+    // 親のワールド行列を設定
+    for (auto &model : models_) {
+        model.SetParentTransform(&worldTransform);
+    }
+    // 各モデルデータの描画
+    for (auto &model : models_) {
+        model.Draw();
+    }
 }
 
 void Model::SetRenderer(Renderer *renderer) {
-    for (auto &model : models) {
+    for (auto &model : models_) {
         model.SetRenderer(renderer);
     }
 }

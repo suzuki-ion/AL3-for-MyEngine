@@ -156,14 +156,6 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="Shaders\BC6HEncode.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Shaders\BC7Encode.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\Common\d3dx12.h" />
     <CLInclude Include="BC.h" />
     <ClCompile Include="BC.cpp" />

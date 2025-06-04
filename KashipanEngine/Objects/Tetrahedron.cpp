@@ -1,7 +1,9 @@
 #include "Tetrahedron.h"
 #include <cmath>
 
-KashipanEngine::Tetrahedron::Tetrahedron() {
+namespace KashipanEngine {
+
+Tetrahedron::Tetrahedron() {
     Create(12, 12);
     isUseCamera_ = true;
 
@@ -48,7 +50,7 @@ KashipanEngine::Tetrahedron::Tetrahedron() {
     }
 }
 
-void KashipanEngine::Tetrahedron::Draw() {
+void Tetrahedron::Draw() {
     // 法線を設定
     if (material_.enableLighting == false) {
         for (int i = 0; i < 12; i++) {
@@ -76,7 +78,7 @@ void KashipanEngine::Tetrahedron::Draw() {
     DrawCommon();
 }
 
-void KashipanEngine::Tetrahedron::Draw(const Transform &transform) {
+void Tetrahedron::Draw(WorldTransform &worldTransform) {
     // 法線を設定
     if (material_.enableLighting == false) {
         for (int i = 0; i < 12; i++) {
@@ -101,5 +103,7 @@ void KashipanEngine::Tetrahedron::Draw(const Transform &transform) {
     }
 
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
+
+} // namespace KashipanEngine

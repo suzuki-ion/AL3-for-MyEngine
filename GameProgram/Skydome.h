@@ -19,7 +19,7 @@ public:
 
 private:
 	// ワールド変換データ
-	KashipanEngine::Transform worldTransform_;
+	KashipanEngine::WorldTransform worldTransform_;
 	// モデル
 	KashipanEngine::Model* model_ = nullptr;
 

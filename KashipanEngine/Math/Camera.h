@@ -8,7 +8,7 @@ class WinApp;
 
 class Camera {
 public:
-    static void Initialize(const WinApp *winApp) noexcept;
+    static void Initialize(WinApp *winApp) noexcept;
 
     Camera();
     Camera(const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept;

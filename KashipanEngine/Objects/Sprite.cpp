@@ -23,13 +23,13 @@ void Sprite::Draw() {
     DrawCommon();
 }
 
-void Sprite::Draw(const Transform &transform) {
+void Sprite::Draw(WorldTransform &worldTransform) {
     // 法線を設定
     for (int i = 0; i < 4; i++) {
         mesh_->vertexBufferMap[i].normal = { 0.0f, 0.0f, -1.0f };
     }
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
 
 } // namespace KashipanEngine

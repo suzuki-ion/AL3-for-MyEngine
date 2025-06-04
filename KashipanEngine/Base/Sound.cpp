@@ -116,8 +116,6 @@ void Sound::Finalize() {
 }
 
 int Sound::Load(const std::string &filePath) {
-    HRESULT hr;
-
     // ファイル入力ストリームのインスタンス
     std::ifstream file(filePath, std::ios::binary);
     if (!file.is_open()) {

@@ -140,7 +140,7 @@ void Sphere::Draw() {
     DrawCommon();
 }
 
-void Sphere::Draw(const Transform &transform) {
+void Sphere::Draw(WorldTransform &worldTransform) {
     Vector3 position[3];
     // 緯度の方向に分割
     for (uint32_t latIndex = 0; latIndex < kSubdivision_; latIndex++) {
@@ -193,7 +193,7 @@ void Sphere::Draw(const Transform &transform) {
     }
 
     // 描画共通処理を呼び出す
-    DrawCommon(transform);
+    DrawCommon(worldTransform);
 }
 
 } // namespace KashipanEngine

@@ -6,9 +6,9 @@ void CameraController::Update() {
 	// 追従対象のワールドトランスフォームを参照
 	const auto& targetWorldTransform = target_->GetWorldTransform();
 	// 追従対象とオフセットと追従対象の速度からカメラの目標座標を計算
-	targetPosition_.x = targetWorldTransform.translate.x + targetOffset_.x + target_->GetVelocity().x * kVelocityBias;
-	targetPosition_.y = targetWorldTransform.translate.y + targetOffset_.y /*+ target_->GetVelocity().y * kVelocityBias*/;
-	targetPosition_.z = targetWorldTransform.translate.z + targetOffset_.z + target_->GetVelocity().z * kVelocityBias;
+	targetPosition_.x = targetWorldTransform.translate_.x + targetOffset_.x + target_->GetVelocity().x * kVelocityBias;
+	targetPosition_.y = targetWorldTransform.translate_.y + targetOffset_.y /*+ target_->GetVelocity().y * kVelocityBias*/;
+	targetPosition_.z = targetWorldTransform.translate_.z + targetOffset_.z + target_->GetVelocity().z * kVelocityBias;
 
 	// 座標補間でゆったり追従
 	camera_->GetTranslatePtr()->x += (targetPosition_.x - camera_->GetTranslatePtr()->x) * kInterpolationRate;
@@ -25,7 +25,7 @@ void CameraController::Reset() {
 	// 追従対象のワールドトランスフォームを参照
 	const auto& targetWorldTransform = target_->GetWorldTransform();
 	// 追従対象とオフセットからカメラの座標を計算
-	camera_->GetTranslatePtr()->x = targetWorldTransform.translate.x + targetOffset_.x;
-	camera_->GetTranslatePtr()->y = targetWorldTransform.translate.y + targetOffset_.y;
-	camera_->GetTranslatePtr()->z = targetWorldTransform.translate.z + targetOffset_.z;
+	camera_->GetTranslatePtr()->x = targetWorldTransform.translate_.x + targetOffset_.x;
+	camera_->GetTranslatePtr()->y = targetWorldTransform.translate_.y + targetOffset_.y;
+	camera_->GetTranslatePtr()->z = targetWorldTransform.translate_.z + targetOffset_.z;
 }
