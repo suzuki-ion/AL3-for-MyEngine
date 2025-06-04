@@ -82,6 +82,7 @@ void Block::ResetWorldTransforms() {
         for (auto &worldTransformBlock : worldTransformBlockLine) {
             if (worldTransformBlock) {
                 delete worldTransformBlock;
+                worldTransformBlock = nullptr;
             }
         }
     }

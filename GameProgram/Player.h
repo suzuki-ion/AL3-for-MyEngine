@@ -72,7 +72,10 @@ private:
     void ApplyCollisionResult(const CollisionMapInfo &collisionMapInfo);
     // 天井に接している場合の処理
     void OnHitCeiling(const CollisionMapInfo &collisionMapInfo);
-
+    // 壁に接している場合の処理
+    void OnHitWall(const CollisionMapInfo &collisionMapInfo);
+    // 接地状態の切り替え
+    void SwitchOnGroundState(CollisionMapInfo &collisionMapInfo);
     // 旋回処理
     void Turn();
 

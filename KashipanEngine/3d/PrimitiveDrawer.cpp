@@ -377,7 +377,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
             break;
         default:
             break;
-    }
+    } 
 
     //==================================================
     // Shaderをコンパイルする
