@@ -36,11 +36,15 @@ public:
     /// @brief 親のワールド変換データを設定する
     /// @param parentTransform 親のワールド変換データ
     void SetParentTransform(WorldTransform *parentTransform) {
-        worldTransform_ = parentTransform;
+        worldTransform_->parentTransform_ = parentTransform;
     }
 
     /// @brief 描画処理
     void Draw();
+
+    /// @brief 描画処理
+    /// @param worldTransform ワールド変換データ
+    void Draw(WorldTransform &worldTransform);
 
 private:
     /// @brief インデックス数

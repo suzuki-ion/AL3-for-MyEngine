@@ -19,7 +19,7 @@ public:
     // ワールド行列
     Matrix4x4 worldMatrix_;
     // 親のWorldTransformへのポインタ
-    WorldTransform *parentTransform_ = nullptr;
+    const WorldTransform *parentTransform_ = nullptr;
 
     /// @brief リソースへのポインタを取得
     /// @return TransformationMatrixリソースへのポインタ

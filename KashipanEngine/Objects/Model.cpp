@@ -131,6 +131,11 @@ void ModelData::Draw() {
     DrawCommon(*worldTransform_);
 }
 
+void ModelData::Draw(WorldTransform &worldTransform) {
+    isUseCamera_ = true;
+    DrawCommon(worldTransform);
+}
+
 void Model::SetTextureManager(TextureManager *textureManager) {
     sTextureManager = textureManager;
 }
@@ -312,11 +317,7 @@ void Model::Draw() {
 void Model::Draw(WorldTransform &worldTransform) {
     // 親のワールド行列を設定
     for (auto &model : models_) {
-        model.SetParentTransform(&worldTransform);
-    }
-    // 各モデルデータの描画
-    for (auto &model : models_) {
-        model.Draw();
+        model.Draw(worldTransform);
     }
 }
 

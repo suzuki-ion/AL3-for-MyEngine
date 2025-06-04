@@ -90,7 +90,7 @@ Matrix4x4 &Matrix4x4::operator*=(const float scalar) noexcept {
 }
 
 Matrix4x4 &Matrix4x4::operator*=(const Matrix4x4 &matrix) noexcept {
-    *this = matrix * *this;
+    *this = *this * matrix;
     return *this;
 }
 
