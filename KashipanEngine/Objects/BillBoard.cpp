@@ -44,7 +44,7 @@ void BillBoard::Draw() {
                     Vector3(mesh_->vertexBufferMap[i].position);
             }
         } else if (normalType_ == kNormalTypeFace) {
-            Vector3 position[3];
+            Vector3 position[3] = {};
             position[0] = Vector3(mesh_->vertexBufferMap[0].position);
             position[1] = Vector3(mesh_->vertexBufferMap[1].position);
             position[2] = Vector3(mesh_->vertexBufferMap[2].position);
@@ -88,7 +88,7 @@ void BillBoard::Draw(WorldTransform &worldTransform) {
                     Vector3(mesh_->vertexBufferMap[i].position);
             }
         } else if (normalType_ == kNormalTypeFace) {
-            Vector3 position[3];
+            Vector3 position[3] = {};
             position[0] = Vector3(mesh_->vertexBufferMap[0].position);
             position[1] = Vector3(mesh_->vertexBufferMap[1].position);
             position[2] = Vector3(mesh_->vertexBufferMap[2].position);

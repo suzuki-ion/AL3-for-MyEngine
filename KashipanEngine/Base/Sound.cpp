@@ -149,7 +149,7 @@ int Sound::Load(const std::string &filePath) {
     }
 
     // RIFFヘッダの読み込み
-    RiffHeader riff;
+    RiffHeader riff{};
     file.read(reinterpret_cast<char *>(&riff), sizeof(RiffHeader));
     // ファイルがRIFFかチェック
     if (strncmp(riff.chunk.id, "RIFF", 4) != 0) {
@@ -163,7 +163,7 @@ int Sound::Load(const std::string &filePath) {
     }
 
     // Formatチャンクの読み込み
-    FormatChunk format;
+    FormatChunk format{};
     file.read(reinterpret_cast<char *>(&format), sizeof(ChunkHeader));
     // チャンクIDがfmtかチェック
     if (strncmp(format.chunk.id, "fmt ", 4) != 0) {
@@ -176,7 +176,7 @@ int Sound::Load(const std::string &filePath) {
     file.read(reinterpret_cast<char *>(&format.fmt), format.chunk.size);
 
     // Dataチャンクの読み込み
-    ChunkHeader data;
+    ChunkHeader data{};
     file.read(reinterpret_cast<char *>(&data), sizeof(ChunkHeader));
     // JUNKチャンクを検出した場合
     if (strncmp(data.id, "JUNK", 4) == 0) {
@@ -199,7 +199,7 @@ int Sound::Load(const std::string &filePath) {
     file.close();
 
     // 読み込んだデータをSoundDataに格納
-    SoundData soundData;
+    SoundData soundData{};
     soundData.wfex = format.fmt;
     soundData.pBuffer = reinterpret_cast<BYTE *>(pBuffer);
     soundData.bufferSize = data.size;
