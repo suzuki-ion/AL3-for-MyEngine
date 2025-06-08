@@ -1,5 +1,9 @@
 #define XAUDIO2_HELPER_FUNCTIONS
 
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+
 #include <xaudio2.h>
 #include <wrl.h>
 #include <cassert>
@@ -12,6 +16,10 @@
 #include "Common/Logs.h"
 
 #pragma comment(lib, "xaudio2.lib")
+#pragma comment(lib, "mf.lib")
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "mfreadwrite.lib")
+#pragma comment(lib, "mfuuid.lib")
 
 namespace KashipanEngine {
 
@@ -68,6 +76,9 @@ IXAudio2MasteringVoice *sMasterVoice;
 /// @brief 音声データのリスト
 std::vector<SoundData> sSoundData;
 
+/// @brief Media Foundationソースリーダー
+Microsoft::WRL::ComPtr<IMFSourceReader> sSourceReader;
+
 //==================================================
 // テーブル
 //==================================================
@@ -101,10 +112,24 @@ void Sound::Initialize() {
         assert(SUCCEEDED(hr));
     }
 
+    // Media Foundationの初期化
+    hr = MFStartup(MF_VERSION);
+    if (FAILED(hr)) {
+        Log("Failed to initialize Media Foundation.", kLogLevelFlagError);
+        assert(SUCCEEDED(hr));
+    }
+
     Log("XAudio2 initialized successfully.", kLogLevelFlagInfo);
 }
 
 void Sound::Finalize() {
+    // Media Foundationの終了
+    HRESULT hr = MFShutdown();
+    if (FAILED(hr)) {
+        Log("Failed to shutdown Media Foundation.", kLogLevelFlagError);
+        assert(SUCCEEDED(hr));
+    }
+
     // XAudio2の解放
     sXaudio2.Reset();
     // 音声データの解放

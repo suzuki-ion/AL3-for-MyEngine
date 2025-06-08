@@ -84,7 +84,7 @@ KashipanEngine::Vector3 MapChipField::GetMapChipPosition(uint32_t x, uint32_t y)
 }
 
 IndexSet MapChipField::GetMapChipIndex(const KashipanEngine::Vector3& position) {
-	IndexSet indexSet;
+	IndexSet indexSet{};
 	// x座標からインデックスを計算
 	indexSet.x = static_cast<uint32_t>((position.x + kBlockWidth / 2.0f) / kBlockWidth);
 	// y座標からインデックスを計算
@@ -94,7 +94,7 @@ IndexSet MapChipField::GetMapChipIndex(const KashipanEngine::Vector3& position) 
 
 Rect MapChipField::GetRect(uint32_t x, uint32_t y) {
 	KashipanEngine::Vector3 center = GetMapChipPosition(x, y);
-	Rect rect;
+	Rect rect{};
 	rect.left = center.x - kBlockWidth / 2.0f;
 	rect.right = center.x + kBlockWidth / 2.0f;
 	rect.bottom = center.y - kBlockHeight / 2.0f;

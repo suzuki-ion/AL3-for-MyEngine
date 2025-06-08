@@ -14,7 +14,7 @@ namespace KashipanEngine {
 class WinApp;
 class DirectXCommon;
 class Renderer;
-class TextureManager;
+class Texture;
 
 } // namespace KashipanEngine
 
@@ -58,7 +58,7 @@ public:
 
     /// @brief テクスチャ管理クラスのポインタ取得
     /// @return テクスチャ管理クラスのポインタ
-    KashipanEngine::TextureManager *GetTextureManager() const;
+    KashipanEngine::Texture *GetTexture() const;
     
     /// @brief メッセージ処理
     /// @return メッセージ処理結果。-1の場合は終了

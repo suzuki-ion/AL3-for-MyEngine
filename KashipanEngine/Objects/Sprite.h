@@ -5,7 +5,9 @@ namespace KashipanEngine {
 
 struct Sprite : public Object {
 public:
-    Sprite();
+    Sprite() = delete;
+    Sprite(const std::string &filePath);
+    Sprite(const uint32_t textureIndex);
 
     /// @brief 描画処理
     void Draw();

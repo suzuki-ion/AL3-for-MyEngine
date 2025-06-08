@@ -1,13 +1,12 @@
 #define NOMINMAX
 
-#include "Base/Input.h"
 #include "Player.h"
 #include "MapChipField.h"
 #include "Easings.h"
+#include "Base/Input.h"
 #include <cassert>
 #include <numbers>
 #include <algorithm>
-#include <cmath>
 #include <array>
 
 using namespace KashipanEngine;
@@ -21,12 +20,12 @@ namespace {
 /// @param center 中心座標
 /// @param corner 角の種類
 /// @return 角の座標
-KashipanEngine::Vector3 CornerPosition(const Vector3 &center, Player::Corner corner) {
+KashipanEngine::Vector3 CornerPosition(const Vector3& center, Player::Corner corner) {
 	static KashipanEngine::Vector3 offsetTable[Player::kNumCorner] = {
-		{Player::kWidth / 2.0f,  -Player::kHeight / 2.0f, 0.0f}, // 右下
-		{-Player::kWidth / 2.0f, -Player::kHeight / 2.0f, 0.0f}, // 左下
-		{Player::kWidth / 2.0f,  Player::kHeight / 2.0f,  0.0f}, // 右上
-		{-Player::kWidth / 2.0f, Player::kHeight / 2.0f,  0.0f}  // 左上
+	    {Player::kWidth / 2.0f,  -Player::kHeight / 2.0f, 0.0f}, // 右下
+	    {-Player::kWidth / 2.0f, -Player::kHeight / 2.0f, 0.0f}, // 左下
+	    {Player::kWidth / 2.0f,  Player::kHeight / 2.0f,  0.0f}, // 右上
+	    {-Player::kWidth / 2.0f, Player::kHeight / 2.0f,  0.0f}  // 左上
 	};
 
 	return KashipanEngine::Vector3(
@@ -38,33 +37,81 @@ KashipanEngine::Vector3 CornerPosition(const Vector3 &center, Player::Corner cor
 
 } // namespace
 
-Player::Player(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position) {
+void Player::Initialize(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position) {
 	// NULLポインタチェック
 	assert(model);
-
 	// モデルの設定
 	model_ = model;
-
 	// ワールド変換の初期化
-	worldTransform_.translate_ = position;
+    worldTransform_ = std::make_unique<KashipanEngine::WorldTransform>();
+	worldTransform_->translate_ = position;
+    worldTransform_->TransferMatrix();
 	// 初期で横向きにする
-	worldTransform_.rotate_.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransform_->rotate_.y = std::numbers::pi_v<float> / 2.0f;
 }
 
 void Player::Update() {
-	// 移動処理
-	Move();
+	// 振る舞いの切り替え
+	SwitchBehaivior();
+
+	// 振る舞いの更新
+	switch (behaivior_) {
+	case Behaivior::kRoot:
+		BehaiviorRootUpdate();
+		break;
+	case Behaivior::kAttack:
+		BehaiviorAttackUpdate();
+		break;
+	}
+
 	// 当たり判定処理
 	CollisionCheck();
 	// 旋回処理
 	Turn();
-    // ワールド行列の転送
-    worldTransform_.TransferMatrix();
+
+	// 行列の転送
+	worldTransform_->TransferMatrix();
 }
 
 void Player::Draw() {
 	// 3Dモデルを描画
-	model_->Draw(worldTransform_);
+	model_->Draw(*worldTransform_);
+}
+
+void Player::OnCollision(const Enemy* enemy) {
+	static_cast<void>(enemy);
+	// デスフラグを立てる
+	isDead_ = true;
+}
+
+const KashipanEngine::Vector3 Player::GetPosition() {
+	return Vector3(
+		worldTransform_->worldMatrix_.m[3][0],
+		worldTransform_->worldMatrix_.m[3][1],
+		worldTransform_->worldMatrix_.m[3][2]
+	);
+}
+
+KashipanEngine::Math::AABB Player::GetAABB() {
+	// ワールド座標を取得
+	KashipanEngine::Vector3 worldPos = GetPosition();
+
+	KashipanEngine::Math::AABB aabb{};
+
+	aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+	aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+
+	return aabb;
+}
+
+void Player::BehaiviorRootUpdate() {
+	// 移動処理
+	Move();
+	// shiftキーが押されたら振る舞いを攻撃に切り替える
+	if (Input::IsKeyDown(DIK_LSHIFT) ||
+		Input::IsKeyDown(DIK_RSHIFT)) {
+		behaiviorRequest_ = Behaivior::kAttack;
+	}
 }
 
 void Player::Move() {
@@ -96,7 +143,7 @@ void Player::Move() {
 				acceleration.x += kAcceleration;
 				if (lrDirection_ != LRDirection::kRight) {
 					lrDirection_ = LRDirection::kRight;
-					turnFirstRotationY_ = worldTransform_.rotate_.y;
+					turnFirstRotationY_ = worldTransform_->rotate_.y;
 					turnTimer_ = 0.0f;
 				}
 			}
@@ -108,7 +155,7 @@ void Player::Move() {
 				acceleration.x -= kAcceleration;
 				if (lrDirection_ != LRDirection::kLeft) {
 					lrDirection_ = LRDirection::kLeft;
-					turnFirstRotationY_ = worldTransform_.rotate_.y;
+					turnFirstRotationY_ = worldTransform_->rotate_.y;
 					turnTimer_ = 0.0f;
 				}
 			}
@@ -126,48 +173,55 @@ void Player::Move() {
 		// ジャンプ操作
 		if (Input::IsKeyDown(DIK_UP)) {
 			velocity_.y += kJumpAcceleration;
-			onGround_ = false;
 		}
 
-	} else {
-		// 落下速度
-		velocity_.y -= kGravityAcceleration;
-		// 最大落下速度制限
-		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
 	}
+
+	// 落下速度
+	velocity_.y -= kGravityAcceleration;
+	// 最大落下速度制限
+	velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
 }
 
 void Player::CollisionCheck() {
 	CollisionMapInfo collisionMapInfo;
 	collisionMapInfo.velocity = velocity_;
 
+	// 上下処理
 	CollisionCheckUp(collisionMapInfo);
 	CollisionCheckDown(collisionMapInfo);
+	worldTransform_->translate_.y += collisionMapInfo.velocity.y;
+	velocity_.y = collisionMapInfo.velocity.y;
+	collisionMapInfo.velocity.y = 0.0f;
+
+	// 左右処理
 	CollisionCheckLeft(collisionMapInfo);
 	CollisionCheckRight(collisionMapInfo);
-	ApplyCollisionResult(collisionMapInfo);
+	worldTransform_->translate_.x += collisionMapInfo.velocity.x;
+	velocity_.x = collisionMapInfo.velocity.x;
+	collisionMapInfo.velocity.x = 0.0f;
+
+	SwitchOnGroundState(collisionMapInfo);
 	// 天井に接している場合の処理
 	OnHitCeiling(collisionMapInfo);
-    // 接地状態の切り替え
-	SwitchOnGroundState(collisionMapInfo);
 	// 壁に接している場合の処理
 	OnHitWall(collisionMapInfo);
 }
 
-void Player::CollisionCheckUp(CollisionMapInfo &collisionMapInfo) {
+void Player::CollisionCheckUp(CollisionMapInfo& collisionMapInfo) {
 	if (collisionMapInfo.velocity.y <= 0.0f) {
 		// 上方向に移動していない場合は当たり判定しない
 		return;
 	}
 
 	// 移動後の4つの角の座標
-	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
+	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew{};
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-			KashipanEngine::Vector3(
-				worldTransform_.translate_.x + collisionMapInfo.velocity.x,
-				worldTransform_.translate_.y + collisionMapInfo.velocity.y,
-				worldTransform_.translate_.z + collisionMapInfo.velocity.z),
+		    KashipanEngine::Vector3(
+				worldTransform_->translate_.x + collisionMapInfo.velocity.x,
+				worldTransform_->translate_.y + collisionMapInfo.velocity.y,
+		        worldTransform_->translate_.z + collisionMapInfo.velocity.z),
 			static_cast<Player::Corner>(i));
 	};
 
@@ -177,7 +231,7 @@ void Player::CollisionCheckUp(CollisionMapInfo &collisionMapInfo) {
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kLeftTop]));
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kRightTop]));
 	// 上辺のマップチップを取得し、ブロックに当たっていたらフラグを立てる
-	for (const auto &indexSet : indexSets) {
+	for (const auto& indexSet : indexSets) {
 		MapChipType mapChipType = mapChipField_->GetMapChipType(indexSet.x, indexSet.y);
 		if (mapChipType != MapChipType::kBlank) {
 			isHit = true;
@@ -193,26 +247,26 @@ void Player::CollisionCheckUp(CollisionMapInfo &collisionMapInfo) {
 	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftTop]);
 	// めり込み先ブロックの範囲矩形
 	Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-	collisionMapInfo.velocity.y = std::max(0.0f, (rect.bottom - worldTransform_.translate_.y) - (Player::kHeight / 2.0f + 1.0f));
+	collisionMapInfo.velocity.y = std::max(0.0f, (rect.bottom - worldTransform_->translate_.y) - (Player::kHeight / 2.0f));
 	// 天井に当たったことを記録する
 	collisionMapInfo.isHitUp = true;
 }
 
-void Player::CollisionCheckDown(CollisionMapInfo &collisionMapInfo) {
+void Player::CollisionCheckDown(CollisionMapInfo& collisionMapInfo) {
 	if (collisionMapInfo.velocity.y >= 0.0f) {
 		// 下方向に移動していない場合は当たり判定しない
 		return;
 	}
 
 	// 移動後の4つの角の座標
-	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
+	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew{};
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-			KashipanEngine::Vector3(
-				worldTransform_.translate_.x + collisionMapInfo.velocity.x,
-				worldTransform_.translate_.y + collisionMapInfo.velocity.y,
-				worldTransform_.translate_.z + collisionMapInfo.velocity.z),
-			static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(
+		        worldTransform_->translate_.x + collisionMapInfo.velocity.x,
+				worldTransform_->translate_.y + collisionMapInfo.velocity.y,
+		        worldTransform_->translate_.z + collisionMapInfo.velocity.z),
+		    static_cast<Player::Corner>(i));
 	};
 
 	bool isHit = false;
@@ -221,7 +275,7 @@ void Player::CollisionCheckDown(CollisionMapInfo &collisionMapInfo) {
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]));
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kRightBottom]));
 	// 下辺のマップチップを取得し、ブロックに当たっていたらフラグを立てる
-	for (const auto &indexSet : indexSets) {
+	for (const auto& indexSet : indexSets) {
 		MapChipType mapChipType = mapChipField_->GetMapChipType(indexSet.x, indexSet.y);
 		if (mapChipType != MapChipType::kBlank) {
 			isHit = true;
@@ -237,25 +291,25 @@ void Player::CollisionCheckDown(CollisionMapInfo &collisionMapInfo) {
 	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]);
 	// めり込み先ブロックの範囲矩形
 	Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-	collisionMapInfo.velocity.y = std::min(0.0f, (rect.top - worldTransform_.translate_.y) + (Player::kHeight / 2.0f + 1.0f));
+	collisionMapInfo.velocity.y = std::min(0.0f, (rect.top - worldTransform_->translate_.y) + (Player::kHeight / 2.0f));
 	collisionMapInfo.isHitGround = true;
 }
 
-void Player::CollisionCheckLeft(CollisionMapInfo &collisionMapInfo) {
+void Player::CollisionCheckLeft(CollisionMapInfo& collisionMapInfo) {
 	if (collisionMapInfo.velocity.x >= 0.0f) {
 		// 左方向に移動していない場合は当たり判定しない
 		return;
 	}
 
 	// 移動後の4つの角の座標
-	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
+	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew{};
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-			KashipanEngine::Vector3(
-				worldTransform_.translate_.x + collisionMapInfo.velocity.x,
-				worldTransform_.translate_.y + collisionMapInfo.velocity.y,
-				worldTransform_.translate_.z + collisionMapInfo.velocity.z),
-			static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(
+		        worldTransform_->translate_.x + collisionMapInfo.velocity.x,
+				worldTransform_->translate_.y + collisionMapInfo.velocity.y,
+		        worldTransform_->translate_.z + collisionMapInfo.velocity.z),
+		    static_cast<Player::Corner>(i));
 	};
 
 	bool isHit = false;
@@ -264,7 +318,7 @@ void Player::CollisionCheckLeft(CollisionMapInfo &collisionMapInfo) {
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kLeftTop]));
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]));
 	// 左辺のマップチップを取得し、ブロックに当たっていたらフラグを立てる
-	for (const auto &indexSet : indexSets) {
+	for (const auto& indexSet : indexSets) {
 		MapChipType mapChipType = mapChipField_->GetMapChipType(indexSet.x, indexSet.y);
 		if (mapChipType != MapChipType::kBlank) {
 			isHit = true;
@@ -277,10 +331,10 @@ void Player::CollisionCheckLeft(CollisionMapInfo &collisionMapInfo) {
 	}
 
 	// めり込みを排除する方向に移動量を設定する
-	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftBottom]);
+	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kLeftTop]);
 	// めり込み先ブロックの範囲矩形
 	Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-	collisionMapInfo.velocity.x = std::max(0.0f, (rect.right - worldTransform_.translate_.x) - (Player::kWidth / 2.0f + 1.0f));
+	collisionMapInfo.velocity.x = std::max(0.0f, (rect.right - worldTransform_->translate_.x) - (Player::kWidth / 2.0f));
 	collisionMapInfo.isHitWall = true;
 }
 
@@ -290,14 +344,14 @@ void Player::CollisionCheckRight(CollisionMapInfo &collisionMapInfo) {
 		return;
 	}
 	// 移動後の4つの角の座標
-	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew;
+	std::array<KashipanEngine::Vector3, Player::kNumCorner> positionNew{};
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(
-			KashipanEngine::Vector3(
-				worldTransform_.translate_.x + collisionMapInfo.velocity.x,
-				worldTransform_.translate_.y + collisionMapInfo.velocity.y,
-				worldTransform_.translate_.z + collisionMapInfo.velocity.z),
-			static_cast<Player::Corner>(i));
+		    KashipanEngine::Vector3(
+		        worldTransform_->translate_.x + collisionMapInfo.velocity.x,
+				worldTransform_->translate_.y + collisionMapInfo.velocity.y,
+		        worldTransform_->translate_.z + collisionMapInfo.velocity.z),
+		    static_cast<Player::Corner>(i));
 	};
 	bool isHit = false;
 	// 右辺のインデックス全てを取得
@@ -305,7 +359,7 @@ void Player::CollisionCheckRight(CollisionMapInfo &collisionMapInfo) {
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kRightTop]));
 	indexSets.push_back(mapChipField_->GetMapChipIndex(positionNew[Player::kRightBottom]));
 	// 右辺のマップチップを取得し、ブロックに当たっていたらフラグを立てる
-	for (const auto &indexSet : indexSets) {
+	for (const auto& indexSet : indexSets) {
 		MapChipType mapChipType = mapChipField_->GetMapChipType(indexSet.x, indexSet.y);
 		if (mapChipType != MapChipType::kBlank) {
 			isHit = true;
@@ -318,32 +372,32 @@ void Player::CollisionCheckRight(CollisionMapInfo &collisionMapInfo) {
 	}
 
 	// めり込みを排除する方向に移動量を設定する
-	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kRightBottom]);
+	IndexSet indexSet = mapChipField_->GetMapChipIndex(positionNew[Player::kRightTop]);
 	// めり込み先ブロックの範囲矩形
 	Rect rect = mapChipField_->GetRect(indexSet.x, indexSet.y);
-	collisionMapInfo.velocity.x = std::min(0.0f, (rect.left - worldTransform_.translate_.x) + (Player::kWidth / 2.0f + 1.0f));
+	collisionMapInfo.velocity.x = std::min(0.0f, (rect.left - worldTransform_->translate_.x) + (Player::kWidth / 2.0f));
 	collisionMapInfo.isHitWall = true;
 }
 
-void Player::ApplyCollisionResult(const CollisionMapInfo &collisionMapInfo) {
+void Player::ApplyCollisionResult(const CollisionMapInfo& collisionMapInfo) {
 	// 速度を適用する
-	worldTransform_.translate_.x += collisionMapInfo.velocity.x;
-	worldTransform_.translate_.y += collisionMapInfo.velocity.y;
-	worldTransform_.translate_.z += collisionMapInfo.velocity.z;
+	worldTransform_->translate_.x += collisionMapInfo.velocity.x;
+	worldTransform_->translate_.y += collisionMapInfo.velocity.y;
+	worldTransform_->translate_.z += collisionMapInfo.velocity.z;
 	// 速度を反映する
 	velocity_.x = collisionMapInfo.velocity.x;
 	velocity_.y = collisionMapInfo.velocity.y;
 	velocity_.z = collisionMapInfo.velocity.z;
 }
 
-void Player::OnHitCeiling(const CollisionMapInfo &collisionMapInfo) {
+void Player::OnHitCeiling(const CollisionMapInfo& collisionMapInfo) {
 	// 天井に当たった場合は上方向の速度を0にする
 	if (collisionMapInfo.isHitUp) {
 		velocity_.y = 0.0f;
 	}
 }
 
-void Player::OnHitWall(const CollisionMapInfo &collisionMapInfo) {
+void Player::OnHitWall(const CollisionMapInfo& collisionMapInfo) {
 	const float kAttenuationWall = 0.1f;
 
 	// 壁接触による減速
@@ -352,7 +406,7 @@ void Player::OnHitWall(const CollisionMapInfo &collisionMapInfo) {
 	}
 }
 
-void Player::SwitchOnGroundState(CollisionMapInfo &collisionMapInfo) {
+void Player::SwitchOnGroundState(CollisionMapInfo& collisionMapInfo) {
 	static const float kAttenuationLanding = 0.1f;
 	static const float kDownPosPlus = 2.0f;
 
@@ -361,9 +415,6 @@ void Player::SwitchOnGroundState(CollisionMapInfo &collisionMapInfo) {
 		if (velocity_.y > 0.0f) {
 			onGround_ = false;
 		} else {
-			// 少し下にずらして当たり判定を行う
-			collisionMapInfo.velocity.y -= kDownPosPlus;
-			CollisionCheckDown(collisionMapInfo);
 			if (!collisionMapInfo.isHitGround) {
 				// 落下開始
 				onGround_ = false;
@@ -399,6 +450,90 @@ void Player::Turn() {
 		// 状態に応じた角度を取得する
 		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
 		// 自キャラの角度を設定する
-		worldTransform_.rotate_.y = Ease::OutCubic(turnTimer_ / kTimeTurn, turnFirstRotationY_, destinationRotationY);
+		worldTransform_->rotate_.y = Ease::OutCubic(turnTimer_ / kTimeTurn, turnFirstRotationY_, destinationRotationY);
 	}
+}
+
+void Player::BehaiviorAttackUpdate() {
+	// 溜めの時間
+	static const int kAttackDuration = 10;
+	// 突進時間
+	static const int kRushDuration = 30;
+	// 余韻の時間
+	static const int kAfterDuration = 10;
+
+	// 予備動作
+	attackParameter_++;
+
+	float t;
+	switch (attackPhase_) {
+	case AttackPhase::kStore:
+		t = static_cast<float>(attackParameter_) / kAttackDuration;
+		worldTransform_->scale_.z = Ease::OutCubic(t, 1.0f, 0.3f);
+		worldTransform_->scale_.y = Ease::OutCubic(t, 1.0f, 1.6f);
+		if (attackParameter_ >= kAttackDuration) {
+			// 溜めが終わったら突進へ
+			attackPhase_ = AttackPhase::kRush;
+			attackParameter_ = 0;
+		}
+		break;
+
+	case AttackPhase::kRush:
+		t = static_cast<float>(attackParameter_) / kRushDuration;
+		worldTransform_->scale_.z = Ease::OutCubic(t, 0.3f, 1.3f);
+		worldTransform_->scale_.y = Ease::InCubic(t, 1.6f, 0.7f);
+		if (attackParameter_ >= kRushDuration) {
+			// 突進が終わったら余韻へ
+			attackPhase_ = AttackPhase::kAfter;
+			attackParameter_ = 0;
+		}
+
+		// 向いてる方向に突進
+		if (lrDirection_ == LRDirection::kRight) {
+			velocity_.x = 0.4f;
+		} else {
+			velocity_.x = -0.4f;
+		}
+		break;
+
+	case AttackPhase::kAfter:
+		t = static_cast<float>(attackParameter_) / kAfterDuration;
+		worldTransform_->scale_.z = Ease::InCubic(t, 1.3f, 1.0f);
+		worldTransform_->scale_.y = Ease::InCubic(t, 0.7f, 1.0f);
+		if (attackParameter_ >= kAfterDuration) {
+			// 余韻が終わったら通常行動へ
+			behaiviorRequest_ = Behaivior::kRoot;
+			attackPhase_ = AttackPhase::kStore;
+			attackParameter_ = 0;
+			return;
+		}
+		break;
+	}
+}
+
+void Player::SwitchBehaivior() {
+	if (behaiviorRequest_ == Behaivior::kUnknown) {
+		return;
+	}
+	// 振る舞いを変更
+	behaivior_ = behaiviorRequest_;
+	// 各振る舞いごとの初期化を実行
+	switch (behaivior_) {
+	case Behaivior::kRoot:
+		// 通常行動の初期化
+		BehaiviorRootInitialize();
+		break;
+	case Behaivior::kAttack:
+		// 攻撃行動の初期化
+		BehaiviorAttackInitialize();
+		break;
+	}
+	behaiviorRequest_ = Behaivior::kUnknown;
+}
+
+void Player::BehaiviorRootInitialize() {}
+
+void Player::BehaiviorAttackInitialize() {
+	// 攻撃ギミックの経過時間カウンターをリセット
+	attackParameter_ = 0;
 }

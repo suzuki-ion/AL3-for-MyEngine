@@ -1,6 +1,4 @@
 #pragma once
-#include "KashipanEngine.h"
-#include "Math/Vector3.h"
 #include "Math/Camera.h"
 
 // 前方宣言
@@ -36,7 +34,7 @@ public:
 
 private:
 	// カメラ
-	KashipanEngine::Camera* camera_;
+	KashipanEngine::Camera* camera_ = nullptr;
 	// ターゲット
 	Player* target_ = nullptr;
 	// 追従対象とカメラ座標の差

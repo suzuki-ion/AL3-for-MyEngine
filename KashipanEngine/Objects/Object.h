@@ -30,7 +30,7 @@ public:
     };
 
     Object() = default;
-    Object(Object &&other);
+    Object(Object &&other) noexcept;
 
     /// @brief レンダラーの設定
     /// @param renderer レンダラーへのポインタ
@@ -97,7 +97,7 @@ protected:
         { 0.0f, 0.0f, 0.0f }    // 平行移動
     };
     /// @brief ワールド行列
-    Matrix4x4 worldMatrix_;
+    Matrix4x4 worldMatrix_{};
     /// @brief マテリアルデータ
     Material material_;
 

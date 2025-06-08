@@ -15,7 +15,7 @@
 #include "Common/Descriptors/DSV.h"
 #include "Base/WinApp.h"
 #include "Base/DirectXCommon.h"
-#include "Base/TextureManager.h"
+#include "Base/Texture.h"
 #include "Base/CrashHandler.h"
 #include "Base/ResourceLeakChecker.h"
 #include "Base/Renderer.h"
@@ -48,7 +48,6 @@ D3DResourceLeakChecker leakCheck_;
 // 各エンジン用クラスのグローバル変数
 std::unique_ptr<WinApp> sWinApp;
 std::unique_ptr<DirectXCommon> sDxCommon;
-std::unique_ptr<TextureManager> sTextureManager;
 std::unique_ptr<ImGuiManager> sImGuiManager;
 std::unique_ptr<Renderer> sRenderer;
 
@@ -76,7 +75,11 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     sFrequency = freq.QuadPart;
 
     // COMの初期化
-    CoInitializeEx(0, COINIT_MULTITHREADED);
+    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hr)) {
+        Log("Failed to initialize COM library.");
+        assert(SUCCEEDED(hr));
+    }
 
     // 誰も捕捉しなかった場合に(Unhandled)、捕捉する関数を登録
     SetUnhandledExceptionFilter(ExportDump);
@@ -111,13 +114,10 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
     sImGuiManager = std::make_unique<ImGuiManager>(sWinApp.get(), sDxCommon.get());
 
     // テクスチャ管理クラス初期化
-    sTextureManager = std::make_unique<TextureManager>(sWinApp.get(), sDxCommon.get());
-
-    // モデルの初期化
-    Model::SetTextureManager(sTextureManager.get());
+    Texture::Initialize(sDxCommon.get());
 
     // 描画用クラス初期化
-    sRenderer = std::make_unique<Renderer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get(), sTextureManager.get());
+    sRenderer = std::make_unique<Renderer>(sWinApp.get(), sDxCommon.get(), sImGuiManager.get());
 
     // 初期化完了のログを出力
     Log("Engine Initialized.");
@@ -126,8 +126,9 @@ Engine::Engine(const char *title, int width, int height, bool enableDebugLayer,
 
 Engine::~Engine() {
     LogInsertPartition("\n================= Engine Finalize ================\n");
+    sRenderer.reset();
     Sound::Finalize();
-    sTextureManager.reset();
+    Texture::Finalize();
     sImGuiManager.reset();
     sDxCommon.reset();
     sWinApp.reset();
@@ -197,10 +198,6 @@ KashipanEngine::Renderer *Engine::GetRenderer() const {
     return sRenderer.get();
 }
 
-KashipanEngine::TextureManager *Engine::GetTextureManager() const {
-    return sTextureManager.get();
-}
-
 int Engine::ProccessMessage() {
     return sWinApp->ProccessMessage();
 }
@@ -209,7 +206,6 @@ FinalizeChecker::~FinalizeChecker() {
     // エンジンが完全に終了しているかチェック
     assert(!sWinApp);
     assert(!sDxCommon);
-    assert(!sTextureManager);
     assert(!sImGuiManager);
     // 初期化完了のログを出力
     Log("Complete Finalize Engine.");

@@ -7,7 +7,7 @@
 
 namespace KashipanEngine {
 
-Object::Object(Object &&other) {
+Object::Object(Object &&other) noexcept {
     if (!other.mesh_) {
         return;
     }
@@ -23,6 +23,12 @@ Object::Object(Object &&other) {
 }
 
 void Object::DrawCommon() {
+    // レンダラーが設定されていない場合はログを出力して終了
+    if (renderer_ == nullptr) {
+        Log("Renderer is not set.", kLogLevelFlagError);
+        return;
+    }
+
     // マテリアルを設定
     materialMap_->color = ConvertColor(material_.color);
     materialMap_->enableLighting = material_.enableLighting;
@@ -55,6 +61,12 @@ void Object::DrawCommon() {
 }
 
 void Object::DrawCommon(WorldTransform &worldTransform) {
+    // レンダラーが設定されていない場合はログを出力して終了
+    if (renderer_ == nullptr) {
+        Log("Renderer is not set.", kLogLevelFlagError);
+        return;
+    }
+
     // マテリアルを設定
     materialMap_->color = ConvertColor(material_.color);
     materialMap_->enableLighting = material_.enableLighting;

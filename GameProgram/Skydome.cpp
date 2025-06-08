@@ -3,19 +3,19 @@
 
 using namespace KashipanEngine;
 
-Skydome::Skydome(KashipanEngine::Model *model) {
+void Skydome::Initialize(KashipanEngine::Model *model) {
 	// NULLポインタチェック
 	assert(model);
 	// モデルの設定
 	model_ = model;
+    // ワールド変換データの生成
+    worldTransform_ = std::make_unique<WorldTransform>();
 }
 
 void Skydome::Update() {
-    // ワールド変換の転送
-    worldTransform_.TransferMatrix();
+	worldTransform_->TransferMatrix();
 }
 
 void Skydome::Draw() {
-	// 3Dモデルを描画
-	model_->Draw(worldTransform_);
+	model_->Draw(*worldTransform_);
 }

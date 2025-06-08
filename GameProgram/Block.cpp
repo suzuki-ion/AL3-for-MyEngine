@@ -9,82 +9,81 @@ extern const uint32_t kNumBlockHorizontal;
 extern const float kBlockWidth;
 extern const float kBlockHeight;
 
-Block::Block(KashipanEngine::Model *model) {
-	// NULLポインタチェック
-	assert(model);
-
-	// モデルの設定
-	model_ = model;
-	
-	// 要素数を変更する
-	worldTransforms_.resize(kNumBlockVertical);
-	for (uint32_t i = 0; i < kNumBlockVertical; i++) {
-		worldTransforms_[i].resize(kNumBlockHorizontal);
-	}
+void Block::Initialize(KashipanEngine::Model *model) {
+    // NULLポインタチェック
+    assert(model);
+    // モデルの設定
+    model_ = model;
+    // 要素数を変更する
+    worldTransforms_.resize(kNumBlockVertical);
+    for (uint32_t i = 0; i < kNumBlockVertical; i++) {
+        worldTransforms_[i].resize(kNumBlockHorizontal);
+    }
 }
 
-Block::~Block() {
-    // ワールドトランスフォームのリセット
+void Block::Finalize() {
+    // ブロック用のワールドトランスフォームの解放
     ResetWorldTransforms();
 }
 
-void Block::SetMapChipFieldBlocks(MapChipField* mapChipField) {
-	// NULLポインタチェック
-	assert(mapChipField);
+void Block::SetMapChipFieldBlocks(MapChipField *mapChipField) {
+    // NULLポインタチェック
+    assert(mapChipField);
 
-    // 一度ワールドトランスフォームをリセット
+    // 一度ワールドトランスフォームを解放
     ResetWorldTransforms();
-
-	// 要素数を変更する
-	worldTransforms_.resize(kNumBlockVertical);
-	for (uint32_t i = 0; i < kNumBlockVertical; i++) {
-		worldTransforms_[i].resize(kNumBlockHorizontal);
-	}
-	// ブロックの生成
-	for (uint32_t i = 0; i < kNumBlockVertical; i++) {
-		for (uint32_t j = 0; j < kNumBlockHorizontal; j++) {
-			if (mapChipField->GetMapChipType(j, i) == MapChipType::kBlank) {
-				continue;
-			}
-            worldTransforms_[i][j] = new KashipanEngine::WorldTransform();
-			worldTransforms_[i][j]->translate_ = mapChipField->GetMapChipPosition(j, i);
-		}
-	}
+    mapChipField_ = mapChipField;
+    // ワールドトランスフォームの生成
+    CreateWorldTransforms();
 }
 
 void Block::Update() {
-    // ワールド行列の転送
     for (auto &worldTransformBlockLine : worldTransforms_) {
         for (auto &worldTransformBlock : worldTransformBlockLine) {
             if (!worldTransformBlock) {
                 continue;
             }
+            // ワールドトランスフォームの更新
             worldTransformBlock->TransferMatrix();
         }
     }
 }
 
 void Block::Draw() {
-	// 3Dモデルを描画
-	for (auto& worldTransformBlockLine : worldTransforms_) {
-		for (auto& worldTransformBlock : worldTransformBlockLine) {
-			if (!worldTransformBlock) {
-				continue;
-			}
+    // 3Dモデルを描画
+    for (auto &worldTransformBlockLine : worldTransforms_) {
+        for (auto &worldTransformBlock : worldTransformBlockLine) {
+            if (!worldTransformBlock) {
+                continue;
+            }
             model_->Draw(*worldTransformBlock);
-		}
-	}
+        }
+    }
 }
 
 void Block::ResetWorldTransforms() {
-    // ワールドトランスフォームのリセット
     for (auto &worldTransformBlockLine : worldTransforms_) {
         for (auto &worldTransformBlock : worldTransformBlockLine) {
-            if (worldTransformBlock) {
-                delete worldTransformBlock;
-                worldTransformBlock = nullptr;
-            }
+            delete worldTransformBlock;
         }
     }
     worldTransforms_.clear();
+}
+
+void Block::CreateWorldTransforms() {
+    // 要素数を変更する
+    worldTransforms_.resize(kNumBlockVertical);
+    for (uint32_t i = 0; i < kNumBlockVertical; i++) {
+        worldTransforms_[i].resize(kNumBlockHorizontal);
+    }
+    // ブロックの生成
+    for (uint32_t i = 0; i < kNumBlockVertical; i++) {
+        for (uint32_t j = 0; j < kNumBlockHorizontal; j++) {
+            if (mapChipField_->GetMapChipType(j, i) == MapChipType::kBlank) {
+                continue;
+            }
+            worldTransforms_[i][j] = new WorldTransform();
+            worldTransforms_[i][j]->translate_ = mapChipField_->GetMapChipPosition(j, i);
+        }
+    }
 }

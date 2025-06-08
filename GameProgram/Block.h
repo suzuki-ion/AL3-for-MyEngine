@@ -1,7 +1,6 @@
 #pragma once
 #include "Objects.h"
-#include <memory>
-#include <vector>
+#include "Math/Camera.h"
 
 // 前方宣言
 class MapChipField;
@@ -10,9 +9,11 @@ class Block {
 public:
 	/// @brief 初期化
 	/// @param model モデル
-	Block(KashipanEngine::Model* model);
+	/// @param camera カメラ
+	/// @param debugCamera デバッグカメラ
+	void Initialize(KashipanEngine::Model* model);
 	/// @brief 終了処理
-	~Block();
+	void Finalize();
 
 	/// @brief マップチップフィールドのブロックを生成
 	/// @param mapChipField マップチップフィールド
@@ -23,17 +24,16 @@ public:
 	// 描画
 	void Draw();
 
-	// デバッグカメラ切り替え
-	void ToggleDebugCamera() { isDebugCameraActive_ = !isDebugCameraActive_; }
-
 private:
+    // ワールド変換データのリセット
     void ResetWorldTransforms();
+    // ワールド変換データの生成
+    void CreateWorldTransforms();
 
 	// ワールド変換データ
 	std::vector<std::vector<KashipanEngine::WorldTransform*>> worldTransforms_;
 	// モデル
 	KashipanEngine::Model* model_ = nullptr;
-
-	// デバッグカメラ有効
-	bool isDebugCameraActive_ = false;
+    // マップチップフィールド
+    MapChipField *mapChipField_ = nullptr;
 };

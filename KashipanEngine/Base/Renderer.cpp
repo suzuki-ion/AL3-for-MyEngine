@@ -4,7 +4,7 @@
 #include "Renderer.h"
 #include "WinApp.h"
 #include "DirectXCommon.h"
-#include "TextureManager.h"
+#include "Texture.h"
 #include "2d/ImGuiManager.h"
 
 #include "Math/Camera.h"
@@ -41,7 +41,7 @@ DirectionalLight sDefaultDirectionalLight = {
 
 } // namespace
 
-Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager, TextureManager *textureManager) {
+Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager) {
     // nullチェック
     if (!winApp) {
         Log("winApp is null.", kLogLevelFlagError);
@@ -55,15 +55,10 @@ Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiM
         Log("imguiManager is null.", kLogLevelFlagError);
         assert(false);
     }
-    if (!textureManager) {
-        Log("textureManager is null.", kLogLevelFlagError);
-        assert(false);
-    }
     // 各クラスへのポインタを設定
     winApp_ = winApp;
     dxCommon_ = dxCommon;
     imguiManager_ = imguiManager;
-    textureManager_ = textureManager;
 
     // 2D描画用の行列を初期化
     viewMatrix2D_.MakeIdentity();
@@ -246,14 +241,14 @@ void Renderer::SetLightBuffer(DirectionalLight *light) {
 
 void Renderer::DrawCommon(std::vector<ObjectState> &objects) {
     // 描画処理
-    for (auto object : objects) {
+    for (auto &object : objects) {
         DrawCommon(&object);
     }
 }
 
 void Renderer::DrawCommon(ObjectState *objectState) {
     // Cameraがnullptrの場合は2D描画
-    if (sCameraPtr == nullptr) {
+    if (objectState->isUseCamera == false) {
         wvpMatrix2D_ = *objectState->worldMatrix * (viewMatrix2D_ * projectionMatrix2D_);
         objectState->transformationMatrixMap->wvp = wvpMatrix2D_;
     } else {
@@ -270,10 +265,10 @@ void Renderer::DrawCommon(ObjectState *objectState) {
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
     if (objectState->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(objectState->useTextureIndex).srvHandleGPU);
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, Texture::GetTexture(objectState->useTextureIndex).srvHandleGPU);
     } else {
         // テクスチャを使用しない場合は0を設定
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureManager_->GetTexture(0).srvHandleGPU);
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, Texture::GetTexture(0).srvHandleGPU);
     }
 
     dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

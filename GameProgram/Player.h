@@ -1,14 +1,16 @@
 #pragma once
 #include "Objects.h"
+#include "Math/MathObjects/AABB.h"
 
 // 前方宣言
 class MapChipField;
+class Enemy;
 
 class Player {
 public:
     // キャラクターの当たり判定サイズ
-    static inline const float kWidth = 0.8f;
-    static inline const float kHeight = 0.8f;
+    static inline const float kWidth = 1.8f;
+    static inline const float kHeight = 1.8f;
 
     enum class LRDirection {
         kRight,
@@ -24,6 +26,18 @@ public:
         kNumCorner		// 要素数
     };
 
+    enum class Behaivior {
+        kUnknown,	// 未定義
+        kRoot,		// 通常行動
+        kAttack,	// 攻撃行動
+    };
+
+    enum class AttackPhase {
+        kStore,	// 溜め
+        kRush,  // 突進
+        kAfter, // 余韻
+    };
+
     struct CollisionMapInfo {
         bool isHitUp = false;
         bool isHitGround = false;
@@ -31,11 +45,12 @@ public:
         KashipanEngine::Vector3 velocity = { 0.0f, 0.0f, 0.0f };
     };
 
-    Player() = delete;
     /// @brief 初期化
     /// @param model モデル
+    /// @param camera カメラ
+    /// @param debugCamera デバッグカメラ
     /// @param position 初期位置
-    Player(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position);
+    void Initialize(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position);
 
     // 更新
     void Update();
@@ -44,22 +59,33 @@ public:
     void Draw();
 
     // 座標の設定
-    void SetPosition(const KashipanEngine::Vector3 &position) { worldTransform_.translate_ = position; }
-
-    // デバッグカメラ切り替え
-    void ToggleDebugCamera() { isDebugCameraActive_ = !isDebugCameraActive_; }
-
-    // ワールドトランスフォームの取得
-    KashipanEngine::WorldTransform &GetWorldTransform() { return worldTransform_; }
-
-    // 速度の取得
-    const KashipanEngine::Vector3 &GetVelocity() const { return velocity_; }
+    void SetPosition(const KashipanEngine::Vector3 &position) { worldTransform_->translate_ = position; }
 
     /// @brief マップチップフィールドの設定
     /// @param mapChipField マップチップフィールド
     void SetMapChipField(MapChipField *mapChipField) { mapChipField_ = mapChipField; }
 
+    // 衝突応答
+    void OnCollision(const Enemy *enemy);
+
+    // ワールドトランスフォームの取得
+    KashipanEngine::WorldTransform &GetWorldTransform() { return *worldTransform_; }
+
+    // 速度の取得
+    const KashipanEngine::Vector3 &GetVelocity() const { return velocity_; }
+
+    // 座標の取得
+    const KashipanEngine::Vector3 GetPosition();
+
+    // AABBの取得
+    KashipanEngine::Math::AABB GetAABB();
+
+    // デスフラグの取得
+    bool IsDead() const { return isDead_; }
+
 private:
+    // 通常行動更新
+    void BehaiviorRootUpdate();
     // 移動処理
     void Move();
     // 当たり判定処理
@@ -78,9 +104,19 @@ private:
     void SwitchOnGroundState(CollisionMapInfo &collisionMapInfo);
     // 旋回処理
     void Turn();
+    // 攻撃行動処理
+    void BehaiviorAttackUpdate();
+
+    // 振る舞い状態の切り替え
+    void SwitchBehaivior();
+
+    // 通常行動初期化
+    void BehaiviorRootInitialize();
+    // 攻撃行動初期化
+    void BehaiviorAttackInitialize();
 
     // ワールド変換データ
-    KashipanEngine::WorldTransform worldTransform_;
+    std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
     // モデル
     KashipanEngine::Model *model_ = nullptr;
     // マップチップフィールド
@@ -97,6 +133,17 @@ private:
     // 接地状態フラグ
     bool onGround_ = true;
 
-    // デバッグカメラ有効
-    bool isDebugCameraActive_ = false;
+    // デスフラグ
+    bool isDead_ = false;
+
+    // 振るまい
+    Behaivior behaivior_ = Behaivior::kRoot;
+    // 次の振るまい
+    Behaivior behaiviorRequest_ = Behaivior::kUnknown;
+
+    // 攻撃ギミックの経過時間カウンター
+    uint32_t attackParameter_ = 0;
+
+    // 現在の攻撃フェーズ
+    AttackPhase attackPhase_ = AttackPhase::kStore;
 };

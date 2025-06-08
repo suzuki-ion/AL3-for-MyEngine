@@ -1,28 +1,20 @@
 #pragma once
-#include "Math/Transform.h"
-#include "Math/Camera.h"
 #include "Objects.h"
 
 class Skydome {
 public:
-	// 初期化
-	Skydome(KashipanEngine::Model* model);
+    // 初期化
+    void Initialize(KashipanEngine::Model *model);
 
-	// 更新
-	void Update();
+    // 更新
+    void Update();
 
-	// 描画
-	void Draw();
-
-	// デバッグカメラ切り替え
-	void ToggleDebugCamera() { isDebugCameraActive_ = !isDebugCameraActive_; }
+    // 描画
+    void Draw();
 
 private:
-	// ワールド変換データ
-	KashipanEngine::WorldTransform worldTransform_;
-	// モデル
-	KashipanEngine::Model* model_ = nullptr;
-
-	// デバッグカメラ有効
-	bool isDebugCameraActive_ = false;
+    // ワールド変換データ
+    std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
+    // モデル
+    KashipanEngine::Model *model_ = nullptr;
 };

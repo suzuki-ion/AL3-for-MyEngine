@@ -7,7 +7,7 @@
 namespace KashipanEngine {
 
 // 前方宣言
-class TextureManager;
+class Texture;
 
 /// @brief モデルのマテリアルデータ
 struct MaterialData {
@@ -19,7 +19,7 @@ class ModelData : public Object {
 public:
     ModelData() = default;
     ~ModelData();
-    ModelData(ModelData &&other);
+    ModelData(ModelData &&other) noexcept;
 
     /// @brief モデルデータの作成
     /// @param vertexData 頂点データ
@@ -58,8 +58,6 @@ private:
 /// @brief モデルクラス
 class Model {
 public:
-    static void SetTextureManager(TextureManager *textureManager);
-
     /// @brief 必ずモデルのデータを設定してもらいたいので、デフォルトコンストラクタは削除
     Model() = delete;
     /// @brief Modelのコンストラクタ
@@ -94,7 +92,7 @@ private:
     /// @brief モデルデータ全体のtransform
     Transform transform_;
     /// @brief ワールド行列
-    AffineMatrix worldMatrix_;
+    AffineMatrix worldMatrix_{};
 
     /// @brief モデルデータ
     std::vector<ModelData> models_;

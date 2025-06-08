@@ -1,4 +1,7 @@
 #include "Sphere.h"
+#include "Math/Collider.h"
+#include <cmath>
+#define M_PI (4.0f * std::atanf(1.0f))
 
 namespace KashipanEngine {
 
@@ -85,7 +88,7 @@ Sphere::Sphere(const int subdivision) :
 }
 
 void Sphere::Draw() {
-    Vector3 position[3];
+    Vector3 position[3] = {};
     // 緯度の方向に分割
     for (uint32_t latIndex = 0; latIndex < kSubdivision_; latIndex++) {
         // 経度の方向に分割
@@ -141,7 +144,7 @@ void Sphere::Draw() {
 }
 
 void Sphere::Draw(WorldTransform &worldTransform) {
-    Vector3 position[3];
+    Vector3 position[3] = {};
     // 緯度の方向に分割
     for (uint32_t latIndex = 0; latIndex < kSubdivision_; latIndex++) {
         // 経度の方向に分割
