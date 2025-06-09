@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ソース ファイル\MathObjects">
-      <UniqueIdentifier>{41d9c74f-1dc8-41f6-882c-8fe6596a82ee}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\MathObjects">
-      <UniqueIdentifier>{647aa617-5c97-40d0-9f22-660d8c89d1b3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Externals\imgui\imgui.cpp">
@@ -186,9 +180,6 @@
     <ClCompile Include="KashipanEngine\Math\Physics\Pendulum.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Math\MathObjects\AABB.cpp">
-      <Filter>ソース ファイル\MathObjects</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Math\MathObjects\Lines.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -199,6 +190,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Math\MathObjects\Triangle.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Math\MathObjects\AABB.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -413,9 +407,6 @@
     <ClInclude Include="KashipanEngine\Math\Physics\Spring.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Math\MathObjects\AABB.h">
-      <Filter>ヘッダー ファイル\MathObjects</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Math\MathObjects\Lines.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -426,6 +417,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Math\MathObjects\Triangle.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Math\MathObjects\AABB.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

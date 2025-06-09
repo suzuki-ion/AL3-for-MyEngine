@@ -2,6 +2,7 @@
 #include "GameScene.h"
 #include "Base/Input.h"
 #include "Base/Renderer.h"
+#include "Base/Sound.h"
 
 using namespace KashipanEngine;
 
