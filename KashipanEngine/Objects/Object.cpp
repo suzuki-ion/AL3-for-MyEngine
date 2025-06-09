@@ -44,6 +44,8 @@ void Object::DrawCommon() {
         transform_.rotate,
         transform_.translate
     );
+    // TransformationMatrixを転送
+    transformationMatrixMap_->world = worldMatrix_;
 
     Renderer::ObjectState objectState;
     objectState.mesh = mesh_.get();

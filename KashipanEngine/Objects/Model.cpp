@@ -74,33 +74,6 @@ MaterialData LoadMaterialFile(const std::string &directoryPath, const std::strin
 
 } // namespace
 
-ModelData::~ModelData() {
-    if (worldTransform_ != nullptr) {
-        delete worldTransform_;
-        worldTransform_ = nullptr;
-    }
-}
-
-ModelData::ModelData(ModelData &&other) noexcept {
-    if (other.worldTransform_ != nullptr) {
-        worldTransform_ = other.worldTransform_;
-        other.worldTransform_ = nullptr;
-    }
-
-    if (!other.mesh_) {
-        return;
-    }
-
-    mesh_ = std::move(other.mesh_);
-    materialResource_ = other.materialResource_;
-    transformationMatrixResource_ = other.transformationMatrixResource_;
-    materialMap_ = other.materialMap_;
-    transformationMatrixMap_ = other.transformationMatrixMap_;
-    vertexCount_ = other.vertexCount_;
-    indexCount_ = other.indexCount_;
-    useTextureIndex_ = other.useTextureIndex_;
-}
-
 void ModelData::CreateData(std::vector<VertexData> &vertexData, std::vector<uint32_t> &indexData, MaterialData &materialData) {
     isUseCamera_ = true;
     // メッシュの生成
@@ -118,14 +91,11 @@ void ModelData::CreateData(std::vector<VertexData> &vertexData, std::vector<uint
     } else {
         useTextureIndex_ = Texture::Load(materialData_.textureFilePath);
     }
-
-    // ワールド変換データの生成
-    worldTransform_ = new WorldTransform();
 }
 
 void ModelData::Draw() {
     isUseCamera_ = true;
-    DrawCommon(*worldTransform_);
+    DrawCommon();
 }
 
 void ModelData::Draw(WorldTransform &worldTransform) {

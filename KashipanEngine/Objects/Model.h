@@ -18,8 +18,6 @@ struct MaterialData {
 class ModelData : public Object {
 public:
     ModelData() = default;
-    ~ModelData();
-    ModelData(ModelData &&other) noexcept;
 
     /// @brief モデルデータの作成
     /// @param vertexData 頂点データ
@@ -31,12 +29,6 @@ public:
     /// @return メッシュが存在するならtrue、存在しないならfalse
     bool isMeshExist() const {
         return mesh_.get() != nullptr;
-    }
-
-    /// @brief 親のワールド変換データを設定する
-    /// @param parentTransform 親のワールド変換データ
-    void SetParentTransform(WorldTransform *parentTransform) {
-        worldTransform_->parentTransform_ = parentTransform;
     }
 
     /// @brief 描画処理
@@ -51,8 +43,6 @@ private:
     UINT indexCount_ = 0;
     /// @brief モデルのマテリアル
     MaterialData materialData_;
-    /// @brief ワールド変換データ
-    WorldTransform *worldTransform_ = nullptr;
 };
 
 /// @brief モデルクラス
