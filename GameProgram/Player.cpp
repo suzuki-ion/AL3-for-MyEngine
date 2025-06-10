@@ -45,9 +45,9 @@ void Player::Initialize(KashipanEngine::Model *model, KashipanEngine::Model *mod
 	model_ = model;
     modelAttack_ = modelAttack;
     // 攻撃用モデルはデフォルトで非表示にする
-    for (auto &model : modelAttack_->GetModels()) {
+    for (auto &models : modelAttack_->GetModels()) {
         // アルファ値を0にして非表示にする
-        model.GetStatePtr().material->color.w = 0.0f;
+        models.GetStatePtr().material->color.w = 0.0f;
     }
 	// ワールド変換の初期化
     worldTransform_ = std::make_unique<KashipanEngine::WorldTransform>();
