@@ -216,7 +216,7 @@ std::unique_ptr<Mesh> PrimitiveDrawer::CreateMesh(UINT vertexCount, UINT indexCo
     return mesh;
 }
 
-PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable, const std::source_location &location) {
+PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable, const bool isBackCulling, const std::source_location &location) {
     // 呼び出された場所のログを出力
     Log(location);
 
@@ -317,11 +317,14 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
     //==================================================
 
     D3D12_RASTERIZER_DESC rasterizerDesc{};
-    if (topologyType == D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE) {
+    if (isBackCulling) {
+        rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+    } else {
         rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+    }
+    if (topologyType == D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE) {
         rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
     } else {
-        rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
         rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
     }
 
@@ -377,7 +380,7 @@ PipeLineSet PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYP
             break;
         default:
             break;
-    } 
+    }
 
     //==================================================
     // Shaderをコンパイルする
