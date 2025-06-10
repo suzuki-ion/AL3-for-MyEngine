@@ -47,10 +47,11 @@ public:
 
     /// @brief 初期化
     /// @param model モデル
+    /// @param modelAttack 攻撃用モデル
     /// @param camera カメラ
     /// @param debugCamera デバッグカメラ
     /// @param position 初期位置
-    void Initialize(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position);
+    void Initialize(KashipanEngine::Model *model, KashipanEngine::Model *modelAttack, const KashipanEngine::Vector3 &position);
 
     // 更新
     void Update();
@@ -119,6 +120,8 @@ private:
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
     // モデル
     KashipanEngine::Model *model_ = nullptr;
+    // 攻撃用モデル
+    KashipanEngine::Model *modelAttack_ = nullptr;
     // マップチップフィールド
     MapChipField *mapChipField_ = nullptr;
 
