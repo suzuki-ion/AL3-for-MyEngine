@@ -49,6 +49,8 @@ private:
 
 	// プレイヤーの3Dモデルデータ
 	std::unique_ptr<KashipanEngine::Model> modelPlayer_ = nullptr;
+    // プレイヤーの攻撃用3Dモデルデータ
+    std::unique_ptr<KashipanEngine::Model> modelPlayerAttack_ = nullptr;
 	// 敵キャラの3Dモデルデータ
 	std::unique_ptr<KashipanEngine::Model> modelEnemy_ = nullptr;
 	// ブロックの3Dモデルデータ

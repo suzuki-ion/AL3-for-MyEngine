@@ -37,11 +37,18 @@ KashipanEngine::Vector3 CornerPosition(const Vector3& center, Player::Corner cor
 
 } // namespace
 
-void Player::Initialize(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position) {
+void Player::Initialize(KashipanEngine::Model *model, KashipanEngine::Model *modelAttack, const KashipanEngine::Vector3 &position) {
 	// NULLポインタチェック
 	assert(model);
+    assert(modelAttack);
 	// モデルの設定
 	model_ = model;
+    modelAttack_ = modelAttack;
+    // 攻撃用モデルはデフォルトで非表示にする
+    for (auto &model : modelAttack_->GetModels()) {
+        // アルファ値を0にして非表示にする
+        model.GetStatePtr().material->color.w = 0.0f;
+    }
 	// ワールド変換の初期化
     worldTransform_ = std::make_unique<KashipanEngine::WorldTransform>();
 	worldTransform_->translate_ = position;
@@ -76,6 +83,7 @@ void Player::Update() {
 void Player::Draw() {
 	// 3Dモデルを描画
 	model_->Draw(*worldTransform_);
+	modelAttack_->Draw();
 }
 
 void Player::OnCollision(const Enemy* enemy) {
@@ -456,11 +464,11 @@ void Player::Turn() {
 
 void Player::BehaiviorAttackUpdate() {
 	// 溜めの時間
-	static const int kAttackDuration = 10;
+	static const int kAttackDuration = 2;
 	// 突進時間
-	static const int kRushDuration = 30;
+	static const int kRushDuration = 4;
 	// 余韻の時間
-	static const int kAfterDuration = 10;
+	static const int kAfterDuration = 4;
 
 	// 予備動作
 	attackParameter_++;
@@ -475,6 +483,17 @@ void Player::BehaiviorAttackUpdate() {
 			// 溜めが終わったら突進へ
 			attackPhase_ = AttackPhase::kRush;
 			attackParameter_ = 0;
+            // 攻撃用モデルを表示する
+            for (auto &model : modelAttack_->GetModels()) {
+                // アルファ値を255にして表示する
+                model.GetStatePtr().material->color.w = 255.0f;
+                // プレイヤーの向きに合わせてモデルのスケールを設定
+                if (lrDirection_ == LRDirection::kRight) {
+                    model.GetStatePtr().transform->scale.x = 1.0f;
+                } else {
+                    model.GetStatePtr().transform->scale.x = -1.0f;
+                }
+            }
 		}
 		break;
 
@@ -487,12 +506,11 @@ void Player::BehaiviorAttackUpdate() {
 			attackPhase_ = AttackPhase::kAfter;
 			attackParameter_ = 0;
 		}
-
 		// 向いてる方向に突進
 		if (lrDirection_ == LRDirection::kRight) {
-			velocity_.x = 0.4f;
+			velocity_.x = 2.0f;
 		} else {
-			velocity_.x = -0.4f;
+			velocity_.x = -2.0f;
 		}
 		break;
 
@@ -500,6 +518,11 @@ void Player::BehaiviorAttackUpdate() {
 		t = static_cast<float>(attackParameter_) / kAfterDuration;
 		worldTransform_->scale_.z = Ease::InCubic(t, 1.3f, 1.0f);
 		worldTransform_->scale_.y = Ease::InCubic(t, 0.7f, 1.0f);
+        // 攻撃用モデルのアルファ値を徐々に0にする
+        for (auto &model : modelAttack_->GetModels()) {
+            // アルファ値を減衰させる
+            model.GetStatePtr().material->color.w = std::max(0.0f, (1.0f - t) * 255.0f);
+        }
 		if (attackParameter_ >= kAfterDuration) {
 			// 余韻が終わったら通常行動へ
 			behaiviorRequest_ = Behaivior::kRoot;
@@ -508,6 +531,11 @@ void Player::BehaiviorAttackUpdate() {
 			return;
 		}
 		break;
+	}
+
+	// 攻撃用モデルの位置をプレイヤーの位置に合わせる
+	for (auto &model : modelAttack_->GetModels()) {
+		model.GetStatePtr().transform->translate = worldTransform_->translate_;
 	}
 }
 

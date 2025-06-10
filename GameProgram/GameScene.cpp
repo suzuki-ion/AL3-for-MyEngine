@@ -32,6 +32,9 @@ void GameScene::Initialize(Engine *kashipanEngine) {
 	// プレイヤーの3Dモデルデータの生成
     modelPlayer_ = std::make_unique<Model>("Resources/Player", "player.obj");
     modelPlayer_->SetRenderer(sRenderer);
+    // プレイヤーの攻撃用3Dモデルデータの生成
+    modelPlayerAttack_ = std::make_unique<Model>("Resources/Attack", "attack.obj");
+    modelPlayerAttack_->SetRenderer(sRenderer);
 	// 敵キャラの3Dモデルデータの生成
     modelEnemy_ = std::make_unique<Model>("Resources/Enemy", "enemy.obj");
     modelEnemy_->SetRenderer(sRenderer);
@@ -51,7 +54,7 @@ void GameScene::Initialize(Engine *kashipanEngine) {
 
 	// 自キャラの生成
     player_ = std::make_unique<Player>();
-	player_->Initialize(modelPlayer_.get(), mapChipField_->GetMapChipPosition(1, kNumBlockVertical - 2));
+	player_->Initialize(modelPlayer_.get(), modelPlayerAttack_.get(), mapChipField_->GetMapChipPosition(1, kNumBlockVertical - 2));
 	player_->SetMapChipField(mapChipField_.get());
 
 	// 敵キャラの生成(3体)
