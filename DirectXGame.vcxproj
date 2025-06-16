@@ -117,7 +117,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="GameProgram\Easings.cpp" />
     <ClCompile Include="GameProgram\GameScene.cpp" />
+    <ClCompile Include="GameProgram\KeyConfig.cpp" />
     <ClCompile Include="GameProgram\Player.cpp" />
+    <ClCompile Include="GameProgram\PlayerBullet.cpp" />
     <ClCompile Include="KashipanEngine\2d\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\3d\AxisIndicator.cpp" />
     <ClCompile Include="KashipanEngine\3d\PrimitiveDrawer.cpp" />
@@ -173,7 +175,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="GameProgram\Easings.h" />
     <ClInclude Include="GameProgram\GameScene.h" />
+    <ClInclude Include="GameProgram\KeyConfig.h" />
     <ClInclude Include="GameProgram\Player.h" />
+    <ClInclude Include="GameProgram\PlayerBullet.h" />
     <ClInclude Include="KashipanEngine\2d\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\3d\DiffuseLight.h" />
     <ClInclude Include="KashipanEngine\3d\DirectionalLight.h" />
