@@ -19,9 +19,6 @@ Player::Player(Engine *kashipanEngine) {
     bulletModel_ = std::make_unique<Model>("Resources/Bullet", "bullet.obj");
     bulletModel_->SetRenderer(renderer);
 
-    // 弾の生成
-    playerBullet_ = std::make_unique<PlayerBullet>(bulletModel_.get());
-
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
     worldTransform_->translate_.z = 64.0f;
@@ -34,7 +31,11 @@ void Player::Update() {
     Rotate();
     LimitPosition();
     Attack();
-    playerBullet_->Update();
+
+    // 弾の更新
+    for (auto &bullet : bullets_) {
+        bullet->Update();
+    }
 }
 
 void Player::Draw() {
@@ -42,7 +43,9 @@ void Player::Draw() {
     model_->Draw(*worldTransform_.get());
 
     // 弾を描画
-    playerBullet_->Draw();
+    for (auto &bullet : bullets_) {
+        bullet->Draw();
+    }
 }
 
 void Player::InputMove() {
@@ -165,5 +168,10 @@ void Player::Attack() {
 }
 
 void Player::ShootBullet() {
-    playerBullet_->Shot(worldTransform_->translate_);
+    bullets_.push_back(
+        std::make_unique<PlayerBullet>(
+            bulletModel_.get(),
+            worldTransform_->translate_
+        )
+    );
 }

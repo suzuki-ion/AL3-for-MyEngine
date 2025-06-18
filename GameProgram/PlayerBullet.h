@@ -4,21 +4,12 @@
 
 class PlayerBullet {
 public:
-    PlayerBullet(KashipanEngine::Model *model);
-
-    bool IsShot() const {
-        return isShot_;
-    }
-
-    void Shot(const KashipanEngine::Vector3 &position);
+    PlayerBullet(KashipanEngine::Model *model, const KashipanEngine::Vector3 &position);
 
     void Update();
     void Draw();
 
 private:
-    // 発射フラグ
-    bool isShot_ = false;
-
     // モデルデータ
     KashipanEngine::Model *model_;
     // ワールド変換データ

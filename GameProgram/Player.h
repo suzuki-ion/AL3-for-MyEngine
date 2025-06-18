@@ -67,6 +67,6 @@ private:
     // 移動方向(上下)
     MoveDirectionUD moveDirectionUD_ = MoveDirectionUD::kMoveNone;
 
-    // 弾
-    std::unique_ptr<PlayerBullet> playerBullet_;
+    // 弾のリスト
+    std::list<std::unique_ptr<PlayerBullet>> bullets_;
 };

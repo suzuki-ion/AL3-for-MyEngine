@@ -10,35 +10,40 @@ using namespace KashipanEngine;
 
 namespace {
 
+// キー設定用の構造体
+struct KeyConfig {
+    // 設定されてるキー
+    std::array<int, static_cast<int>(Action::kKeyConfigNum)> keys;
+    // 判定用関数へのポインタ
+    bool (*isKeyPressed)(int keyID);
+};
+
 // キーコンフィグの設定
-//int keyConfig[static_cast<int>(Action::kActions)][static_cast<int>(Action::kKeyConfigNum)] = {
-//    { DIK_W, DIK_UP },
-//    { DIK_S, DIK_DOWN },
-//    { DIK_A, DIK_LEFT },
-//    { DIK_D, DIK_RIGHT },
-//    { DIK_SPACE, DIK_RETURN }
-//};
-std::unordered_map<Action, std::array<int, static_cast<int>(Action::kKeyConfigNum)>> keyConfig = {
+std::unordered_map<Action, KeyConfig> keyConfig = {
     // 移動
-    { Action::kMoveUp, { DIK_W, -1 } },
-    { Action::kMoveDown, { DIK_S, -1 } },
-    { Action::kMoveLeft, { DIK_A, -1 } },
-    { Action::kMoveRight, { DIK_D, -1 } },
+    { Action::kMoveUp, {{ DIK_W, -1 }, Input::IsKeyDown }},
+    { Action::kMoveDown, {{ DIK_S, -1 }, Input::IsKeyDown }},
+    { Action::kMoveLeft, {{ DIK_A, -1 }, Input::IsKeyDown }},
+    { Action::kMoveRight, {{ DIK_D, -1 }, Input::IsKeyDown }},
     // 回転
-    { Action::kRotateUp, { DIK_UP, -1 } },
-    { Action::kRotateDown, { DIK_DOWN, -1 } },
-    { Action::kRotateLeft, { DIK_LEFT, -1 } },
-    { Action::kRotateRight, { DIK_RIGHT, -1 } },
+    { Action::kRotateUp, {{ DIK_UP, -1 }, Input::IsKeyDown }},
+    { Action::kRotateDown, {{ DIK_DOWN, -1 }, Input::IsKeyDown }},
+    { Action::kRotateLeft, {{ DIK_LEFT, -1 }, Input::IsKeyDown }},
+    { Action::kRotateRight, {{ DIK_RIGHT, -1 }, Input::IsKeyDown }},
     // 弾の発射
-    { Action::kShootBullet, { DIK_SPACE, DIK_RETURN } }
+    { Action::kShootBullet, {{ DIK_SPACE, DIK_RETURN }, Input::IsKeyTrigger }}
 };
 
 } // namespace
 
 bool IsAction(Action actionType) {
-    for (auto key : keyConfig[actionType]) {
+    for (auto key : keyConfig[actionType].keys) {
+        // キーIDが-1の場合は設定されていないキーなのでスキップ
+        if (key == -1) {
+            continue;
+        }
         // 指定の操作のキーが押されているかを確認
-        if (Input::IsKeyDown(key)) {
+        if (keyConfig[actionType].isKeyPressed(key)) {
             return true;
         }
     }
@@ -51,7 +56,7 @@ int ConfigGet(Action actionType, int index) {
         index < 0 || index >= static_cast<int>(Action::kKeyConfigNum)) {
         assert(false);
     }
-    return keyConfig[actionType][index];
+    return keyConfig[actionType].keys[index];
 }
 
 void ConfigSet(Action actionType, int index, int keyID) {
@@ -60,6 +65,6 @@ void ConfigSet(Action actionType, int index, int keyID) {
         index < 0 || index >= static_cast<int>(Action::kKeyConfigNum)) {
         assert(false);
     }
-    keyConfig[actionType][index] = keyID;
+    keyConfig[actionType].keys[index] = keyID;
 }
 
