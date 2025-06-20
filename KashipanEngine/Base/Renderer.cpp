@@ -171,7 +171,7 @@ void Renderer::PreDraw() {
 
     // デバッグカメラが有効ならデバッグカメラの処理
     if (isUseDebugCamera_) {
-        sDebugCamera->MoveToMouse(0.01f, 0.01f, 0.001f);
+        sDebugCamera->MoveToMouse(0.1f, 0.001f, 0.1f);
     }
 }
 

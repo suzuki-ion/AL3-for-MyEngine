@@ -7,6 +7,19 @@
 
 using namespace KashipanEngine;
 
+namespace {
+
+Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
+    // ベクトルを変換するための行列を適用
+    Vector3 result;
+    result.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0];
+    result.y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1];
+    result.z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2];
+    return result;
+}
+
+}
+
 Player::Player(Engine *kashipanEngine) {
     kashipanEngine_ = kashipanEngine;
     // エンジンのレンダラーを取得
@@ -36,6 +49,10 @@ void Player::Update() {
     for (auto &bullet : bullets_) {
         bullet->Update();
     }
+    // 弾の削除処理
+    bullets_.remove_if([](const std::unique_ptr<PlayerBullet> &bullet) {
+        return !bullet->IsAlive();
+    });
 }
 
 void Player::Draw() {
@@ -117,6 +134,9 @@ void Player::Move() {
     velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
 
     worldTransform_->translate_ += velocity_;
+
+    // ワールド変換データを更新
+    worldTransform_->TransferMatrix();
 }
 
 void Player::Rotate() {
@@ -168,10 +188,14 @@ void Player::Attack() {
 }
 
 void Player::ShootBullet() {
+    const Vector3 kBulletVelocity(0.0f, 0.0f, 0.1f);
+
     bullets_.push_back(
         std::make_unique<PlayerBullet>(
             bulletModel_.get(),
-            worldTransform_->translate_
+            worldTransform_->translate_,
+            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+            180
         )
     );
 }
