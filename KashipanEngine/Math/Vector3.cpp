@@ -3,6 +3,7 @@
 #include "Matrix4x4.h"
 #include "MathObjects/Lines.h"
 #include <cassert>
+#include <omp.h>
 
 namespace KashipanEngine {
 
@@ -174,15 +175,18 @@ Vector3 Vector3::Transform(const Matrix4x4 &mat) const noexcept {
     return result;
 }
 
-inline constexpr const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept {
-    return Vector3(
-        mat.m[0][0] * vector.x + mat.m[0][1] * vector.y + mat.m[0][2] * vector.z + mat.m[0][3],
-        mat.m[1][0] * vector.x + mat.m[1][1] * vector.y + mat.m[1][2] * vector.z + mat.m[1][3],
-        mat.m[2][0] * vector.x + mat.m[2][1] * vector.y + mat.m[2][2] * vector.z + mat.m[2][3]
-    );
+const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept {
+    Vector3 result;
+
+#pragma omp simd
+    for (int i = 0; i < 3; ++i) {
+        result[i] = mat.m[i][0] * vector.x + mat.m[i][1] * vector.y + mat.m[i][2] * vector.z + mat.m[i][3];
+    }
+
+    return result;
 }
 
-inline constexpr const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept {
+const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept {
     return Vector3(
         vector.x * mat.m[0][0] + vector.y * mat.m[1][0] + vector.z * mat.m[2][0] + mat.m[3][0],
         vector.x * mat.m[0][1] + vector.y * mat.m[1][1] + vector.z * mat.m[2][1] + mat.m[3][1],
