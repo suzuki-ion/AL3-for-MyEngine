@@ -9,6 +9,9 @@ using namespace KashipanEngine;
 
 namespace {
 
+// エンジンへのポインタ
+Engine *sKashipanEngine = nullptr;
+
 Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
     // ベクトルを変換するための行列を適用
     Vector3 result;
@@ -21,9 +24,9 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
 }
 
 Player::Player(Engine *kashipanEngine) {
-    kashipanEngine_ = kashipanEngine;
+    sKashipanEngine = kashipanEngine;
     // エンジンのレンダラーを取得
-    Renderer *renderer = kashipanEngine_->GetRenderer();
+    Renderer *renderer = sKashipanEngine->GetRenderer();
 
     // モデルデータを作成
     model_ = std::make_unique<Model>("Resources/Player", "player.obj");
@@ -111,7 +114,9 @@ void Player::InputRotate() {
 
 void Player::Move() {
     // 移動速度上限
-    const float kSpeedLimit = 0.5f;
+    const float kSpeedLimit = 30.0f * sKashipanEngine->GetDeltaTime();
+    // 1フレームあたりの移動速度
+    const float kMoveSpeed = kMoveSpeedSecond * sKashipanEngine->GetDeltaTime();
 
     // 横方向
     if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
@@ -142,8 +147,8 @@ void Player::Move() {
 void Player::Rotate() {
     // 調整回転角[ラジアン]
     const float kAdjustmentRotate = 10.0f * std::numbers::pi_v<float> / 180.0f;
-    // 回転速度[0.0f-1.0f]
-    const float kRotateSpeed = 0.1f;
+    // 1フレームあたりの回転速度
+    const float kRotateSpeed = kRotateSpeedSecond * sKashipanEngine->GetDeltaTime();
 
     // 移動方向に応じて回転を調整
     if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {

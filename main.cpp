@@ -7,9 +7,6 @@ using namespace KashipanEngine;
 
 namespace {
 
-// フレームレート
-const int kFrameRate = 60;
-
 // エンジンのインスタンスを作成
 auto sKashipanEngine = std::make_unique<Engine>("KashipanEngine", 1920, 1080, true);
 // レンダラーへのポインタ
@@ -25,7 +22,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ウィンドウのxボタンが押されるまでループ
 	while (sKashipanEngine->ProccessMessage() != -1) {
 		sKashipanEngine->BeginFrame();
-		if (sKashipanEngine->BeginGameLoop(kFrameRate) == false) {
+		if (sKashipanEngine->BeginGameLoop() == false) {
 			continue;
 		}
 		Input::Update();

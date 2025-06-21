@@ -9,7 +9,10 @@
 
 class Player {
 public:
-    static inline const float kMoveSpeed = 0.1f;
+    // 1秒あたりの移動速度
+    static inline const float kMoveSpeedSecond = 6.0f;
+    // 1秒あたりの回転速度
+    static inline const float kRotateSpeedSecond = 6.0f;
 
     enum class MoveDirectionLR {
         kMoveNone,
@@ -46,9 +49,6 @@ private:
 
     // 弾発射用関数
     void ShootBullet();
-
-    // エンジンへのポインタ
-    Engine *kashipanEngine_;
 
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;

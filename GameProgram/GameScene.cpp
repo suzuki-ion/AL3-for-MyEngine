@@ -25,6 +25,8 @@ GameScene::GameScene(Engine *engine) {
 
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine);
+    // 敵のインスタンスを作成
+    enemy_ = std::make_unique<Enemy>(sKashipanEngine);
 
     // ライトの設定
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
@@ -34,6 +36,7 @@ GameScene::GameScene(Engine *engine) {
 
 void GameScene::Update() {
     player_->Update();
+    enemy_->Update();
 
 #ifdef _DEBUG
     if (Input::IsKeyTrigger(DIK_F1)) {
@@ -43,15 +46,24 @@ void GameScene::Update() {
 }
 
 void GameScene::Draw() {
+    static int frameRate = 60;
     sRenderer->PreDraw();
+
 #ifdef _DEBUG
-    // デバッグ用のフレームレート表示
+    // デバッグ用ImGui
     ImGuiManager::Begin("Debug");
+    ImGui::InputInt("Frame Rate", &frameRate, 1, 240);
     ImGui::Text("FPS: %d", sKashipanEngine->GetFPS());
     ImGui::Text("Delta Time: %.3f ms", sKashipanEngine->GetDeltaTime() * 1000.0f);
     ImGui::End();
+
+    sKashipanEngine->SetFrameRate(frameRate);
 #endif // _DEBUG
+    
     sRenderer->SetLight(&light_);
+    
     player_->Draw();
+    enemy_->Draw();
+    
     sRenderer->PostDraw();
 }
