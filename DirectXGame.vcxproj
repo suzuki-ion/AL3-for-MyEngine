@@ -282,9 +282,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Engine\Shader\Object3d.hlsli" />
-  </ItemGroup>
-  <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
