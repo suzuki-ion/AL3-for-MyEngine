@@ -29,12 +29,15 @@ public:
     void BeginFrame();
 
     /// @brief ゲームループ開始処理
-    /// @param frameRate フレームレート。最低24まで。無効な値(例: 24以下やモニターのFPS以上)の場合は垂直同期
     /// @return ゲームループを開始するかどうか
-    bool BeginGameLoop(int frameRate);
+    bool BeginGameLoop();
 
     /// @brief フレーム終了処理
     void EndFrame();
+
+    /// @brief フレームレート設定
+    /// @param frameRate フレームレート。最低24まで。無効な値(例: 24以下やモニターのFPS以上)の場合は垂直同期
+    void SetFrameRate(int frameRate);
 
     /// @brief デルタタイム取得
     /// @return デルタタイム
@@ -55,10 +58,6 @@ public:
     /// @brief レンダラーのポインタ取得
     /// @return レンダラーへのポインタ
     KashipanEngine::Renderer *GetRenderer() const;
-
-    /// @brief テクスチャ管理クラスのポインタ取得
-    /// @return テクスチャ管理クラスのポインタ
-    KashipanEngine::Texture *GetTexture() const;
     
     /// @brief メッセージ処理
     /// @return メッセージ処理結果。-1の場合は終了

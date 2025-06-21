@@ -5,6 +5,7 @@
 #include <3d/DirectionalLight.h>
 
 #include "Player.h"
+#include "Enemy.h"
 
 class GameScene {
 public:
@@ -19,6 +20,8 @@ public:
 private:
     // プレイヤー
     std::unique_ptr<Player> player_;
+    // 敵
+    std::unique_ptr<Enemy> enemy_;
 
     // カメラ
     std::unique_ptr<KashipanEngine::Camera> camera_;
