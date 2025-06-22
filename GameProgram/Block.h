@@ -31,7 +31,7 @@ private:
     void CreateWorldTransforms();
 
 	// ワールド変換データ
-	std::vector<std::vector<KashipanEngine::WorldTransform*>> worldTransforms_;
+	std::vector<std::vector<std::unique_ptr<KashipanEngine::WorldTransform>>> worldTransforms_;
 	// モデル
 	KashipanEngine::Model* model_ = nullptr;
     // マップチップフィールド

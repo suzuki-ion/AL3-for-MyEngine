@@ -64,7 +64,7 @@ void Block::Draw() {
 void Block::ResetWorldTransforms() {
     for (auto &worldTransformBlockLine : worldTransforms_) {
         for (auto &worldTransformBlock : worldTransformBlockLine) {
-            delete worldTransformBlock;
+            worldTransformBlock.reset();
         }
     }
     worldTransforms_.clear();
@@ -82,7 +82,7 @@ void Block::CreateWorldTransforms() {
             if (mapChipField_->GetMapChipType(j, i) == MapChipType::kBlank) {
                 continue;
             }
-            worldTransforms_[i][j] = new WorldTransform();
+            worldTransforms_[i][j] = std::make_unique<WorldTransform>();
             worldTransforms_[i][j]->translate_ = mapChipField_->GetMapChipPosition(j, i);
         }
     }
