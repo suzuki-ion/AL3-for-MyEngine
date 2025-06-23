@@ -108,6 +108,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameProgram\EnemyStateLeave.cpp" />
+    <ClCompile Include="GameProgram\EnemyStateApproach.cpp" />
+    <ClCompile Include="GameProgram\BaseEnemyState.cpp" />
     <ClCompile Include="GameProgram\Enemy.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />
     <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
@@ -166,6 +169,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameProgram\EnemyStateLeave.h" />
+    <ClInclude Include="GameProgram\EnemyStateApproach.h" />
+    <ClInclude Include="GameProgram\BaseEnemyState.h" />
     <ClInclude Include="GameProgram\Enemy.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h" />

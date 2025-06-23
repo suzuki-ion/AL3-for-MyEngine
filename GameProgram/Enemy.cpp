@@ -1,6 +1,8 @@
 #include <Base/Renderer.h>
 
 #include "Enemy.h"
+#include "EnemyStateApproach.h"
+#include "EnemyStateLeave.h"
 
 using namespace KashipanEngine;
 
@@ -8,11 +10,6 @@ namespace {
 // エンジンへのポインタ
 Engine *sKashipanEngine = nullptr;
 }
-
-void (Enemy::*Enemy::phaseUpdateFuncTable[])() = {
-    &Enemy::UpdateApproachPhase,
-    &Enemy::UpdateLeavePhase,
-};
 
 Enemy::Enemy(Engine *kashipanEngine) {
     sKashipanEngine = kashipanEngine;
@@ -27,39 +24,27 @@ Enemy::Enemy(Engine *kashipanEngine) {
     worldTransform_ = std::make_unique<WorldTransform>();
     worldTransform_->translate_ = { -16.0f, -8.0f, 32.0f };
 
-    // 速度の設定
-    velocity_.z = -kMoveSpeed;
-
     // 初期フェーズの設定
-    phase_ = Phase::Approach;
+    ChangeState(std::make_unique<EnemyStateApproach>(sKashipanEngine, this));
+}
+
+void Enemy::AddTranslate(const KashipanEngine::Vector3 &translate) {
+    worldTransform_->translate_ += translate;
+}
+
+void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> newState) {
+    state_ = std::move(newState);
 }
 
 void Enemy::Update() {
-    (this->*phaseUpdateFuncTable[static_cast<int>(phase_)])();
+    state_->Update();
+
+    // z座標が0以下になったら状態を変更
+    if (worldTransform_->translate_.z < 0.0f) {
+        ChangeState(std::make_unique<EnemyStateLeave>(sKashipanEngine, this));
+    }
 }
 
 void Enemy::Draw() {
     model_->Draw(*worldTransform_);
-}
-
-void Enemy::UpdateApproachPhase() {
-    if (phase_ != Phase::Approach) {
-        return;
-    }
-
-    worldTransform_->translate_ += velocity_ * sKashipanEngine->GetDeltaTime();
-    if (worldTransform_->translate_.z < 0.0f) {
-        phase_ = Phase::Leave;
-        velocity_.x = kMoveSpeed;
-        velocity_.y = kMoveSpeed;
-        velocity_.z = 0.0f;
-    }
-}
-
-void Enemy::UpdateLeavePhase() {
-    if (phase_ != Phase::Leave) {
-        return;
-    }
-
-    worldTransform_->translate_ += velocity_ * sKashipanEngine->GetDeltaTime();
 }
