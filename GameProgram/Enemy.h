@@ -8,6 +8,11 @@ class Enemy {
 public:
     static inline const float kMoveSpeed = 3.0f;
 
+    enum class Phase {
+        Approach,
+        Leave,
+    };
+
     Enemy(Engine *kashipanEngine);
 
     // 更新処理
@@ -16,11 +21,19 @@ public:
     void Draw();
 
 private:
+    // 近接フェーズ更新関数
+    void UpdateApproachPhase();
+    // 離脱フェーズ更新関数
+    void UpdateLeavePhase();
+
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
     // 速度
     KashipanEngine::Vector3 velocity_;
+
+    // 行動フェーズ
+    Phase phase_ = Phase::Approach;
 };
 

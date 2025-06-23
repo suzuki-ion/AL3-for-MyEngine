@@ -1,5 +1,6 @@
 #include <Base/Renderer.h>
 #include <Base/Input.h>
+#include <Math/Camera.h>
 #include <numbers>
 
 #include "KeyConfig.h"
@@ -23,8 +24,9 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
 
 }
 
-Player::Player(Engine *kashipanEngine) {
+Player::Player(Engine *kashipanEngine, Camera *camera) {
     sKashipanEngine = kashipanEngine;
+    camera_ = camera;
     // エンジンのレンダラーを取得
     Renderer *renderer = sKashipanEngine->GetRenderer();
 
@@ -37,7 +39,6 @@ Player::Player(Engine *kashipanEngine) {
 
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
-    worldTransform_->translate_.z = 64.0f;
 }
 
 void Player::Update() {
@@ -170,9 +171,9 @@ void Player::Rotate() {
 }
 
 void Player::LimitPosition() {
-    // 移動制限
-    const float kMoveLimitX = worldTransform_->translate_.z * 16.0f / 48.0f;
-    const float kMoveLimitY = worldTransform_->translate_.z * 9.0f / 48.0f;
+    const float length = (camera_->GetTranslate() - worldTransform_->translate_).Length();
+    const float kMoveLimitX = length * 16.0f / 48.0f;
+    const float kMoveLimitY = length * 9.0f / 48.0f;
     
     // 移動制限範囲を超えたら制限範囲内に戻して速度を0にする
     if (std::clamp(worldTransform_->translate_.x, -kMoveLimitX, kMoveLimitX) != worldTransform_->translate_.x) {

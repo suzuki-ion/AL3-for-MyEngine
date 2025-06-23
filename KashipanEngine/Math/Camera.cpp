@@ -78,20 +78,26 @@ Camera::Camera(const Vector3 &cameraTranslate, const Vector3 &cameraRotate, cons
 }
 
 void Camera::SetCamera(const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept {
+    cameraTranslate_ = cameraTranslate;
+    cameraRotate_ = cameraRotate;
+    cameraScale_ = cameraScale;
     cameraMatrix_.SetTranslate(cameraTranslate);
     cameraMatrix_.SetRotate(cameraRotate);
     cameraMatrix_.SetScale(cameraScale);
 }
 
 void Camera::SetTranslate(const Vector3 &cameraTranslate) noexcept {
+    cameraTranslate_ = cameraTranslate;
     cameraMatrix_.SetTranslate(cameraTranslate);
 }
 
 void Camera::SetRotate(const Vector3 &cameraRotate) noexcept {
+    cameraRotate_ = cameraRotate;
     cameraMatrix_.SetRotate(cameraRotate);
 }
 
 void Camera::SetScale(const Vector3 &cameraScale) noexcept {
+    cameraScale_ = cameraScale;
     cameraMatrix_.SetScale(cameraScale);
 }
 

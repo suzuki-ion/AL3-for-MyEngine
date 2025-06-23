@@ -25,7 +25,7 @@ public:
         kMoveDown
     };
 
-    Player(Engine *kashipanEngine);
+    Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
     // 更新処理
     void Update();
@@ -50,6 +50,8 @@ private:
     // 弾発射用関数
     void ShootBullet();
 
+    // カメラへのポインタ
+    KashipanEngine::Camera *camera_;
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
     // 回転専用ベクトル
