@@ -1,11 +1,11 @@
-#include "PlayerBullet.h"
+#include "EnemyBullet.h"
 
 namespace {
 // エンジンへのポインタ
 Engine *sKashipanEngine = nullptr;
 }
 
-PlayerBullet::PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model, const KashipanEngine::Vector3 &position,
+EnemyBullet::EnemyBullet(Engine *kashipanEngine, KashipanEngine::Model *model, const KashipanEngine::Vector3 &position,
     const KashipanEngine::Vector3 &velocity, float lifeTime) : kLifeTime(lifeTime) {
     if (model == nullptr) {
         throw std::invalid_argument("Model pointer cannot be null");
@@ -22,7 +22,7 @@ PlayerBullet::PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
     isAlive_ = true;
 }
 
-void PlayerBullet::Update() {
+void EnemyBullet::Update() {
     if (!isAlive_) {
         return;
     }
@@ -35,7 +35,7 @@ void PlayerBullet::Update() {
     }
 }
 
-void PlayerBullet::Draw() {
+void EnemyBullet::Draw() {
     if (!isAlive_) {
         return;
     }

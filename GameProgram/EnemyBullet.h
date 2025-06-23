@@ -3,9 +3,9 @@
 #include <Objects.h>
 #include <memory>
 
-class PlayerBullet {
+class EnemyBullet {
 public:
-    PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
+    EnemyBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
         const KashipanEngine::Vector3 &position, const KashipanEngine::Vector3 &velocity, float lifeTime);
 
     bool IsAlive() const { return isAlive_; }
@@ -28,3 +28,4 @@ private:
     // 速度
     KashipanEngine::Vector3 velocity_;
 };
+

@@ -194,14 +194,15 @@ void Player::Attack() {
 }
 
 void Player::ShootBullet() {
-    const Vector3 kBulletVelocity(0.0f, 0.0f, 0.1f);
+    const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
 
     bullets_.push_back(
         std::make_unique<PlayerBullet>(
+            sKashipanEngine,
             bulletModel_.get(),
             worldTransform_->translate_,
             TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-            180
+            5.0f
         )
     );
 }
