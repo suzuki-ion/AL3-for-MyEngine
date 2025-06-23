@@ -9,6 +9,11 @@ namespace {
 Engine *sKashipanEngine = nullptr;
 }
 
+void (Enemy::*Enemy::phaseUpdateFuncTable[])() = {
+    &Enemy::UpdateApproachPhase,
+    &Enemy::UpdateLeavePhase,
+};
+
 Enemy::Enemy(Engine *kashipanEngine) {
     sKashipanEngine = kashipanEngine;
     // エンジンのレンダラーを取得
@@ -24,11 +29,13 @@ Enemy::Enemy(Engine *kashipanEngine) {
 
     // 速度の設定
     velocity_.z = -kMoveSpeed;
+
+    // 初期フェーズの設定
+    phase_ = Phase::Approach;
 }
 
 void Enemy::Update() {
-    UpdateApproachPhase();
-    UpdateLeavePhase();
+    (this->*phaseUpdateFuncTable[static_cast<int>(phase_)])();
 }
 
 void Enemy::Draw() {

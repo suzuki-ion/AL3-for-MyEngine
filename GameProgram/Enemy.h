@@ -15,16 +15,19 @@ public:
 
     Enemy(Engine *kashipanEngine);
 
+    // 近接フェーズ更新関数
+    void UpdateApproachPhase();
+    // 離脱フェーズ更新関数
+    void UpdateLeavePhase();
+
     // 更新処理
     void Update();
     // 描画処理
     void Draw();
 
 private:
-    // 近接フェーズ更新関数
-    void UpdateApproachPhase();
-    // 離脱フェーズ更新関数
-    void UpdateLeavePhase();
+    // フェーズ更新用関数ポインタテーブル
+    static void (Enemy::*phaseUpdateFuncTable[])();
 
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
