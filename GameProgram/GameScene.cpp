@@ -20,11 +20,13 @@ GameScene::GameScene(Engine *engine) {
 
     // カメラのインスタンスを作成
     camera_ = std::make_unique<Camera>();
+    camera_->SetTranslate(Vector3(0.0f, 0.0f, -64.0f));
+    camera_->CalculateMatrix();
     // レンダラーにカメラを設定
     sRenderer->SetCamera(camera_.get());
 
     // プレイヤーのインスタンスを作成
-    player_ = std::make_unique<Player>(sKashipanEngine);
+    player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
     // 敵のインスタンスを作成
     enemy_ = std::make_unique<Enemy>(sKashipanEngine);
 
