@@ -4,21 +4,18 @@
 #include <Objects/WorldTransform.h>
 #include <memory>
 
+#include "BaseEnemyState.h"
+
 class Enemy {
 public:
     static inline const float kMoveSpeed = 3.0f;
 
-    enum class Phase {
-        Approach,
-        Leave,
-    };
-
     Enemy(Engine *kashipanEngine);
 
-    // 近接フェーズ更新関数
-    void UpdateApproachPhase();
-    // 離脱フェーズ更新関数
-    void UpdateLeavePhase();
+    void AddTranslate(const KashipanEngine::Vector3 &translate);
+
+    // 状態遷移
+    void ChangeState(std::unique_ptr<BaseEnemyState> newState);
 
     // 更新処理
     void Update();
@@ -26,17 +23,12 @@ public:
     void Draw();
 
 private:
-    // フェーズ更新用関数ポインタテーブル
-    static void (Enemy::*phaseUpdateFuncTable[])();
-
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
-    // 速度
-    KashipanEngine::Vector3 velocity_;
 
-    // 行動フェーズ
-    Phase phase_ = Phase::Approach;
+    // 状態管理
+    std::unique_ptr<BaseEnemyState> state_;
 };
 
