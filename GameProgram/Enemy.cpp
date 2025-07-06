@@ -40,10 +40,32 @@ Enemy::Enemy(Engine *kashipanEngine) {
 
     // 初期フェーズの設定
     ChangeState(std::make_unique<EnemyStateApproach>(sKashipanEngine, this));
+
+    // 弾の時限発動の設定
+    timedCall_ = std::make_unique<TimedCall>(
+        std::bind(&Enemy::Fire, this), 1.0f, true
+    );
 }
 
 void Enemy::AddTranslate(const KashipanEngine::Vector3 &translate) {
     worldTransform_->translate_ += translate;
+}
+
+void Enemy::SetBulletFireEnable(bool enable) {
+    if (enable) {
+        if (timedCall_ != nullptr) {
+            return;
+        }
+        timedCall_ = std::make_unique<TimedCall>(
+            std::bind(&Enemy::Fire, this), 1.0f, true
+        );
+
+    } else {
+        if (timedCall_ == nullptr) {
+            return;
+        }
+        timedCall_.reset();
+    }
 }
 
 void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> newState) {
@@ -59,7 +81,9 @@ void Enemy::Update() {
     }
 
     // 弾の発射処理
-    Fire();
+    if (timedCall_ != nullptr) {
+        timedCall_->Update();
+    }
     // 弾の更新
     for (auto &bullet : bullets_) {
         bullet->Update();
@@ -67,7 +91,7 @@ void Enemy::Update() {
     // 弾の削除処理
     bullets_.remove_if([](const std::unique_ptr<EnemyBullet> &bullet) {
         return !bullet->IsAlive();
-    });
+        });
 }
 
 void Enemy::Draw() {
@@ -82,14 +106,6 @@ void Enemy::Draw() {
 void Enemy::Fire() {
     const Vector3 kBulletVelocity(0.0f, 0.0f, -6.0f);
 
-    // タイマーをカウント
-    fireTimer_ += sKashipanEngine->GetDeltaTime();
-    // タイマーが一定時間を超えたら弾を発射
-    if (fireTimer_ < kFireInterval) {
-        // 発射間隔に達していない場合は何もしない
-        return;
-    }
-
     bullets_.push_back(
         std::make_unique<EnemyBullet>(
             sKashipanEngine,
@@ -99,6 +115,4 @@ void Enemy::Fire() {
             5.0f
         )
     );
-    // タイマーをリセット
-    fireTimer_ = 0.0f;
 }

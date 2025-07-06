@@ -41,11 +41,11 @@ public:
 
     /// @brief デルタタイム取得
     /// @return デルタタイム
-    float GetDeltaTime() const;
+    static float GetDeltaTime();
 
     /// @brief フレームレート取得
     /// @return フレームレート
-    unsigned int GetFPS() const;
+    static unsigned int GetFPS();
 
     /// @brief WinAppクラスのポインタ取得
     /// @return WinAppクラスのポインタ

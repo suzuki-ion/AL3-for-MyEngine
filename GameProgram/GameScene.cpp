@@ -55,8 +55,8 @@ void GameScene::Draw() {
     // デバッグ用ImGui
     ImGuiManager::Begin("Debug");
     ImGui::InputInt("Frame Rate", &frameRate, 1, 240);
-    ImGui::Text("FPS: %d", sKashipanEngine->GetFPS());
-    ImGui::Text("Delta Time: %.3f ms", sKashipanEngine->GetDeltaTime() * 1000.0f);
+    ImGui::Text("FPS: %d", Engine::GetFPS());
+    ImGui::Text("Delta Time: %.3f ms", Engine::GetDeltaTime() * 1000.0f);
     ImGui::End();
 
     sKashipanEngine->SetFrameRate(frameRate);

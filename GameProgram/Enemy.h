@@ -7,6 +7,7 @@
 
 #include "BaseEnemyState.h"
 #include "EnemyBullet.h"
+#include "TimedCall.h"
 
 class Enemy {
 public:
@@ -16,6 +17,7 @@ public:
     Enemy(Engine *kashipanEngine);
 
     void AddTranslate(const KashipanEngine::Vector3 &translate);
+    void SetBulletFireEnable(bool enable);
 
     // 状態遷移
     void ChangeState(std::unique_ptr<BaseEnemyState> newState);
@@ -41,7 +43,7 @@ private:
 
     // 弾のリスト
     std::list<std::unique_ptr<EnemyBullet>> bullets_;
-    // 弾の発射間隔タイマー
-    float fireTimer_ = 0.0f;
+    // 時限発動のリスト
+    std::unique_ptr<TimedCall> timedCall_;
 };
 
