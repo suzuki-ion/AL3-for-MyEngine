@@ -3,6 +3,7 @@
 
 EnemyStateLeave::EnemyStateLeave(Engine *kashipanEngine, Enemy *enemy) :
     BaseEnemyState(kashipanEngine, enemy) {
+    enemy->SetBulletFireEnable(false);
     velocity_ = { Enemy::kMoveSpeed, Enemy::kMoveSpeed, 0.0f };
 }
 

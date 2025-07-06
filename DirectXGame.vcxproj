@@ -125,6 +125,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="GameProgram\KeyConfig.cpp" />
     <ClCompile Include="GameProgram\Player.cpp" />
     <ClCompile Include="GameProgram\PlayerBullet.cpp" />
+    <ClCompile Include="GameProgram\TimedCall.cpp" />
     <ClCompile Include="KashipanEngine\2d\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\3d\AxisIndicator.cpp" />
     <ClCompile Include="KashipanEngine\3d\PrimitiveDrawer.cpp" />
@@ -188,6 +189,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="GameProgram\KeyConfig.h" />
     <ClInclude Include="GameProgram\Player.h" />
     <ClInclude Include="GameProgram\PlayerBullet.h" />
+    <ClInclude Include="GameProgram\TimedCall.h" />
     <ClInclude Include="KashipanEngine\2d\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\3d\DiffuseLight.h" />
     <ClInclude Include="KashipanEngine\3d\DirectionalLight.h" />

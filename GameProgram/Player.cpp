@@ -115,9 +115,9 @@ void Player::InputRotate() {
 
 void Player::Move() {
     // 移動速度上限
-    const float kSpeedLimit = 30.0f * sKashipanEngine->GetDeltaTime();
+    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
     // 1フレームあたりの移動速度
-    const float kMoveSpeed = kMoveSpeedSecond * sKashipanEngine->GetDeltaTime();
+    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
 
     // 横方向
     if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
@@ -149,7 +149,7 @@ void Player::Rotate() {
     // 調整回転角[ラジアン]
     const float kAdjustmentRotate = 10.0f * std::numbers::pi_v<float> / 180.0f;
     // 1フレームあたりの回転速度
-    const float kRotateSpeed = kRotateSpeedSecond * sKashipanEngine->GetDeltaTime();
+    const float kRotateSpeed = kRotateSpeedSecond * Engine::GetDeltaTime();
 
     // 移動方向に応じて回転を調整
     if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {

@@ -193,11 +193,11 @@ void Engine::SetFrameRate(int frameRate) {
     sFrameRate = frameRate;
 }
 
-float Engine::GetDeltaTime() const {
+float Engine::GetDeltaTime() {
     return sDeltaTime;
 }
 
-unsigned int Engine::GetFPS() const {
+unsigned int Engine::GetFPS() {
     // 補正値として1を入れておく
     return sCountFps + 1;
 }
