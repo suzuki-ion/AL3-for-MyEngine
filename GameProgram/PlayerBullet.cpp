@@ -22,6 +22,10 @@ PlayerBullet::PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
     isAlive_ = true;
 }
 
+void PlayerBullet::OnCollision() {
+    isAlive_ = false;
+}
+
 void PlayerBullet::Update() {
     if (!isAlive_) {
         return;

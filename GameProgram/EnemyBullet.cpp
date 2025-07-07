@@ -33,6 +33,10 @@ EnemyBullet::EnemyBullet(Engine *kashipanEngine, Model *model, const Vector3 &po
     isAlive_ = true;
 }
 
+void EnemyBullet::OnCollision() {
+    isAlive_ = false;
+}
+
 void EnemyBullet::Update() {
     if (!isAlive_) {
         return;

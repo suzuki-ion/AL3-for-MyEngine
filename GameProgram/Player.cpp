@@ -50,6 +50,9 @@ Vector3 Player::GetPosition() {
     return position;
 }
 
+void Player::OnCollision() {
+}
+
 void Player::Update() {
     InputMove();
     InputRotate();
