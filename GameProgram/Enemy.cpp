@@ -68,6 +68,10 @@ void Enemy::SetBulletFireEnable(bool enable) {
     }
 }
 
+void Enemy::SetPlayerPosition(KashipanEngine::Vector3 playerPosition) {
+    playerPosition_ = playerPosition;
+}
+
 void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> newState) {
     state_ = std::move(newState);
 }
@@ -104,7 +108,13 @@ void Enemy::Draw() {
 }
 
 void Enemy::Fire() {
-    const Vector3 kBulletVelocity(0.0f, 0.0f, -6.0f);
+    Vector3 enemyPosition(
+        worldTransform_->worldMatrix_.m[3][0],
+        worldTransform_->worldMatrix_.m[3][1],
+        worldTransform_->worldMatrix_.m[3][2]
+    );
+    Vector3 kBulletVelocity(playerPosition_ - enemyPosition);
+    kBulletVelocity = kBulletVelocity.Normalize() * 32.0f; // 弾の速度を設定
 
     bullets_.push_back(
         std::make_unique<EnemyBullet>(

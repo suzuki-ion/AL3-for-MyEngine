@@ -27,6 +27,8 @@ public:
 
     Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
+    KashipanEngine::Vector3 GetPosition();
+
     // 更新処理
     void Update();
     // 描画処理
