@@ -41,6 +41,15 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
     worldTransform_ = std::make_unique<WorldTransform>();
 }
 
+Vector3 Player::GetPosition() {
+    Vector3 position(
+        worldTransform_->worldMatrix_.m[3][0],
+        worldTransform_->worldMatrix_.m[3][1],
+        worldTransform_->worldMatrix_.m[3][2]
+    );
+    return position;
+}
+
 void Player::Update() {
     InputMove();
     InputRotate();

@@ -19,6 +19,8 @@ public:
     void AddTranslate(const KashipanEngine::Vector3 &translate);
     void SetBulletFireEnable(bool enable);
 
+    void SetPlayerPosition(KashipanEngine::Vector3 playerPosition);
+
     // 状態遷移
     void ChangeState(std::unique_ptr<BaseEnemyState> newState);
 
@@ -30,6 +32,9 @@ public:
 private:
     // 弾発射処理
     void Fire();
+
+    // プレイヤーのワールド座標
+    KashipanEngine::Vector3 playerPosition_;
 
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
