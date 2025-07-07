@@ -33,12 +33,6 @@ DirectionalLight sDefaultDirectionalLight = {
     1.0f
 };
 
-//bool ZSort(Object *a, Object *b) {
-//    // カメラからの距離でソート
-//    return a->transform.translate.Distance(a->camera->GetTranslate()) <
-//        b->transform.translate.Distance(b->camera->GetTranslate());
-//}
-
 } // namespace
 
 Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiManager) {
@@ -77,40 +71,42 @@ Renderer::Renderer(WinApp *winApp, DirectXCommon *dxCommon, ImGuiManager *imguiM
         Vector3(0.0f, 0.0f, 0.0f),
         Vector3(1.0f, 1.0f, 1.0f)
     );
+    // 球面座標系に設定
+    sDebugCamera->SetCoordinateSystem(Camera::CoordinateSystem::kDecart);
 
     //==================================================
     // パイプラインセットの初期化
     //==================================================
 
     pipelineSet_[kFillModeSolid][kBlendModeNone] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNone, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNone);
     pipelineSet_[kFillModeSolid][kBlendModeNormal] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNormal, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeNormal);
     pipelineSet_[kFillModeSolid][kBlendModeAdd] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeAdd, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeAdd);
     pipelineSet_[kFillModeSolid][kBlendModeSubtract] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeSubtract, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeSubtract);
     pipelineSet_[kFillModeSolid][kBlendModeMultiply] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeMultiply, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeMultiply);
     pipelineSet_[kFillModeSolid][kBlendModeScreen] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeScreen, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeScreen);
     pipelineSet_[kFillModeSolid][kBlendModeExclusion] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeExclusion, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, kBlendModeExclusion);
 
     pipelineSet_[kFillModeWireframe][kBlendModeNone] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNone, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNone);
     pipelineSet_[kFillModeWireframe][kBlendModeNormal] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNormal, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeNormal);
     pipelineSet_[kFillModeWireframe][kBlendModeAdd] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeAdd, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeAdd);
     pipelineSet_[kFillModeWireframe][kBlendModeSubtract] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeSubtract, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeSubtract);
     pipelineSet_[kFillModeWireframe][kBlendModeMultiply] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeMultiply, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeMultiply);
     pipelineSet_[kFillModeWireframe][kBlendModeScreen] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeScreen, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeScreen);
     pipelineSet_[kFillModeWireframe][kBlendModeExclusion] =
-        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeExclusion, true, true);
+        PrimitiveDrawer::CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, kBlendModeExclusion);
 
     // 初期化完了のログを出力
     Log("Renderer Initialized.");
@@ -142,6 +138,16 @@ void Renderer::PreDraw() {
     drawAlphaObjects_.clear();
     draw2DObjects_.clear();
 
+    // 2D用のプロジェクション行列を設定
+    projectionMatrix2D_ = MakeOrthographicMatrix(
+        0.0f,
+        0.0f,
+        static_cast<float>(winApp_->GetClientWidth()),
+        static_cast<float>(winApp_->GetClientHeight()),
+        0.0f,
+        100.0f
+    );
+
     // ビューポートの設定
     viewport_.Width = static_cast<FLOAT>(winApp_->GetClientWidth());
     viewport_.Height = static_cast<FLOAT>(winApp_->GetClientHeight());
@@ -171,7 +177,7 @@ void Renderer::PreDraw() {
 
     // デバッグカメラが有効ならデバッグカメラの処理
     if (isUseDebugCamera_) {
-        sDebugCamera->MoveToMouse(0.1f, 0.001f, 0.1f);
+        sDebugCamera->MoveToMouse(0.1f, 0.01f, 0.1f);
     }
 }
 
@@ -264,11 +270,11 @@ void Renderer::DrawCommon(ObjectState *objectState) {
     }
 
     // SRVのDescriptorTableの先頭を設定。2はrootParameter[2]である。
-    if (objectState->useTextureIndex != -1) {
-        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, Texture::GetTexture(objectState->useTextureIndex).srvHandleGPU);
-    } else {
-        // テクスチャを使用しない場合は0を設定
+    if ((objectState->fillMode == kFillModeWireframe) ||
+        objectState->useTextureIndex <= 0) {
         dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, Texture::GetTexture(0).srvHandleGPU);
+    } else {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, Texture::GetTexture(objectState->useTextureIndex).srvHandleGPU);
     }
 
     dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

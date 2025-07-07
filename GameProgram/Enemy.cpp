@@ -114,7 +114,7 @@ void Enemy::Fire() {
         worldTransform_->worldMatrix_.m[3][2]
     );
     Vector3 kBulletVelocity(playerPosition_ - enemyPosition);
-    kBulletVelocity = kBulletVelocity.Normalize() * 32.0f; // 弾の速度を設定
+    kBulletVelocity = kBulletVelocity.Normalize();
 
     bullets_.push_back(
         std::make_unique<EnemyBullet>(
@@ -122,7 +122,8 @@ void Enemy::Fire() {
             bulletModel_.get(),
             worldTransform_->translate_,
             TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-            5.0f
+            5.0f,
+            32.0f
         )
     );
 }

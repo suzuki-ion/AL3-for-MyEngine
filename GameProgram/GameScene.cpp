@@ -38,6 +38,7 @@ GameScene::GameScene(Engine *engine) {
 
 void GameScene::Update() {
     player_->Update();
+    EnemyBullet::SetTargetPosition(player_->GetPosition());
     enemy_->SetPlayerPosition(player_->GetPosition());
     enemy_->Update();
 
