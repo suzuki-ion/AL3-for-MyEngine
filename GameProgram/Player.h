@@ -5,9 +5,10 @@
 #include <list>
 #include <memory>
 
+#include "Collider.h"
 #include "PlayerBullet.h"
 
-class Player {
+class Player : public Collider {
 public:
     // 1秒あたりの移動速度
     static inline const float kMoveSpeedSecond = 6.0f;
@@ -27,13 +28,19 @@ public:
 
     Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
-    KashipanEngine::Vector3 GetPosition();
+    KashipanEngine::Vector3 GetWorldPosition() override {
+        return {
+            worldTransform_->worldMatrix_.m[3][0],
+            worldTransform_->worldMatrix_.m[3][1],
+            worldTransform_->worldMatrix_.m[3][2]
+        };
+    }
     const std::list<std::unique_ptr<PlayerBullet>> &GetBullets() const {
         return bullets_;
     }
 
     // 衝突を検知したら呼び出されるコールバック関数
-    void OnCollision();
+    void OnCollision() override;
 
     // 更新処理
     void Update();

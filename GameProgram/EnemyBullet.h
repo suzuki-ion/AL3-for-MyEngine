@@ -3,7 +3,9 @@
 #include <Objects.h>
 #include <memory>
 
-class EnemyBullet {
+#include "Collider.h"
+
+class EnemyBullet : public Collider {
 public:
     static void SetTargetPosition(const KashipanEngine::Vector3 &targetPosition);
 
@@ -12,16 +14,16 @@ public:
 
     bool IsAlive() const { return isAlive_; }
 
-    KashipanEngine::Vector3 GetPosition() {
-        return KashipanEngine::Vector3(
+    KashipanEngine::Vector3 GetWorldPosition() override {
+        return {
             worldTransform_->worldMatrix_.m[3][0],
             worldTransform_->worldMatrix_.m[3][1],
             worldTransform_->worldMatrix_.m[3][2]
-        );
+        };
     }
 
     // 衝突を検知したら呼び出されるコールバック関数
-    void OnCollision();
+    void OnCollision() override;
 
     void Update();
     void Draw();

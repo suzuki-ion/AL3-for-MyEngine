@@ -39,15 +39,8 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
 
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
-}
 
-Vector3 Player::GetPosition() {
-    Vector3 position(
-        worldTransform_->worldMatrix_.m[3][0],
-        worldTransform_->worldMatrix_.m[3][1],
-        worldTransform_->worldMatrix_.m[3][2]
-    );
-    return position;
+    SetRadius(1.0f);
 }
 
 void Player::OnCollision() {

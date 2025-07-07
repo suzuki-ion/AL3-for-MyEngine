@@ -108,6 +108,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameProgram\Collider.cpp" />
     <ClCompile Include="GameProgram\EnemyBullet.cpp" />
     <ClCompile Include="GameProgram\EnemyStateLeave.cpp" />
     <ClCompile Include="GameProgram\EnemyStateApproach.cpp" />
@@ -180,6 +181,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameProgram\Collider.h" />
     <ClInclude Include="GameProgram\EnemyBullet.h" />
     <ClInclude Include="GameProgram\EnemyStateLeave.h" />
     <ClInclude Include="GameProgram\EnemyStateApproach.h" />
