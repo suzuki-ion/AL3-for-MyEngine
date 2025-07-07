@@ -39,8 +39,8 @@ GameScene::GameScene(Engine *engine) {
 
 void GameScene::Update() {
     player_->Update();
-    EnemyBullet::SetTargetPosition(player_->GetPosition());
-    enemy_->SetPlayerPosition(player_->GetPosition());
+    EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
+    enemy_->SetPlayerPosition(player_->GetWorldPosition());
     enemy_->Update();
     CheckAllCollisions();
 
@@ -75,10 +75,6 @@ void GameScene::Draw() {
 }
 
 void GameScene::CheckAllCollisions() {
-    // 判定用の球
-    Math::Sphere sphereA(Vector3(0.0f), 1.0f);
-    Math::Sphere sphereB(Vector3(0.0f), 1.0f);
-
     // 自機の弾リスト取得
     const auto &playerBullets = player_->GetBullets();
     // 敵の弾リスト取得
@@ -86,38 +82,32 @@ void GameScene::CheckAllCollisions() {
 
     //--------- 自機と敵弾 ---------//
 
-    sphereA.center = player_->GetPosition();
     for (const auto &bullet : enemyBullets) {
-        sphereB.center = bullet->GetPosition();
-        if (sphereA.IsCollision(sphereB)) {
-            player_->OnCollision();
-            bullet->OnCollision();
-        }
+        CheckCollisionPair(player_.get(), bullet.get());
     }
 
     //--------- 自弾と敵機 ---------//
 
-    sphereA.center = enemy_->GetPosition();
     for (const auto &bullet : playerBullets) {
-        sphereB.center = bullet->GetPosition();
-        if (sphereA.IsCollision(sphereB)) {
-            enemy_->OnCollision();
-            bullet->OnCollision();
-        }
+        CheckCollisionPair(enemy_.get(), bullet.get());
     }
 
     //--------- 自弾と敵弾 ---------//
 
-    sphereA.radius = 0.5f;
-    sphereB.radius = 0.5f;
     for (const auto &playerBullet : playerBullets) {
-        sphereA.center = playerBullet->GetPosition();
         for (const auto &enemyBullet : enemyBullets) {
-            sphereB.center = enemyBullet->GetPosition();
-            if (sphereA.IsCollision(sphereB)) {
-                playerBullet->OnCollision();
-                enemyBullet->OnCollision();
-            }
+            CheckCollisionPair(playerBullet.get(), enemyBullet.get());
         }
+    }
+}
+
+void GameScene::CheckCollisionPair(Collider *colliderA, Collider *colliderB) {
+    // 判定用の球
+    Math::Sphere sphereA(colliderA->GetWorldPosition(), colliderA->GetRadius());
+    Math::Sphere sphereB(colliderB->GetWorldPosition(), colliderB->GetRadius());
+
+    if (sphereA.IsCollision(sphereB)) {
+        colliderA->OnCollision();
+        colliderB->OnCollision();
     }
 }

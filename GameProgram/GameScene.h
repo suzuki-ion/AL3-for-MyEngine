@@ -20,6 +20,11 @@ public:
 private:
     void CheckAllCollisions();
 
+    /// @brief コライダーの衝突判定
+    /// @param colliderA コライダーA
+    /// @param colliderB コライダーB
+    void CheckCollisionPair(Collider *colliderA, Collider *colliderB);
+
     // プレイヤー
     std::unique_ptr<Player> player_;
     // 敵

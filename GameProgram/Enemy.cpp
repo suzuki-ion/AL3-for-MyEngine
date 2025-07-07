@@ -45,6 +45,8 @@ Enemy::Enemy(Engine *kashipanEngine) {
     timedCall_ = std::make_unique<TimedCall>(
         std::bind(&Enemy::Fire, this), 1.0f, true
     );
+
+    SetRadius(1.0f);
 }
 
 void Enemy::AddTranslate(const KashipanEngine::Vector3 &translate) {
@@ -70,15 +72,6 @@ void Enemy::SetBulletFireEnable(bool enable) {
 
 void Enemy::SetPlayerPosition(KashipanEngine::Vector3 playerPosition) {
     playerPosition_ = playerPosition;
-}
-
-Vector3 Enemy::GetPosition() {
-    Vector3 position(
-        worldTransform_->worldMatrix_.m[3][0],
-        worldTransform_->worldMatrix_.m[3][1],
-        worldTransform_->worldMatrix_.m[3][2]
-    );
-    return position;
 }
 
 void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> newState) {

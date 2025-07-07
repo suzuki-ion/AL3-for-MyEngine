@@ -5,11 +5,12 @@
 #include <list>
 #include <memory>
 
+#include "Collider.h"
 #include "BaseEnemyState.h"
 #include "EnemyBullet.h"
 #include "TimedCall.h"
 
-class Enemy {
+class Enemy : public Collider {
 public:
     static inline const float kMoveSpeed = 3.0f;
     static inline const float kFireInterval = 1.0f;
@@ -21,7 +22,13 @@ public:
 
     void SetPlayerPosition(KashipanEngine::Vector3 playerPosition);
 
-    KashipanEngine::Vector3 GetPosition();
+    KashipanEngine::Vector3 GetWorldPosition() override {
+        return {
+            worldTransform_->worldMatrix_.m[3][0],
+            worldTransform_->worldMatrix_.m[3][1],
+            worldTransform_->worldMatrix_.m[3][2]
+        };
+    }
     const std::list<std::unique_ptr<EnemyBullet>> &GetBullets() const {
         return bullets_;
     }
@@ -30,7 +37,7 @@ public:
     void ChangeState(std::unique_ptr<BaseEnemyState> newState);
 
     // 衝突を検知したら呼び出されるコールバック関数
-    void OnCollision();
+    void OnCollision() override;
 
     // 更新処理
     void Update();

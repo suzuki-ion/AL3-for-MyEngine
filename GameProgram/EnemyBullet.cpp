@@ -31,6 +31,8 @@ EnemyBullet::EnemyBullet(Engine *kashipanEngine, Model *model, const Vector3 &po
     lifeTimeCounter_ = 0.0f;
     speed_ = speed;
     isAlive_ = true;
+
+    SetRadius(0.5f);
 }
 
 void EnemyBullet::OnCollision() {

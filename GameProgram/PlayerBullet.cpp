@@ -20,6 +20,8 @@ PlayerBullet::PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
     velocity_ = velocity;
     lifeTimeCounter_ = 0.0f;
     isAlive_ = true;
+
+    SetRadius(0.5f);
 }
 
 void PlayerBullet::OnCollision() {
