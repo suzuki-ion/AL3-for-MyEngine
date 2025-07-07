@@ -28,6 +28,12 @@ public:
     Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
     KashipanEngine::Vector3 GetPosition();
+    const std::list<std::unique_ptr<PlayerBullet>> &GetBullets() const {
+        return bullets_;
+    }
+
+    // 衝突を検知したら呼び出されるコールバック関数
+    void OnCollision();
 
     // 更新処理
     void Update();

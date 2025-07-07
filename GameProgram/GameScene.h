@@ -18,6 +18,8 @@ public:
 	void Draw();
 
 private:
+    void CheckAllCollisions();
+
     // プレイヤー
     std::unique_ptr<Player> player_;
     // 敵

@@ -21,8 +21,16 @@ public:
 
     void SetPlayerPosition(KashipanEngine::Vector3 playerPosition);
 
+    KashipanEngine::Vector3 GetPosition();
+    const std::list<std::unique_ptr<EnemyBullet>> &GetBullets() const {
+        return bullets_;
+    }
+
     // 状態遷移
     void ChangeState(std::unique_ptr<BaseEnemyState> newState);
+
+    // 衝突を検知したら呼び出されるコールバック関数
+    void OnCollision();
 
     // 更新処理
     void Update();
