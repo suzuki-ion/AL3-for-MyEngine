@@ -7,6 +7,7 @@
 
 #include "Player.h"
 #include "Enemy.h"
+#include "CollisionManager.h"
 
 class GameScene {
 public:
@@ -21,22 +22,17 @@ public:
 private:
     void CheckAllCollisions();
 
-    /// @brief コライダーの衝突判定
-    /// @param colliderA コライダーA
-    /// @param colliderB コライダーB
-    void CheckCollisionPair(Collider *colliderA, Collider *colliderB);
-
     // プレイヤー
     std::unique_ptr<Player> player_;
     // 敵
     std::unique_ptr<Enemy> enemy_;
+    // 衝突管理
+    std::unique_ptr<CollisionManager> collisionManager_;
 
     // グリッド線
     std::unique_ptr<KashipanEngine::GridLine> gridLine_;
-
     // カメラ
     std::unique_ptr<KashipanEngine::Camera> camera_;
-
     // ライト
     KashipanEngine::DirectionalLight light_;
 };

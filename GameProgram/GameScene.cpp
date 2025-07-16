@@ -2,7 +2,6 @@
 #include <Base/Renderer.h>
 #include <Base/Input.h>
 #include <2d/ImGuiManager.h>
-#include <Math/MathObjects/Sphere.h>
 
 using namespace KashipanEngine;
 
@@ -34,6 +33,8 @@ GameScene::GameScene(Engine *engine) {
     player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
     // 敵のインスタンスを作成
     enemy_ = std::make_unique<Enemy>(sKashipanEngine);
+    // 衝突判定管理クラスのインスタンスを作成
+    collisionManager_ = std::make_unique<CollisionManager>();
 
     // ライトの設定
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
@@ -81,63 +82,16 @@ void GameScene::Draw() {
 }
 
 void GameScene::CheckAllCollisions() {
-    std::list<Collider *> colliders;
-    colliders.push_back(player_.get());
-    colliders.push_back(enemy_.get());
+    collisionManager_->ClearColliders();
+
+    collisionManager_->AddCollider(player_.get());
+    collisionManager_->AddCollider(enemy_.get());
     for (auto &bullet : player_->GetBullets()) {
-        colliders.push_back(bullet.get());
+        collisionManager_->AddCollider(bullet.get());
     }
     for (auto &bullet : enemy_->GetBullets()) {
-        colliders.push_back(bullet.get());
+        collisionManager_->AddCollider(bullet.get());
     }
 
-    // リスト内のペアを総当たり
-    auto itrA = colliders.begin();
-    for (; itrA != colliders.end(); ++itrA) {
-        auto itrB = itrA;
-        ++itrB; // itrBはitrAの次の要素から開始
-        for (; itrB != colliders.end(); ++itrB) {
-            if (((*itrA)->GetCollisionAttribute() & (*itrB)->GetCollisionMask()) == 0 ||
-                ((*itrB)->GetCollisionAttribute() & (*itrA)->GetCollisionMask()) == 0) {
-                continue; // 衝突しない場合はスキップ
-            }
-            CheckCollisionPair(*itrA, *itrB);
-        }
-    }
-
-    //// 自機の弾リスト取得
-    //const auto &playerBullets = player_->GetBullets();
-    //// 敵の弾リスト取得
-    //const auto &enemyBullets = enemy_->GetBullets();
-
-    ////--------- 自機と敵弾 ---------//
-
-    //for (const auto &bullet : enemyBullets) {
-    //    CheckCollisionPair(player_.get(), bullet.get());
-    //}
-
-    ////--------- 自弾と敵機 ---------//
-
-    //for (const auto &bullet : playerBullets) {
-    //    CheckCollisionPair(enemy_.get(), bullet.get());
-    //}
-
-    ////--------- 自弾と敵弾 ---------//
-
-    //for (const auto &playerBullet : playerBullets) {
-    //    for (const auto &enemyBullet : enemyBullets) {
-    //        CheckCollisionPair(playerBullet.get(), enemyBullet.get());
-    //    }
-    //}
-}
-
-void GameScene::CheckCollisionPair(Collider *colliderA, Collider *colliderB) {
-    // 判定用の球
-    Math::Sphere sphereA(colliderA->GetWorldPosition(), colliderA->GetRadius());
-    Math::Sphere sphereB(colliderB->GetWorldPosition(), colliderB->GetRadius());
-
-    if (sphereA.IsCollision(sphereB)) {
-        colliderA->OnCollision();
-        colliderB->OnCollision();
-    }
+    collisionManager_->Update();
 }
