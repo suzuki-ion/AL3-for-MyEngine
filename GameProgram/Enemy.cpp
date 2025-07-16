@@ -1,5 +1,6 @@
 #include <Base/Renderer.h>
 
+#include "CollisionConfig.h"
 #include "Enemy.h"
 #include "EnemyStateApproach.h"
 #include "EnemyStateLeave.h"
@@ -46,6 +47,8 @@ Enemy::Enemy(Engine *kashipanEngine) {
         std::bind(&Enemy::Fire, this), 1.0f, true
     );
 
+    SetCollisionAttribute(kCollisionAttributeEnemy);
+    SetCollisionMask(std::bitset<8>(kCollisionAttributeEnemy).flip());
     SetRadius(1.0f);
 }
 

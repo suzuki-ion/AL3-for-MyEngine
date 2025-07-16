@@ -1,3 +1,4 @@
+#include "CollisionConfig.h"
 #include "PlayerBullet.h"
 
 namespace {
@@ -21,6 +22,8 @@ PlayerBullet::PlayerBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
     lifeTimeCounter_ = 0.0f;
     isAlive_ = true;
 
+    SetCollisionAttribute(kCollisionAttributePlayer);
+    SetCollisionMask(std::bitset<8>(kCollisionAttributePlayer).flip());
     SetRadius(0.5f);
 }
 

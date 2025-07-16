@@ -95,7 +95,12 @@ void GameScene::CheckAllCollisions() {
     auto itrA = colliders.begin();
     for (; itrA != colliders.end(); ++itrA) {
         auto itrB = itrA;
+        ++itrB; // itrBはitrAの次の要素から開始
         for (; itrB != colliders.end(); ++itrB) {
+            if (((*itrA)->GetCollisionAttribute() & (*itrB)->GetCollisionMask()) == 0 ||
+                ((*itrB)->GetCollisionAttribute() & (*itrA)->GetCollisionMask()) == 0) {
+                continue; // 衝突しない場合はスキップ
+            }
             CheckCollisionPair(*itrA, *itrB);
         }
     }

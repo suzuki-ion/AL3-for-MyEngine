@@ -1,3 +1,4 @@
+#include "CollisionConfig.h"
 #include "EnemyBullet.h"
 
 using namespace KashipanEngine;
@@ -32,6 +33,8 @@ EnemyBullet::EnemyBullet(Engine *kashipanEngine, Model *model, const Vector3 &po
     speed_ = speed;
     isAlive_ = true;
 
+    SetCollisionAttribute(kCollisionAttributeEnemy);
+    SetCollisionMask(std::bitset<8>(kCollisionAttributeEnemy).flip());
     SetRadius(0.5f);
 }
 

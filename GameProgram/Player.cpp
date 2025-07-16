@@ -3,6 +3,7 @@
 #include <Math/Camera.h>
 #include <numbers>
 
+#include "CollisionConfig.h"
 #include "KeyConfig.h"
 #include "Player.h"
 
@@ -40,6 +41,8 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
 
+    SetCollisionAttribute(kCollisionAttributePlayer);
+    SetCollisionMask(std::bitset<8>(kCollisionAttributePlayer).flip());
     SetRadius(1.0f);
 }
 
