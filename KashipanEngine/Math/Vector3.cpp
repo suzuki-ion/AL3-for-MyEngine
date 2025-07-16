@@ -15,7 +15,7 @@ Vector3 Vector3::Lerp(const Vector3 &start, const Vector3 &end, float t) noexcep
 Vector3 Vector3::Slerp(const Vector3 &start, const Vector3 &end, float t) noexcept {
     Vector3 normalizedStart = start.Normalize();
     Vector3 normalizedEnd = end.Normalize();
-    
+
     float dotProduct = normalizedStart.Dot(normalizedEnd);
     // Dotの値が変な値にならないよう制限
     dotProduct = std::clamp(dotProduct, -1.0f, 1.0f);
@@ -199,7 +199,7 @@ Vector3 Vector3::Transform(const Matrix4x4 &mat) const noexcept {
     return result;
 }
 
-inline constexpr const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept {
+const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept {
     return Vector3(
         mat.m[0][0] * vector.x + mat.m[0][1] * vector.y + mat.m[0][2] * vector.z + mat.m[0][3],
         mat.m[1][0] * vector.x + mat.m[1][1] * vector.y + mat.m[1][2] * vector.z + mat.m[1][3],
@@ -207,7 +207,7 @@ inline constexpr const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &ve
     );
 }
 
-inline constexpr const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept {
+const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept {
     return Vector3(
         vector.x * mat.m[0][0] + vector.y * mat.m[1][0] + vector.z * mat.m[2][0] + mat.m[3][0],
         vector.x * mat.m[0][1] + vector.y * mat.m[1][1] + vector.z * mat.m[2][1] + mat.m[3][1],
