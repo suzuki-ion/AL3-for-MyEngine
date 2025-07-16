@@ -3,6 +3,7 @@
 #include <Objects.h>
 #include <Math/Camera.h>
 #include <3d/DirectionalLight.h>
+#include <Common/GridLine.h>
 
 #include "Player.h"
 #include "Enemy.h"
@@ -29,6 +30,9 @@ private:
     std::unique_ptr<Player> player_;
     // 敵
     std::unique_ptr<Enemy> enemy_;
+
+    // グリッド線
+    std::unique_ptr<KashipanEngine::GridLine> gridLine_;
 
     // カメラ
     std::unique_ptr<KashipanEngine::Camera> camera_;

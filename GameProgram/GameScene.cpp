@@ -19,6 +19,10 @@ GameScene::GameScene(Engine *engine) {
     // レンダラーへのポインタを取得
     sRenderer = sKashipanEngine->GetRenderer();
 
+    // グリッド線
+    gridLine_ = std::make_unique<GridLine>(GridLineType::XZ, 1.0f, 10000);
+    gridLine_->SetRenderer(sRenderer);
+
     // カメラのインスタンスを作成
     camera_ = std::make_unique<Camera>();
     camera_->SetTranslate(Vector3(0.0f, 0.0f, -64.0f));
@@ -67,6 +71,8 @@ void GameScene::Draw() {
 #endif // _DEBUG
     
     sRenderer->SetLight(&light_);
+
+    gridLine_->Draw();
     
     player_->Draw();
     enemy_->Draw();
@@ -75,30 +81,49 @@ void GameScene::Draw() {
 }
 
 void GameScene::CheckAllCollisions() {
-    // 自機の弾リスト取得
-    const auto &playerBullets = player_->GetBullets();
-    // 敵の弾リスト取得
-    const auto &enemyBullets = enemy_->GetBullets();
-
-    //--------- 自機と敵弾 ---------//
-
-    for (const auto &bullet : enemyBullets) {
-        CheckCollisionPair(player_.get(), bullet.get());
+    std::list<Collider *> colliders;
+    colliders.push_back(player_.get());
+    colliders.push_back(enemy_.get());
+    for (auto &bullet : player_->GetBullets()) {
+        colliders.push_back(bullet.get());
+    }
+    for (auto &bullet : enemy_->GetBullets()) {
+        colliders.push_back(bullet.get());
     }
 
-    //--------- 自弾と敵機 ---------//
-
-    for (const auto &bullet : playerBullets) {
-        CheckCollisionPair(enemy_.get(), bullet.get());
-    }
-
-    //--------- 自弾と敵弾 ---------//
-
-    for (const auto &playerBullet : playerBullets) {
-        for (const auto &enemyBullet : enemyBullets) {
-            CheckCollisionPair(playerBullet.get(), enemyBullet.get());
+    // リスト内のペアを総当たり
+    auto itrA = colliders.begin();
+    for (; itrA != colliders.end(); ++itrA) {
+        auto itrB = itrA;
+        for (; itrB != colliders.end(); ++itrB) {
+            CheckCollisionPair(*itrA, *itrB);
         }
     }
+
+    //// 自機の弾リスト取得
+    //const auto &playerBullets = player_->GetBullets();
+    //// 敵の弾リスト取得
+    //const auto &enemyBullets = enemy_->GetBullets();
+
+    ////--------- 自機と敵弾 ---------//
+
+    //for (const auto &bullet : enemyBullets) {
+    //    CheckCollisionPair(player_.get(), bullet.get());
+    //}
+
+    ////--------- 自弾と敵機 ---------//
+
+    //for (const auto &bullet : playerBullets) {
+    //    CheckCollisionPair(enemy_.get(), bullet.get());
+    //}
+
+    ////--------- 自弾と敵弾 ---------//
+
+    //for (const auto &playerBullet : playerBullets) {
+    //    for (const auto &enemyBullet : enemyBullets) {
+    //        CheckCollisionPair(playerBullet.get(), enemyBullet.get());
+    //    }
+    //}
 }
 
 void GameScene::CheckCollisionPair(Collider *colliderA, Collider *colliderB) {

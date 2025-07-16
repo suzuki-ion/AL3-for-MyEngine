@@ -149,6 +149,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Common\Descriptors\RTV.cpp" />
     <ClCompile Include="KashipanEngine\Common\Descriptors\SRV.cpp" />
     <ClCompile Include="KashipanEngine\Common\Easings.cpp" />
+    <ClCompile Include="KashipanEngine\Common\GridLine.cpp" />
     <ClCompile Include="KashipanEngine\Common\KeyFrameAnimation.cpp" />
     <ClCompile Include="KashipanEngine\Common\Logs.cpp" />
     <ClCompile Include="KashipanEngine\Common\TimeGet.cpp" />
@@ -169,6 +170,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Math\RenderingPipeline.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
     <ClCompile Include="KashipanEngine\Objects\BillBoard.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Object.cpp" />
@@ -227,6 +229,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Common\Descriptors\RTV.h" />
     <ClInclude Include="KashipanEngine\Common\Descriptors\SRV.h" />
     <ClInclude Include="KashipanEngine\Common\Easings.h" />
+    <ClInclude Include="KashipanEngine\Common\GridLine.h" />
     <ClInclude Include="KashipanEngine\Common\KeyFrameAnimation.h" />
     <ClInclude Include="KashipanEngine\Common\Logs.h" />
     <ClInclude Include="KashipanEngine\Common\Material.h" />
@@ -237,6 +240,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Common\TimeGet.h" />
     <ClInclude Include="KashipanEngine\Common\TransformationMatrix.h" />
     <ClInclude Include="KashipanEngine\Common\VertexData.h" />
+    <ClInclude Include="KashipanEngine\Common\VertexDataLine.h" />
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />
     <ClInclude Include="KashipanEngine\Math\AffineMatrix.h" />
     <ClInclude Include="KashipanEngine\Math\Bezier.h" />
