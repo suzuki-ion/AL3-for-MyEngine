@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "CollisionManager.h"
+#include "Skydome.h"
 
 class GameScene {
 public:
@@ -28,7 +29,9 @@ private:
     std::unique_ptr<Enemy> enemy_;
     // 衝突管理
     std::unique_ptr<CollisionManager> collisionManager_;
-
+    // スカイドーム
+    std::unique_ptr<Skydome> skydome_;
+    
     // グリッド線
     std::unique_ptr<KashipanEngine::GridLine> gridLine_;
     // カメラ
