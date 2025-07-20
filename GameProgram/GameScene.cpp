@@ -37,6 +37,8 @@ GameScene::GameScene(Engine *engine) {
     collisionManager_ = std::make_unique<CollisionManager>();
     // スカイドームのインスタンスを作成
     skydome_ = std::make_unique<Skydome>(sKashipanEngine);
+    // 地面のインスタンスを作成
+    ground_ = std::make_unique<Ground>(sKashipanEngine);
 
     // ライトの設定
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
@@ -77,6 +79,7 @@ void GameScene::Draw() {
 
     gridLine_->Draw();
     skydome_->Draw();
+    ground_->Draw();
     
     player_->Draw();
     enemy_->Draw();

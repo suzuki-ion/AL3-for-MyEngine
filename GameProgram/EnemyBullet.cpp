@@ -1,5 +1,6 @@
 #include "CollisionConfig.h"
 #include "EnemyBullet.h"
+#include <numbers>
 
 using namespace KashipanEngine;
 
@@ -47,8 +48,10 @@ void EnemyBullet::Update() {
         return;
     }
 
+    // ターゲットへの方向を計算する
     Vector3 toTarget = sTargetPosition - worldTransform_->translate_;
 
+    // ターゲットの方向に向かうベクトルを正規化する
     toTarget = toTarget.Normalize();
     velocity_ = velocity_.Normalize();
     velocity_ = Vector3::Slerp(velocity_, toTarget, 0.1f);
@@ -75,4 +78,6 @@ void EnemyBullet::RotateFromVelocity() {
     float yaw = atan2f(direction.x, -direction.z);
     float pitch = atan2f(direction.y, sqrtf(direction.x * direction.x + direction.z * direction.z));
     worldTransform_->rotate_ = Vector3(pitch, -yaw, 0.0f);
+    // 何故か弾が逆方向を向いてしまうので調整
+    worldTransform_->rotate_.x += std::numbers::pi_v<float>;
 }
