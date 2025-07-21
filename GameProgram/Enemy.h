@@ -26,6 +26,12 @@ public:
 		kNumCorner // 要素数
 	};
 
+	enum class Behaivior {
+		kUnknown,	// 未定義
+        kRoot,		// 通常行動
+        kDeathAnim  // 死亡アニメーション
+	};
+
 	struct CollisionMapInfo {
 		bool isHitUp = false;
 		bool isHitGround = false;
@@ -68,6 +74,12 @@ public:
 	// AABBの取得
 	KashipanEngine::Math::AABB GetAABB();
 
+	// デスフラグの取得
+	bool IsDead() const { return isDead_; }
+
+	// 生存状態の取得
+	bool IsAlive() const { return behaivior_ == Behaivior::kRoot; }
+
 private:
 	// 移動処理
 	void Move();
@@ -90,6 +102,11 @@ private:
 	// 旋回処理
 	void Turn();
 
+	// 通常行動処理
+    void BehaiviorRootUpdate();
+    // 死亡アニメーション処理
+    void BehaiviorDeathAnimUpdate();
+
 	// ワールド変換データ
 	std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
 	// モデル
@@ -108,6 +125,14 @@ private:
 	// 接地状態フラグ
 	bool onGround_ = true;
 
+	// デスフラグ
+	bool isDead_ = false;
+
+	// 振る舞い
+	Behaivior behaivior_ = Behaivior::kRoot;
+
 	// 歩行アニメーション用タイマー
 	float walkTimer_ = 0.0f;
+    // 死亡アニメーション用タイマー
+    float deathAnimTimer_ = 0.0f;
 };

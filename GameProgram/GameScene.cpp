@@ -166,6 +166,11 @@ void GameScene::Update() {
 
 #endif // _DEBUG
 
+	// 死んだ敵を削除
+	enemies_.remove_if([](const std::unique_ptr<Enemy>& enemy) {
+		return enemy->IsDead();
+    });
+
 	// フェードの更新
 	fade_->Update();
 

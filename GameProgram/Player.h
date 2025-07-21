@@ -84,6 +84,9 @@ public:
     // デスフラグの取得
     bool IsDead() const { return isDead_; }
 
+    // 攻撃状態の取得
+    bool IsAttack() const { return behaivior_ == Behaivior::kAttack; }
+
 private:
     // 通常行動更新
     void BehaiviorRootUpdate();

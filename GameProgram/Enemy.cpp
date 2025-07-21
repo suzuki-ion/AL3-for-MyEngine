@@ -1,6 +1,7 @@
 #define NOMINMAX
 
 #include "Enemy.h"
+#include "Player.h"
 #include "MapChipField.h"
 #include "Easings.h"
 #include "Base/Input.h"
@@ -47,14 +48,16 @@ void Enemy::Initialize(KashipanEngine::Model *model, const KashipanEngine::Vecto
 }
 
 void Enemy::Update() {
-    // 移動処理
-    Move();
-    // 当たり判定処理
-    CollisionCheck();
-    // 旋回処理
-    Turn();
-    // 歩行アニメーション
-    Animation();
+    switch (behaivior_) {
+        case Enemy::Behaivior::kRoot:
+            // ルート状態の更新処理
+            BehaiviorRootUpdate();
+            break;
+        case Enemy::Behaivior::kDeathAnim:
+            // 死亡アニメーション状態の更新処理
+            BehaiviorDeathAnimUpdate();
+            break;
+    }
 
     // 行列の転送
     worldTransform_->TransferMatrix();
@@ -66,7 +69,17 @@ void Enemy::Draw() {
 }
 
 void Enemy::OnCollision(const Player *player) {
-    static_cast<void>(player);
+    // 既にやられている場合は何もしない
+    if (behaivior_ == Enemy::Behaivior::kDeathAnim) {
+        return;
+    }
+
+    // プレイヤーが攻撃中なら死亡アニメーションへ遷移
+    if (player->IsAttack()) {
+        behaivior_ = Enemy::Behaivior::kDeathAnim;
+        // 死亡アニメーションのタイマーをリセット
+        deathAnimTimer_ = 0.0f;
+    }
 }
 
 const KashipanEngine::Vector3 Enemy::GetPosition() {
@@ -385,5 +398,35 @@ void Enemy::Turn() {
         float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
         // 自キャラの角度を設定する
         worldTransform_->rotate_.y = Ease::OutCubic(turnTimer_ / kTimeTurn, turnFirstRotationY_, destinationRotationY);
+    }
+}
+
+void Enemy::BehaiviorRootUpdate() {
+    // 移動処理
+    Move();
+    // 当たり判定処理
+    CollisionCheck();
+    // 旋回処理
+    Turn();
+    // 歩行アニメーション
+    Animation();
+}
+
+void Enemy::BehaiviorDeathAnimUpdate() {
+    // 死亡アニメーションの更新処理
+    static const float kDeathAnimTime = 1.0f; // 死亡アニメーションの時間
+    deathAnimTimer_ += 1.0f / 60.0f; // タイマーを1/60秒分カウント
+    if (deathAnimTimer_ >= kDeathAnimTime) {
+        // アニメーションが終了したら削除フラグを立てる
+        isDead_ = true;
+    } else {
+        // アニメーション中はY軸回転と縮小を行う
+        float rotationY = std::numbers::pi_v<float> *2.0f * (deathAnimTimer_ / kDeathAnimTime);
+        worldTransform_->rotate_.y = rotationY;
+        worldTransform_->scale_ = KashipanEngine::Vector3(
+            1.0f - deathAnimTimer_ / kDeathAnimTime,
+            1.0f - deathAnimTimer_ / kDeathAnimTime,
+            1.0f - deathAnimTimer_ / kDeathAnimTime
+        );
     }
 }

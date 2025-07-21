@@ -1,6 +1,7 @@
 #define NOMINMAX
 
 #include "Player.h"
+#include "Enemy.h"
 #include "MapChipField.h"
 #include "Easings.h"
 #include "Base/Input.h"
@@ -87,9 +88,15 @@ void Player::Draw() {
 }
 
 void Player::OnCollision(const Enemy* enemy) {
-	static_cast<void>(enemy);
-	// デスフラグを立てる
-	isDead_ = true;
+    // 攻撃中の場合は何もしない
+	if (IsAttack()) {
+		return;
+    }
+
+    // 生きてる敵に当たった場合は死亡フラグを立てる
+	if (enemy->IsAlive()) {
+		isDead_ = true;
+	}
 }
 
 const KashipanEngine::Vector3 Player::GetPosition() {
