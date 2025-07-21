@@ -10,6 +10,7 @@
 #include "CollisionManager.h"
 #include "Skydome.h"
 #include "Ground.h"
+#include "RailCameraController.h"
 
 class GameScene {
 public:
@@ -34,6 +35,9 @@ private:
     std::unique_ptr<Skydome> skydome_;
     // 地面
     std::unique_ptr<Ground> ground_;
+
+    // カメラコントローラー
+    std::unique_ptr<RailCameraController> railCameraController_;
     
     // グリッド線
     std::unique_ptr<KashipanEngine::GridLine> gridLine_;

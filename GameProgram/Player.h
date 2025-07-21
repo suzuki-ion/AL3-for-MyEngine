@@ -69,6 +69,8 @@ private:
     KashipanEngine::Camera *camera_;
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
+    // カメラのワールド変換データ
+    std::unique_ptr<KashipanEngine::WorldTransform> cameraWorldTransform_;
     // 回転専用ベクトル
     KashipanEngine::Vector3 rotateVector_;
 

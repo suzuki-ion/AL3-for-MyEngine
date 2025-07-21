@@ -24,10 +24,13 @@ GameScene::GameScene(Engine *engine) {
 
     // カメラのインスタンスを作成
     camera_ = std::make_unique<Camera>();
-    camera_->SetTranslate(Vector3(0.0f, 0.0f, -64.0f));
+    camera_->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
     camera_->CalculateMatrix();
     // レンダラーにカメラを設定
     sRenderer->SetCamera(camera_.get());
+
+    // カメラコントローラーのインスタンスを作成
+    railCameraController_ = std::make_unique<RailCameraController>(camera_.get());
 
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
@@ -52,6 +55,7 @@ void GameScene::Update() {
     enemy_->SetPlayerPosition(player_->GetWorldPosition());
     enemy_->Update();
     CheckAllCollisions();
+    railCameraController_->Update();
 
 #ifdef _DEBUG
     if (Input::IsKeyTrigger(DIK_F1)) {

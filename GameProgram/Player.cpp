@@ -40,6 +40,9 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
 
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
+    cameraWorldTransform_ = std::make_unique<WorldTransform>();
+    worldTransform_->parentTransform_ = cameraWorldTransform_.get();
+    worldTransform_->translate_.z = 64.0f; // カメラからの距離を設定
 
     SetCollisionAttribute(kCollisionAttributePlayer);
     SetCollisionMask(std::bitset<8>(kCollisionAttributePlayer).flip());
@@ -149,6 +152,12 @@ void Player::Move() {
 
     worldTransform_->translate_ += velocity_;
 
+    // カメラのワールド変換データを更新
+    cameraWorldTransform_->translate_ = camera_->GetTranslate();
+    cameraWorldTransform_->rotate_ = camera_->GetRotate();
+    cameraWorldTransform_->scale_ = camera_->GetScale();
+    cameraWorldTransform_->TransferMatrix();
+
     // ワールド変換データを更新
     worldTransform_->TransferMatrix();
 }
@@ -179,7 +188,12 @@ void Player::Rotate() {
 }
 
 void Player::LimitPosition() {
-    const float length = (camera_->GetTranslate() - worldTransform_->translate_).Length();
+    const Vector3 cameraTranslate(
+        cameraWorldTransform_->worldMatrix_.m[3][0],
+        cameraWorldTransform_->worldMatrix_.m[3][1],
+        cameraWorldTransform_->worldMatrix_.m[3][2]
+    );
+    const float length = (cameraTranslate - GetWorldPosition()).Length();
     const float kMoveLimitX = length * 16.0f / 48.0f;
     const float kMoveLimitY = length * 9.0f / 48.0f;
     
@@ -203,12 +217,13 @@ void Player::Attack() {
 
 void Player::ShootBullet() {
     const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
+    const Vector3 kShootPos = GetWorldPosition();
 
     bullets_.push_back(
         std::make_unique<PlayerBullet>(
             sKashipanEngine,
             bulletModel_.get(),
-            worldTransform_->translate_,
+            kShootPos,
             TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
             5.0f
         )
