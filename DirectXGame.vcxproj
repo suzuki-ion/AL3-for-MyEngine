@@ -175,6 +175,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
     <ClCompile Include="KashipanEngine\Objects\BillBoard.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Lines.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Object.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Plane.cpp" />
@@ -273,6 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
     <ClInclude Include="KashipanEngine\Objects.h" />
     <ClInclude Include="KashipanEngine\Objects\BillBoard.h" />
+    <ClInclude Include="KashipanEngine\Objects\Lines.h" />
     <ClInclude Include="KashipanEngine\Objects\Model.h" />
     <ClInclude Include="KashipanEngine\Objects\Object.h" />
     <ClInclude Include="KashipanEngine\Objects\Plane.h" />

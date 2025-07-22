@@ -30,7 +30,7 @@ GameScene::GameScene(Engine *engine) {
     sRenderer->SetCamera(camera_.get());
 
     // カメラコントローラーのインスタンスを作成
-    railCameraController_ = std::make_unique<RailCameraController>(camera_.get());
+    railCameraController_ = std::make_unique<RailCameraController>(camera_.get(), sRenderer);
 
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
@@ -77,6 +77,8 @@ void GameScene::Draw() {
     ImGui::End();
 
     sKashipanEngine->SetFrameRate(frameRate);
+
+    railCameraController_->DebugDraw();
 #endif // _DEBUG
     
     sRenderer->SetLight(&light_);
