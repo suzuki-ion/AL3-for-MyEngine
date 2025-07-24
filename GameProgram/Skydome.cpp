@@ -8,6 +8,7 @@ Skydome::Skydome(Engine *kashipanEngine) {
     kashipanEngine_ = kashipanEngine;
     // ワールド変換データの生成
     worldTransform_ = std::make_unique<WorldTransform>();
+    worldTransform_->scale_ = Vector3(10.0f);
 
     // エンジンのレンダラーを取得
     Renderer *renderer = kashipanEngine_->GetRenderer();

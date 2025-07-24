@@ -3,6 +3,7 @@
 #include <memory>
 #include "PipeLineSet.h"
 #include "VertexDataLine.h"
+#include "LineOption.h"
 #include "Mesh.h"
 #include "TransformationMatrix.h"
 
@@ -64,8 +65,6 @@ private:
 
     GridLineType type_ = GridLineType::XZ;
     float gridSize_ = 0.0f;
-
-    
     
     /// @brief 1軸上における線の片側の数
     UINT axisLineSideCount_ = 0;
@@ -79,7 +78,9 @@ private:
     
     std::unique_ptr<Mesh<VertexDataLine>> mesh_;
     Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource_;
+    Microsoft::WRL::ComPtr<ID3D12Resource> lineOptionResource_;
     TransformationMatrix *transformationMatrixMap_ = nullptr;
+    LineOption *lineOptionMap_ = nullptr;
 };
 
 } // namespace KashipanEngine

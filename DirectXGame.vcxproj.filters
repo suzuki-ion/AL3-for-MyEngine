@@ -539,6 +539,9 @@
     <ClInclude Include="KashipanEngine\Objects\Lines.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Common\LineOption.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.VS.hlsl" />

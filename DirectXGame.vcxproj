@@ -240,6 +240,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Common\Easings.h" />
     <ClInclude Include="KashipanEngine\Common\GridLine.h" />
     <ClInclude Include="KashipanEngine\Common\KeyFrameAnimation.h" />
+    <ClInclude Include="KashipanEngine\Common\LineOption.h" />
     <ClInclude Include="KashipanEngine\Common\Logs.h" />
     <ClInclude Include="KashipanEngine\Common\Material.h" />
     <ClInclude Include="KashipanEngine\Common\Mesh.h" />

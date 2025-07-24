@@ -74,10 +74,8 @@ void EnemyBullet::Draw() {
 }
 
 void EnemyBullet::RotateFromVelocity() {
-    Vector3 direction = velocity_.Normalize();
+    Vector3 direction = -velocity_.Normalize();
     float yaw = atan2f(direction.x, -direction.z);
     float pitch = atan2f(direction.y, sqrtf(direction.x * direction.x + direction.z * direction.z));
     worldTransform_->rotate_ = Vector3(pitch, -yaw, 0.0f);
-    // 何故か弾が逆方向を向いてしまうので調整
-    worldTransform_->rotate_.x += std::numbers::pi_v<float>;
 }
