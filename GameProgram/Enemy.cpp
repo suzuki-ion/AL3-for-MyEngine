@@ -1,5 +1,6 @@
 #include <Base/Renderer.h>
 
+#include "GameScene.h"
 #include "CollisionConfig.h"
 #include "Enemy.h"
 #include "EnemyStateApproach.h"
@@ -21,10 +22,11 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
     return result;
 }
 
-}
+} // namespace
 
-Enemy::Enemy(Engine *kashipanEngine) {
+Enemy::Enemy(Engine *kashipanEngine, const KashipanEngine::Vector3 &spawnPos, GameScene *gameScene) {
     sKashipanEngine = kashipanEngine;
+    gameScene_ = gameScene;
     // エンジンのレンダラーを取得
     Renderer *renderer = sKashipanEngine->GetRenderer();
 
@@ -37,7 +39,7 @@ Enemy::Enemy(Engine *kashipanEngine) {
 
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
-    worldTransform_->translate_ = { -16.0f, -8.0f, 128.0f };
+    worldTransform_->translate_ = spawnPos;
 
     // 初期フェーズの設定
     ChangeState(std::make_unique<EnemyStateApproach>(sKashipanEngine, this));
@@ -82,6 +84,7 @@ void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> newState) {
 }
 
 void Enemy::OnCollision() {
+    isAlive_ = false;
 }
 
 void Enemy::Update() {
@@ -96,23 +99,10 @@ void Enemy::Update() {
     if (timedCall_ != nullptr) {
         timedCall_->Update();
     }
-    // 弾の更新
-    for (auto &bullet : bullets_) {
-        bullet->Update();
-    }
-    // 弾の削除処理
-    bullets_.remove_if([](const std::unique_ptr<EnemyBullet> &bullet) {
-        return !bullet->IsAlive();
-        });
 }
 
 void Enemy::Draw() {
     model_->Draw(*worldTransform_);
-    
-    // 弾を描画
-    for (auto &bullet : bullets_) {
-        bullet->Draw();
-    }
 }
 
 void Enemy::Fire() {
@@ -124,7 +114,7 @@ void Enemy::Fire() {
     Vector3 kBulletVelocity(playerPosition_ - enemyPosition);
     kBulletVelocity = kBulletVelocity.Normalize();
 
-    bullets_.push_back(
+    gameScene_->AddEnemyBullet(
         std::make_unique<EnemyBullet>(
             sKashipanEngine,
             bulletModel_.get(),

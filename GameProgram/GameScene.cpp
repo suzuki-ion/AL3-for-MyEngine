@@ -1,4 +1,5 @@
 #include "GameScene.h"
+#include <fstream>
 #include <Base/Renderer.h>
 #include <Base/Input.h>
 #include <2d/ImGuiManager.h>
@@ -30,12 +31,11 @@ GameScene::GameScene(Engine *engine) {
     sRenderer->SetCamera(camera_.get());
 
     // カメラコントローラーのインスタンスを作成
-    railCameraController_ = std::make_unique<RailCameraController>(camera_.get(), sRenderer);
+    //railCameraController_ = std::make_unique<RailCameraController>(camera_.get(), sRenderer);
 
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
-    // 敵のインスタンスを作成
-    enemy_ = std::make_unique<Enemy>(sKashipanEngine);
+    player_->SetGameScene(this);
     // 衝突判定管理クラスのインスタンスを作成
     collisionManager_ = std::make_unique<CollisionManager>();
     // スカイドームのインスタンスを作成
@@ -47,15 +47,42 @@ GameScene::GameScene(Engine *engine) {
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
     light_.color = Vector4(255.0f, 255.0f, 255.0f, 255.0f);
     light_.intensity = 1.0f;
+
+    // 敵発生コマンドの読み込み
+    LoadEnemyPopData();
 }
 
 void GameScene::Update() {
     player_->Update();
     EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
-    enemy_->SetPlayerPosition(player_->GetWorldPosition());
-    enemy_->Update();
+    for (auto &enemy : enemies_) {
+        enemy->SetPlayerPosition(player_->GetWorldPosition());
+        enemy->Update();
+    }
+    enemies_.remove_if([](const std::unique_ptr<Enemy> &enemy) {
+        return !enemy->IsAlive();
+        });
+
+    // 弾の更新
+    for (auto &bullet : playerBullets_) {
+        bullet->Update();
+    }
+    for (auto &bullet : enemyBullets_) {
+        bullet->Update();
+    }
+
+    // 弾の削除処理
+    playerBullets_.remove_if([](const std::unique_ptr<PlayerBullet> &bullet) {
+        return !bullet->IsAlive();
+        });
+    enemyBullets_.remove_if([](const std::unique_ptr<EnemyBullet> &bullet) {
+        return !bullet->IsAlive();
+        });
+
     CheckAllCollisions();
-    railCameraController_->Update();
+    //railCameraController_->Update();
+    UpdateEnemyPopCommands();
+    
 
 #ifdef _DEBUG
     if (Input::IsKeyTrigger(DIK_F1)) {
@@ -78,7 +105,7 @@ void GameScene::Draw() {
 
     sKashipanEngine->SetFrameRate(frameRate);
 
-    railCameraController_->DebugDraw();
+    //railCameraController_->DebugDraw();
 #endif // _DEBUG
     
     sRenderer->SetLight(&light_);
@@ -88,8 +115,16 @@ void GameScene::Draw() {
     ground_->Draw();
     
     player_->Draw();
-    enemy_->Draw();
-    
+    for (auto &enemy : enemies_) {
+        enemy->Draw();
+    }
+    for (auto &bullet : playerBullets_) {
+        bullet->Draw();
+    }
+    for (auto &bullet : enemyBullets_) {
+        bullet->Draw();
+    }
+
     sRenderer->PostDraw();
 }
 
@@ -97,13 +132,89 @@ void GameScene::CheckAllCollisions() {
     collisionManager_->ClearColliders();
 
     collisionManager_->AddCollider(player_.get());
-    collisionManager_->AddCollider(enemy_.get());
-    for (auto &bullet : player_->GetBullets()) {
+    for (auto &enemy : enemies_) {
+        collisionManager_->AddCollider(enemy.get());
+    }
+    for (auto &bullet : playerBullets_) {
         collisionManager_->AddCollider(bullet.get());
     }
-    for (auto &bullet : enemy_->GetBullets()) {
+    for (auto &bullet : enemyBullets_) {
         collisionManager_->AddCollider(bullet.get());
     }
 
     collisionManager_->Update();
+}
+
+void GameScene::LoadEnemyPopData() {
+    std::ifstream file("Resources/enemy_pop.csv");
+    assert(file.is_open());
+
+    // ファイルの内容を文字列ストリームにコピー
+    enemyPopCommands_ << file.rdbuf();
+
+    // ファイルを閉じる
+    file.close();
+}
+
+void GameScene::UpdateEnemyPopCommands() {
+    // 待機処理
+    if (isEnemyPopWait_) {
+        enemyPopWaitTimer_--;
+        if (enemyPopWaitTimer_ <= 0) {
+            isEnemyPopWait_ = false;
+        }
+        return;
+    }
+
+    // 1行分の文字列を入れる変数
+    std::string line;
+
+    // コマンド実行ループ
+    while (std::getline(enemyPopCommands_, line)) {
+        // 1行分の文字列をストリームに変換して解析しやすくする
+        std::istringstream lineStream(line);
+
+        std::string word;
+        std::getline(lineStream, word, ',');
+
+        // "//"から始まる行はコメント
+        if (word.find("//") == 0) {
+            continue;
+
+        } else if (word.find("POP") == 0) {
+            //--------- POP ---------//
+            
+            // x座標
+            std::getline(lineStream, word, ',');
+            float x = static_cast<float>(std::atof(word.c_str()));
+            // y座標
+            std::getline(lineStream, word, ',');
+            float y = static_cast<float>(std::atof(word.c_str()));
+            // z座標
+            std::getline(lineStream, word, ',');
+            float z = static_cast<float>(std::atof(word.c_str()));
+
+            // 敵を発生させる
+            PopEnemy(Vector3(x, y, z));
+
+        } else if (word.find("WAIT") == 0) {
+            //--------- WAIT ---------//
+
+            std::getline(lineStream, word, ',');
+
+            // 待ち時間
+            int32_t waitTime = std::atoi(word.c_str());
+
+            // 待機開始
+            isEnemyPopWait_ = true;
+            enemyPopWaitTimer_ = waitTime;
+
+            // コマンドループを抜ける
+            break;
+        }
+    }
+}
+
+void GameScene::PopEnemy(const KashipanEngine::Vector3 &pos) {
+    enemies_.push_back(std::make_unique<Enemy>(sKashipanEngine, pos, this));
 }

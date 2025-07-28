@@ -8,6 +8,8 @@
 #include "Collider.h"
 #include "PlayerBullet.h"
 
+class GameScene;
+
 class Player : public Collider {
 public:
     // 1秒あたりの移動速度
@@ -28,15 +30,16 @@ public:
 
     Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
+    void SetGameScene(GameScene *gameScene) {
+        gameScene_ = gameScene;
+    }
+
     KashipanEngine::Vector3 GetWorldPosition() override {
         return {
             worldTransform_->worldMatrix_.m[3][0],
             worldTransform_->worldMatrix_.m[3][1],
             worldTransform_->worldMatrix_.m[3][2]
         };
-    }
-    const std::list<std::unique_ptr<PlayerBullet>> &GetBullets() const {
-        return bullets_;
     }
 
     // 衝突を検知したら呼び出されるコールバック関数
@@ -65,6 +68,9 @@ private:
     // 弾発射用関数
     void ShootBullet();
 
+    // ゲームシーンへのポインタ
+    GameScene *gameScene_ = nullptr;
+
     // カメラへのポインタ
     KashipanEngine::Camera *camera_;
     // ワールド変換データ
@@ -85,7 +91,4 @@ private:
     MoveDirectionLR moveDirectionLR_ = MoveDirectionLR::kMoveNone;
     // 移動方向(上下)
     MoveDirectionUD moveDirectionUD_ = MoveDirectionUD::kMoveNone;
-
-    // 弾のリスト
-    std::list<std::unique_ptr<PlayerBullet>> bullets_;
 };

@@ -10,16 +10,18 @@
 #include "EnemyBullet.h"
 #include "TimedCall.h"
 
+class GameScene;
+
 class Enemy : public Collider {
 public:
     static inline const float kMoveSpeed = 3.0f;
     static inline const float kFireInterval = 1.0f;
 
-    Enemy(Engine *kashipanEngine);
+    Enemy(Engine *kashipanEngine, const KashipanEngine::Vector3 &spawnPos, GameScene *gameScene);
 
     void AddTranslate(const KashipanEngine::Vector3 &translate);
-    void SetBulletFireEnable(bool enable);
 
+    void SetBulletFireEnable(bool enable);
     void SetPlayerPosition(KashipanEngine::Vector3 playerPosition);
 
     KashipanEngine::Vector3 GetWorldPosition() override {
@@ -29,8 +31,9 @@ public:
             worldTransform_->worldMatrix_.m[3][2]
         };
     }
-    const std::list<std::unique_ptr<EnemyBullet>> &GetBullets() const {
-        return bullets_;
+
+    bool IsAlive() {
+        return isAlive_;
     }
 
     // 状態遷移
@@ -48,6 +51,9 @@ private:
     // 弾発射処理
     void Fire();
 
+    // ゲームシーンへのポインタ
+    GameScene *gameScene_ = nullptr;
+
     // プレイヤーのワールド座標
     KashipanEngine::Vector3 playerPosition_;
 
@@ -61,9 +67,10 @@ private:
     // 状態管理
     std::unique_ptr<BaseEnemyState> state_;
 
-    // 弾のリスト
-    std::list<std::unique_ptr<EnemyBullet>> bullets_;
     // 時限発動のリスト
     std::unique_ptr<TimedCall> timedCall_;
+
+    // 生存フラグ
+    bool isAlive_ = true;
 };
 

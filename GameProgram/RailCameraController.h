@@ -28,7 +28,7 @@ private:
     KashipanEngine::Camera *camera_;
 
     float time_ = 0.0f;
-    float moveSpeed = 10.0f;
+    float moveSpeed = 32.0f;
     bool isLoop_ = true;
 };
 

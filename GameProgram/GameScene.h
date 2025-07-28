@@ -1,4 +1,5 @@
 #pragma once
+#include <sstream>
 #include <KashipanEngine.h>
 #include <Objects.h>
 #include <Math/Camera.h>
@@ -6,7 +7,9 @@
 #include <Common/GridLine.h>
 
 #include "Player.h"
+#include "PlayerBullet.h"
 #include "Enemy.h"
+#include "EnemyBullet.h"
 #include "CollisionManager.h"
 #include "Skydome.h"
 #include "Ground.h"
@@ -17,6 +20,15 @@ public:
     // コンストラクタ
     GameScene(Engine *kashipanEngine);
     
+    // プレイヤーの弾の追加
+    void AddPlayerBullet(std::unique_ptr<PlayerBullet> bullet) {
+        playerBullets_.emplace_back(std::move(bullet));
+    }
+    // 敵の弾の追加
+    void AddEnemyBullet(std::unique_ptr<EnemyBullet> bullet) {
+        enemyBullets_.emplace_back(std::move(bullet));
+    }
+
 	// 更新
 	void Update();
 	// 描画
@@ -24,17 +36,25 @@ public:
 
 private:
     void CheckAllCollisions();
+    void LoadEnemyPopData();
+    void UpdateEnemyPopCommands();
+    void PopEnemy(const KashipanEngine::Vector3 &pos);
 
     // プレイヤー
     std::unique_ptr<Player> player_;
     // 敵
-    std::unique_ptr<Enemy> enemy_;
+    std::list<std::unique_ptr<Enemy>> enemies_;
     // 衝突管理
     std::unique_ptr<CollisionManager> collisionManager_;
     // スカイドーム
     std::unique_ptr<Skydome> skydome_;
     // 地面
     std::unique_ptr<Ground> ground_;
+
+    // プレイヤーの弾
+    std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
+    // 敵の弾
+    std::list<std::unique_ptr<EnemyBullet>> enemyBullets_;
 
     // カメラコントローラー
     std::unique_ptr<RailCameraController> railCameraController_;
@@ -45,4 +65,11 @@ private:
     std::unique_ptr<KashipanEngine::Camera> camera_;
     // ライト
     KashipanEngine::DirectionalLight light_;
+
+    // 敵発生コマンド
+    std::stringstream enemyPopCommands_;
+    // 敵発生待ち時間
+    int32_t enemyPopWaitTimer_ = 0;
+    // 敵発生待ち時間フラグ
+    bool isEnemyPopWait_ = false;
 };

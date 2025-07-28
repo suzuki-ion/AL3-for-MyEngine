@@ -3,6 +3,7 @@
 #include <Math/Camera.h>
 #include <numbers>
 
+#include "GameScene.h"
 #include "CollisionConfig.h"
 #include "KeyConfig.h"
 #include "Player.h"
@@ -23,7 +24,7 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
     return result;
 }
 
-}
+} // namespace
 
 Player::Player(Engine *kashipanEngine, Camera *camera) {
     sKashipanEngine = kashipanEngine;
@@ -59,25 +60,11 @@ void Player::Update() {
     Rotate();
     LimitPosition();
     Attack();
-
-    // 弾の更新
-    for (auto &bullet : bullets_) {
-        bullet->Update();
-    }
-    // 弾の削除処理
-    bullets_.remove_if([](const std::unique_ptr<PlayerBullet> &bullet) {
-        return !bullet->IsAlive();
-    });
 }
 
 void Player::Draw() {
     // モデルを描画
     model_->Draw(*worldTransform_.get());
-
-    // 弾を描画
-    for (auto &bullet : bullets_) {
-        bullet->Draw();
-    }
 }
 
 void Player::InputMove() {
@@ -219,7 +206,7 @@ void Player::ShootBullet() {
     const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
     const Vector3 kShootPos = GetWorldPosition();
 
-    bullets_.push_back(
+    gameScene_->AddPlayerBullet(
         std::make_unique<PlayerBullet>(
             sKashipanEngine,
             bulletModel_.get(),
