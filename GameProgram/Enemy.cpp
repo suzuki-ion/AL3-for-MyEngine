@@ -1,5 +1,6 @@
 #define NOMINMAX
 
+#include "GameScene.h"
 #include "Enemy.h"
 #include "Player.h"
 #include "MapChipField.h"
@@ -79,6 +80,9 @@ void Enemy::OnCollision(const Player *player) {
         behaivior_ = Enemy::Behaivior::kDeathAnim;
         // 死亡アニメーションのタイマーをリセット
         deathAnimTimer_ = 0.0f;
+
+        // 敵の位置にエフェクトを生成
+        gameScene_->CreateHitEffect(worldTransform_->translate_);
     }
 }
 

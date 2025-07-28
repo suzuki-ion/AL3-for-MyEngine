@@ -10,6 +10,7 @@
 #include "CameraController.h"
 #include "MapChipField.h"
 #include "DeathParticle.h"
+#include "HitEffect.h"
 #include "Fade.h"
 #include <vector>
 #include <list>
@@ -30,6 +31,9 @@ public:
 
 	// 終了フラグの取得
 	bool IsFinished() const { return isFinished_; }
+
+	// ヒットエフェクトを生成
+	void CreateHitEffect(const KashipanEngine::Vector3 &pos);
 
 private:
 	enum class Phase {
@@ -59,6 +63,9 @@ private:
 	std::unique_ptr<KashipanEngine::Model> modelSkydome_ = nullptr;
 	// 死亡パーティクルの3Dモデルデータ
 	std::unique_ptr<KashipanEngine::Model> modelDeathParticle_ = nullptr;
+	// ヒットエフェクト用の3Dモデルデータ
+	std::unique_ptr<KashipanEngine::Model> modelHitEffect_ = nullptr;
+
 	// カメラコントローラー
 	std::unique_ptr<CameraController> cameraController_;
 	// マップチップフィールド
@@ -80,6 +87,8 @@ private:
 	std::unique_ptr<Skydome> skydome_;
 	// 死亡パーティクル
 	std::unique_ptr<DeathParticle> deathParticle_;
+	// ヒットエフェクト
+	std::list<std::unique_ptr<HitEffect>> hitEffects_;
 	// フェード
 	std::unique_ptr<Fade> fade_;
 

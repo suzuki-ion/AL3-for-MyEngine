@@ -5,6 +5,7 @@
 // 前方宣言
 class MapChipField;
 class Player;
+class GameScene;
 
 class Enemy {
 public:
@@ -51,6 +52,9 @@ public:
 
 	// 描画
 	void Draw();
+
+	// ゲームシーンへのポインタの設定
+	void SetGameScene(GameScene *gameScene) { gameScene_ = gameScene; }
 
 	// 座標の設定
 	void SetPosition(const KashipanEngine::Vector3& position) { worldTransform_->translate_ = position; }
@@ -106,6 +110,9 @@ private:
     void BehaiviorRootUpdate();
     // 死亡アニメーション処理
     void BehaiviorDeathAnimUpdate();
+
+	// ゲームシーンへのポインタ
+	GameScene *gameScene_ = nullptr;
 
 	// ワールド変換データ
 	std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;

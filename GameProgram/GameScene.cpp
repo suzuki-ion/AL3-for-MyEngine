@@ -45,8 +45,11 @@ void GameScene::Initialize(Engine *kashipanEngine) {
     modelSkydome_ = std::make_unique<Model>("Resources/Skydome", "skydome.obj");
     modelSkydome_->SetRenderer(sRenderer);
 	// 死亡パーティクルの3Dモデルデータの生成
-    modelDeathParticle_ = std::make_unique<Model>("Resources/DeathParticle", "deathParticle.obj");
-    modelDeathParticle_->SetRenderer(sRenderer);
+	modelDeathParticle_ = std::make_unique<Model>("Resources/DeathParticle", "deathParticle.obj");
+	modelDeathParticle_->SetRenderer(sRenderer);
+	// ヒットエフェクトの3Dモデルデータの生成
+	modelHitEffect_ = std::make_unique<Model>("Resources/HitEffect", "hitEffect.obj");
+	modelHitEffect_->SetRenderer(sRenderer);
 
 	// マップチップフィールドの生成
     mapChipField_ = std::make_unique<MapChipField>();
@@ -60,8 +63,9 @@ void GameScene::Initialize(Engine *kashipanEngine) {
 	// 敵キャラの生成(3体)
 	for (uint32_t i = 0; i < 3; ++i) {
         std::unique_ptr<Enemy> enemy = std::make_unique<Enemy>();
-		enemy->Initialize(modelEnemy_.get(), mapChipField_->GetMapChipPosition(12 + i, kNumBlockVertical - 2));
+		enemy->Initialize(modelEnemy_.get(), mapChipField_->GetMapChipPosition(12 + (i * 8), kNumBlockVertical - 2));
 		enemy->SetMapChipField(mapChipField_.get());
+		enemy->SetGameScene(this);
         enemies_.push_back(std::move(enemy));
 	}
 
@@ -81,6 +85,10 @@ void GameScene::Initialize(Engine *kashipanEngine) {
 	// 死亡パーティクルの生成
     deathParticle_ = std::make_unique<DeathParticle>();
 	deathParticle_->Initialize(modelDeathParticle_.get());
+
+	// ヒットエフェクトの設定
+	HitEffect::SetGameEngine(sKashipanEngine);
+	HitEffect::SetModel(modelHitEffect_.get());
 
 	// フェードの生成
     fade_ = std::make_unique<Fade>();
@@ -171,6 +179,13 @@ void GameScene::Update() {
 		return enemy->IsDead();
     });
 
+	// ヒットエフェクトの更新
+	for (auto &hitEffect : hitEffects_) {
+		hitEffect->Update();
+	}
+	hitEffects_.remove_if([](const std::unique_ptr<HitEffect> &hitEffect) {
+		return hitEffect->IsFinished();
+		});
 	// フェードの更新
 	fade_->Update();
 
@@ -212,8 +227,19 @@ void GameScene::Draw() {
 		break;
 	}
 
+	// ヒットエフェクトの描画
+	for (auto &hitEffect : hitEffects_) {
+		hitEffect->Draw();
+	}
+
 	// フェードの描画
 	fade_->Draw();
+}
+
+void GameScene::CreateHitEffect(const KashipanEngine::Vector3 &pos) {
+	hitEffects_.push_back(
+		std::move(HitEffect::Create(pos))
+	);
 }
 
 void GameScene::CheckAllCollisions() {

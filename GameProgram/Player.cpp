@@ -471,7 +471,7 @@ void Player::Turn() {
 
 void Player::BehaiviorAttackUpdate() {
 	// 溜めの時間
-	static const int kAttackDuration = 2;
+	static const int kAttackDuration = 6;
 	// 突進時間
 	static const int kRushDuration = 4;
 	// 余韻の時間
@@ -515,9 +515,9 @@ void Player::BehaiviorAttackUpdate() {
 		}
 		// 向いてる方向に突進
 		if (lrDirection_ == LRDirection::kRight) {
-			velocity_.x = 2.0f;
+			velocity_.x = 1.0f;
 		} else {
-			velocity_.x = -2.0f;
+			velocity_.x = -1.0f;
 		}
 		break;
 
