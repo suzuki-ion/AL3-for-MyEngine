@@ -21,12 +21,12 @@ public:
     GameScene(Engine *kashipanEngine);
     
     // プレイヤーの弾の追加
-    void AddPlayerBullet(std::unique_ptr<PlayerBullet> bullet) {
-        playerBullets_.emplace_back(std::move(bullet));
+    void AddPlayerBullet(std::unique_ptr<PlayerBullet> &bullet) {
+        playerBullets_.push_back(std::move(bullet));
     }
     // 敵の弾の追加
-    void AddEnemyBullet(std::unique_ptr<EnemyBullet> bullet) {
-        enemyBullets_.emplace_back(std::move(bullet));
+    void AddEnemyBullet(std::unique_ptr<EnemyBullet> &bullet) {
+        enemyBullets_.push_back(std::move(bullet));
     }
 
 	// 更新
@@ -38,7 +38,8 @@ private:
     void CheckAllCollisions();
     void LoadEnemyPopData();
     void UpdateEnemyPopCommands();
-    void PopEnemy(const KashipanEngine::Vector3 &pos);
+    void PopEnemy(const KashipanEngine::Vector3 &startPos, const KashipanEngine::Vector3 &endPos,
+        int useEasingNum, float easeMaxTime);
 
     // プレイヤー
     std::unique_ptr<Player> player_;

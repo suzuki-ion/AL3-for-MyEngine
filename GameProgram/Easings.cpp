@@ -240,6 +240,199 @@ float Ease::Auto(int count, int countMax, float x1, float x2, int easeType, floa
 	return easing;
 }
 
+float Ease::Auto(float currentTime, float timeMax, float x1, float x2, int easeType, float scale) {
+	float t = currentTime / timeMax;
+	static float easing;
+	t = powf(t, scale);
+	switch (easeType) {
+		case EASE_NONE:
+			// NONE ならなんのイージングもしないので
+			// t が 1.0f より下なら始点、1.0f 以上なら終点を返す
+			if (t < 1.0f) {
+				easing = x1;
+			} else {
+				easing = x2;
+			}
+			break;
+
+		case EASE_IN_SINE:
+			easing = InSine(t, x1, x2);
+			break;
+
+		case EASE_OUT_SINE:
+			easing = OutSine(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_SINE:
+			easing = InOutSine(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_SINE:
+			easing = OutInSine(t, x1, x2);
+			break;
+
+		case EASE_IN_QUAD:
+			easing = InQuad(t, x1, x2);
+			break;
+
+		case EASE_OUT_QUAD:
+			easing = OutQuad(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_QUAD:
+			easing = InOutQuad(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_QUAD:
+			easing = OutInQuad(t, x1, x2);
+			break;
+
+		case EASE_IN_CUBIC:
+			easing = InCubic(t, x1, x2);
+			break;
+
+		case EASE_OUT_CUBIC:
+			easing = OutCubic(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_CUBIC:
+			easing = InOutCubic(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_CUBIC:
+			easing = OutInCubic(t, x1, x2);
+			break;
+
+		case EASE_IN_QUART:
+			easing = InQuart(t, x1, x2);
+			break;
+
+		case EASE_OUT_QUART:
+			easing = OutQuart(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_QUART:
+			easing = InOutQuart(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_QUART:
+			easing = OutInQuart(t, x1, x2);
+			break;
+
+		case EASE_IN_QUINT:
+			easing = InQuint(t, x1, x2);
+			break;
+
+		case EASE_OUT_QUINT:
+			easing = OutQuint(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_QUINT:
+			easing = InOutQuint(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_QUINT:
+			easing = OutInQuint(t, x1, x2);
+			break;
+
+		case EASE_IN_EXPO:
+			easing = InExpo(t, x1, x2);
+			break;
+
+		case EASE_OUT_EXPO:
+			easing = OutExpo(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_EXPO:
+			easing = InOutExpo(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_EXPO:
+			easing = OutInExpo(t, x1, x2);
+			break;
+
+		case EASE_IN_CIRC:
+			easing = InCirc(t, x1, x2);
+			break;
+
+		case EASE_OUT_CIRC:
+			easing = OutCirc(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_CIRC:
+			easing = InOutCirc(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_CIRC:
+			easing = OutInCirc(t, x1, x2);
+			break;
+
+		case EASE_IN_BACK:
+			easing = InBack(t, x1, x2);
+			break;
+
+		case EASE_OUT_BACK:
+			easing = OutBack(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_BACK:
+			easing = InOutBack(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_BACK:
+			easing = OutInBack(t, x1, x2);
+			break;
+
+		case EASE_IN_ELASTIC:
+			easing = InElastic(t, x1, x2);
+			break;
+
+		case EASE_OUT_ELASTIC:
+			easing = OutElastic(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_ELASTIC:
+			easing = InOutElastic(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_ELASTIC:
+			easing = OutInElastic(t, x1, x2);
+			break;
+
+		case EASE_IN_BOUNCE:
+			easing = InBounce(t, x1, x2);
+			break;
+
+		case EASE_OUT_BOUNCE:
+			easing = OutBounce(t, x1, x2);
+			break;
+
+		case EASE_IN_OUT_BOUNCE:
+			easing = InOutBounce(t, x1, x2);
+			break;
+
+		case EASE_OUT_IN_BOUNCE:
+			easing = OutInBounce(t, x1, x2);
+			break;
+
+		case EASE_LINER:
+			easing = Liner(t, x1, x2);
+			break;
+
+		default:
+			// なんのイージングもしないので
+			// t が 1.0f より下なら始点、1.0f 以上なら終点を返す
+			if (t < 1.0f) {
+				easing = x1;
+			} else {
+				easing = x2;
+			}
+			break;
+	}
+
+	return easing;
+}
+
 float Ease::Count2Time(int count, int countMax) {
 	// 割る値が 0 なら強制的に 1.0f を返す
 	if (countMax == 0) {

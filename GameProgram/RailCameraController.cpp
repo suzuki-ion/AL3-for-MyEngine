@@ -53,10 +53,8 @@ float RailCameraController::GetTime() const {
         }
     };
 
-    size_t index0 = GetIndex(static_cast<int>(index) - 1);
     size_t index1 = GetIndex(static_cast<int>(index));
     size_t index2 = GetIndex(static_cast<int>(index) + 1);
-    size_t index3 = GetIndex(static_cast<int>(index) + 2);
 
     const auto &p1 = points_[index1];
     const auto &p2 = points_[index2];

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 // イージングの種類
 enum EaseType {
@@ -66,7 +66,7 @@ public:
 	static const char *easeName_[EASINGS];
 
 	/// <summary>
-	/// イージングのちょっとめんどくさい処理を勝手にやってくれる関数
+	/// 自動でイージングを使用してくれる関数
 	/// </summary>
 	/// <param name="count">現在のカウント</param>
 	/// <param name="countMax">カウントの最大値</param>
@@ -76,6 +76,18 @@ public:
 	/// <param name="scale">イージングの動きの倍率。値を大きくすればするほどイージングの動きにキレが出る。</param>
 	/// <returns>x1 ～ x2 の間でイージングした値</returns>
 	static float Auto(int count, int countMax, float x1, float x2, int easeType = EASE_NONE, float scale = 1.0f);
+
+	/// <summary>
+	/// 自動でイージングを使用してくれる関数
+	/// </summary>
+	/// <param name="currentTime">現在の時間</param>
+	/// <param name="timeMax">時間の最大値</param>
+	/// <param name="x1">イージングの始点</param>
+	/// <param name="x2">イージングの終点</param>
+	/// <param name="easeingType">使うイージングの種類("EASE_"から始まる定数)</param>
+	/// <param name="scale">イージングの動きの倍率。値を大きくすればするほどイージングの動きにキレが出る。</param>
+	/// <returns>x1 ～ x2 の間でイージングした値</returns>
+	static float Auto(float currentTime, float timeMax, float x1, float x2, int easeType = EASE_NONE, float scale = 1.0f);
 
 	/// <summary>
 	/// カウントをイージング用の時間(0.0 ～ 1.0)に変換

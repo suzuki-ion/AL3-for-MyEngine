@@ -206,13 +206,15 @@ void Player::ShootBullet() {
     const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
     const Vector3 kShootPos = GetWorldPosition();
 
+    std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
+        sKashipanEngine,
+        bulletModel_.get(),
+        kShootPos,
+        TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+        5.0f
+    );
+
     gameScene_->AddPlayerBullet(
-        std::make_unique<PlayerBullet>(
-            sKashipanEngine,
-            bulletModel_.get(),
-            kShootPos,
-            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-            5.0f
-        )
+        bullet
     );
 }

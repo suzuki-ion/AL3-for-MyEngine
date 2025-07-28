@@ -184,18 +184,38 @@ void GameScene::UpdateEnemyPopCommands() {
         } else if (word.find("POP") == 0) {
             //--------- POP ---------//
             
+            Vector3 startPos;
+            Vector3 endPos;
+
             // x座標
             std::getline(lineStream, word, ',');
-            float x = static_cast<float>(std::atof(word.c_str()));
+            startPos.x = static_cast<float>(std::atof(word.c_str()));
             // y座標
             std::getline(lineStream, word, ',');
-            float y = static_cast<float>(std::atof(word.c_str()));
+            startPos.y = static_cast<float>(std::atof(word.c_str()));
             // z座標
             std::getline(lineStream, word, ',');
-            float z = static_cast<float>(std::atof(word.c_str()));
+            startPos.z = static_cast<float>(std::atof(word.c_str()));
+
+            // x座標
+            std::getline(lineStream, word, ',');
+            endPos.x = static_cast<float>(std::atof(word.c_str()));
+            // y座標
+            std::getline(lineStream, word, ',');
+            endPos.y = static_cast<float>(std::atof(word.c_str()));
+            // z座標
+            std::getline(lineStream, word, ',');
+            endPos.z = static_cast<float>(std::atof(word.c_str()));
+
+            // 使うイージング
+            std::getline(lineStream, word, ',');
+            int useEasingNum = std::atoi(word.c_str());
+            // イージング最大時間
+            std::getline(lineStream, word, ',');
+            float easeMaxTime = static_cast<float>(std::atof(word.c_str()));
 
             // 敵を発生させる
-            PopEnemy(Vector3(x, y, z));
+            PopEnemy(startPos, endPos, useEasingNum, easeMaxTime);
 
         } else if (word.find("WAIT") == 0) {
             //--------- WAIT ---------//
@@ -215,6 +235,6 @@ void GameScene::UpdateEnemyPopCommands() {
     }
 }
 
-void GameScene::PopEnemy(const KashipanEngine::Vector3 &pos) {
-    enemies_.push_back(std::make_unique<Enemy>(sKashipanEngine, pos, this));
+void GameScene::PopEnemy(const KashipanEngine::Vector3 &startPos, const KashipanEngine::Vector3 &endPos, int useEasingNum, float easeMaxTime) {
+    enemies_.push_back(std::make_unique<Enemy>(sKashipanEngine, this, startPos, endPos, useEasingNum, easeMaxTime));
 }

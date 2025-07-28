@@ -17,7 +17,9 @@ public:
     static inline const float kMoveSpeed = 3.0f;
     static inline const float kFireInterval = 1.0f;
 
-    Enemy(Engine *kashipanEngine, const KashipanEngine::Vector3 &spawnPos, GameScene *gameScene);
+    Enemy(Engine *kashipanEngine, GameScene *gameScene,
+        const KashipanEngine::Vector3 &startPos, const KashipanEngine::Vector3 &endPos,
+        int useEasingNum, float maxEaseTime);
 
     void AddTranslate(const KashipanEngine::Vector3 &translate);
 
@@ -50,6 +52,8 @@ public:
 private:
     // 弾発射処理
     void Fire();
+    // 移動処理
+    void Move();
 
     // ゲームシーンへのポインタ
     GameScene *gameScene_ = nullptr;
@@ -59,6 +63,18 @@ private:
 
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
+
+    // 最初の位置
+    KashipanEngine::Vector3 startPos_;
+    // 最後の位置
+    KashipanEngine::Vector3 endPos_;
+    // 使うイージング
+    int useEasingNum_ = 0;
+    // イージング現在時間
+    float currentEaseTimer_ = 0.0f;
+    // イージング最大時間
+    float maxEaseTime_ = 1.0f;
+
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
     // 弾のモデル

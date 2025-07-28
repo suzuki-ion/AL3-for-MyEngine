@@ -9,6 +9,7 @@ public:
         kashipanEngine_(kashipanEngine),
         enemy_(enemy) {
     };
+    virtual ~BaseEnemyState() = default;
     virtual void Update() = 0;
 protected:
     Engine *kashipanEngine_;

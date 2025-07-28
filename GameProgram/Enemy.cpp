@@ -1,5 +1,6 @@
 #include <Base/Renderer.h>
 
+#include "Easings.h"
 #include "GameScene.h"
 #include "CollisionConfig.h"
 #include "Enemy.h"
@@ -24,7 +25,10 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
 
 } // namespace
 
-Enemy::Enemy(Engine *kashipanEngine, const KashipanEngine::Vector3 &spawnPos, GameScene *gameScene) {
+Enemy::Enemy(Engine *kashipanEngine, GameScene *gameScene,
+    const KashipanEngine::Vector3 &startPos, const KashipanEngine::Vector3 &endPos,
+    int useEasingNum, float maxEaseTime) {
+
     sKashipanEngine = kashipanEngine;
     gameScene_ = gameScene;
     // エンジンのレンダラーを取得
@@ -39,14 +43,19 @@ Enemy::Enemy(Engine *kashipanEngine, const KashipanEngine::Vector3 &spawnPos, Ga
 
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
-    worldTransform_->translate_ = spawnPos;
+
+    // 最初の位置と最後の位置と使うイージングの値の設定
+    startPos_ = startPos;
+    endPos_ = endPos;
+    useEasingNum_ = useEasingNum;
+    maxEaseTime_ = maxEaseTime;
 
     // 初期フェーズの設定
     ChangeState(std::make_unique<EnemyStateApproach>(sKashipanEngine, this));
 
     // 弾の時限発動の設定
     timedCall_ = std::make_unique<TimedCall>(
-        std::bind(&Enemy::Fire, this), 1.0f, true
+        std::bind(&Enemy::Fire, this), 2.0f, false
     );
 
     SetCollisionAttribute(kCollisionAttributeEnemy);
@@ -88,11 +97,12 @@ void Enemy::OnCollision() {
 }
 
 void Enemy::Update() {
-    state_->Update();
+    //state_->Update();
+    Move();
 
-    // z座標が0以下になったら状態を変更
-    if (worldTransform_->translate_.z < 0.0f) {
-        ChangeState(std::make_unique<EnemyStateLeave>(sKashipanEngine, this));
+    // 座標のイージングが終わったら死なせる
+    if (currentEaseTimer_ >= maxEaseTime_) {
+        isAlive_ = false;
     }
 
     // 弾の発射処理
@@ -114,14 +124,27 @@ void Enemy::Fire() {
     Vector3 kBulletVelocity(playerPosition_ - enemyPosition);
     kBulletVelocity = kBulletVelocity.Normalize();
 
-    gameScene_->AddEnemyBullet(
-        std::make_unique<EnemyBullet>(
-            sKashipanEngine,
-            bulletModel_.get(),
-            worldTransform_->translate_,
-            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-            5.0f,
-            32.0f
-        )
+    std::unique_ptr<EnemyBullet> bullet = std::make_unique<EnemyBullet>(
+        sKashipanEngine,
+        bulletModel_.get(),
+        worldTransform_->translate_,
+        TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+        5.0f,
+        32.0f
     );
+
+    gameScene_->AddEnemyBullet(
+        bullet
+    );
+}
+
+void Enemy::Move() {
+    worldTransform_->translate_.x =
+        Ease::Auto(currentEaseTimer_, maxEaseTime_, startPos_.x, endPos_.x, useEasingNum_);
+    worldTransform_->translate_.y =
+        Ease::Auto(currentEaseTimer_, maxEaseTime_, startPos_.y, endPos_.y, useEasingNum_);
+    worldTransform_->translate_.z =
+        Ease::Auto(currentEaseTimer_, maxEaseTime_, startPos_.z, endPos_.z, useEasingNum_);
+
+    currentEaseTimer_ += Engine::GetDeltaTime();
 }
