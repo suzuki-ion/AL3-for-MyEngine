@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include <fstream>
 #include <Base/Renderer.h>
+#include <Base/WinApp.h>
 #include <Base/Input.h>
 #include <2d/ImGuiManager.h>
 
@@ -11,6 +12,8 @@ namespace {
 Engine *sKashipanEngine = nullptr;
 // レンダラーへのポインタ
 Renderer *sRenderer = nullptr;
+// WinAppへのポインタ
+WinApp *sWinApp = nullptr;
 }
 
 GameScene::GameScene(Engine *engine) {
@@ -18,23 +21,28 @@ GameScene::GameScene(Engine *engine) {
     sKashipanEngine = engine;
     // レンダラーへのポインタを取得
     sRenderer = sKashipanEngine->GetRenderer();
+    // WinAppへのポインタを取得
+    sWinApp = sKashipanEngine->GetWinApp();
 
     // グリッド線
     gridLine_ = std::make_unique<GridLine>(GridLineType::XZ, 1.0f, 10000);
     gridLine_->SetRenderer(sRenderer);
 
     // カメラのインスタンスを作成
-    camera_ = std::make_unique<Camera>();
-    camera_->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
-    camera_->CalculateMatrix();
+    thirdPersonCamera_ = std::make_unique<Camera>();
+    thirdPersonCamera_->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+    thirdPersonCamera_->CalculateMatrix();
+    firstPersonCamera_ = std::make_unique<Camera>();
+    firstPersonCamera_->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+    firstPersonCamera_->CalculateMatrix();
     // レンダラーにカメラを設定
-    sRenderer->SetCamera(camera_.get());
+    sRenderer->SetCamera(thirdPersonCamera_.get());
 
     // カメラコントローラーのインスタンスを作成
     //railCameraController_ = std::make_unique<RailCameraController>(camera_.get(), sRenderer);
 
     // プレイヤーのインスタンスを作成
-    player_ = std::make_unique<Player>(sKashipanEngine, camera_.get());
+    player_ = std::make_unique<Player>(sKashipanEngine, thirdPersonCamera_.get());
     player_->SetGameScene(this);
     // 衝突判定管理クラスのインスタンスを作成
     collisionManager_ = std::make_unique<CollisionManager>();
@@ -45,7 +53,7 @@ GameScene::GameScene(Engine *engine) {
     // 照準の生成
     Vector3 playerPos = player_->GetWorldPosition();
     playerPos.z += 80.0f;
-    reticle_ = std::make_unique<Reticle2D>(sKashipanEngine, camera_.get(),
+    reticle_ = std::make_unique<Reticle2D>(sKashipanEngine, thirdPersonCamera_.get(),
         playerPos);
 
     // ライトの設定
@@ -58,8 +66,42 @@ GameScene::GameScene(Engine *engine) {
 }
 
 void GameScene::Update() {
-    reticle_->Update();
-    Vector3 playerBulletShootPos = (reticle_->GetPos3D() - player_->GetLocalPosition()).Normalize();
+    // F3キーで視点を切り替え
+    if (Input::IsKeyTrigger(DIK_F3)) {
+        if (perspectiveType_ == PerspectiveType::FirstPerson) {
+            perspectiveType_ = PerspectiveType::ThirdPerson;
+            sRenderer->SetCamera(thirdPersonCamera_.get());
+        } else {
+            perspectiveType_ = PerspectiveType::FirstPerson;
+            sRenderer->SetCamera(firstPersonCamera_.get());
+        }
+    }
+
+    Vector3 playerBulletShootPos;
+    if (perspectiveType_ == PerspectiveType::FirstPerson) {
+        Vector2 screenCenterPos;
+        screenCenterPos.x = static_cast<float>(sWinApp->GetClientWidth()) / 2.0f;
+        screenCenterPos.y = static_cast<float>(sWinApp->GetClientHeight()) / 2.0f;
+        reticle_->SetPos2D(screenCenterPos);
+
+        Vector2 mousePosDelta;
+        mousePosDelta.x = static_cast<float>(Input::GetMouseDeltaX()) / 1000.0f;
+        mousePosDelta.y = static_cast<float>(Input::GetMouseDeltaY()) / 1000.0f;
+        firstPersonCamera_->GetRotatePtr()->x += mousePosDelta.y;
+        firstPersonCamera_->GetRotatePtr()->y += mousePosDelta.x;
+        firstPersonCamera_->SetTranslate(player_->GetWorldPosition());
+
+        Vector3 cameraRotate = firstPersonCamera_->GetRotate();
+        playerBulletShootPos.x = std::cos(-cameraRotate.x) * std::sin(cameraRotate.y);
+        playerBulletShootPos.y = std::sin(-cameraRotate.x);
+        playerBulletShootPos.z = std::cos(-cameraRotate.x) * std::cos(cameraRotate.y);
+
+    } else {
+        reticle_->Update();
+        playerBulletShootPos = (reticle_->GetPos3D() - player_->GetLocalPosition());
+        playerBulletShootPos = playerBulletShootPos.Normalize();
+    }
+    
     player_->SetShootDirection(playerBulletShootPos);
     player_->Update();
     EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
@@ -121,7 +163,10 @@ void GameScene::Draw() {
     skydome_->Draw();
     ground_->Draw();
     
-    player_->Draw();
+    // 三人称のときだけプレイヤーを描画
+    if (perspectiveType_ == PerspectiveType::ThirdPerson) {
+        player_->Draw();
+    }
     for (auto &enemy : enemies_) {
         enemy->Draw();
     }

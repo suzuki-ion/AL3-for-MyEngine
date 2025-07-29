@@ -31,7 +31,7 @@ void Reticle2D::Draw() {
 }
 
 void Reticle2D::MovePos() {
-    GetPos2DFromPos3D();
+    GetPos2D();
 
     worldTransform_->translate_.x = pos2D_.x - anchor_.x;
     worldTransform_->translate_.y = pos2D_.y - anchor_.y;
@@ -58,7 +58,7 @@ void Reticle2D::MovePos() {
     pos3D_ = worldNear + rayDir * kDistance;
 }
 
-void Reticle2D::GetPos2DFromPos3D() {
+void Reticle2D::GetPos2D() {
     // コントローラーが接続されている場合はコントローラーで位置を更新
     if (Input::IsXBoxConnected(0)) {
         pos2D_.x += Input::GetXBoxRightStickRatioX() * 16.0f;

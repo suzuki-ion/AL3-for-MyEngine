@@ -16,6 +16,11 @@
 #include "RailCameraController.h"
 #include "Reticle2D.h"
 
+enum class PerspectiveType {
+    ThirdPerson,    // 三人称視点
+    FirstPerson,    // 一人称視点
+};
+
 class GameScene {
 public:
     // コンストラクタ
@@ -65,8 +70,10 @@ private:
     
     // グリッド線
     std::unique_ptr<KashipanEngine::GridLine> gridLine_;
-    // カメラ
-    std::unique_ptr<KashipanEngine::Camera> camera_;
+    // 三人称カメラ
+    std::unique_ptr<KashipanEngine::Camera> thirdPersonCamera_;
+    // 一人称カメラ
+    std::unique_ptr<KashipanEngine::Camera> firstPersonCamera_;
     // ライト
     KashipanEngine::DirectionalLight light_;
 
@@ -76,4 +83,7 @@ private:
     int32_t enemyPopWaitTimer_ = 0;
     // 敵発生待ち時間フラグ
     bool isEnemyPopWait_ = false;
+
+    // 視点タイプ
+    PerspectiveType perspectiveType_ = PerspectiveType::ThirdPerson;
 };
