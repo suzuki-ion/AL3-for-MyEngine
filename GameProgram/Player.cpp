@@ -54,7 +54,12 @@ void Player::OnCollision() {
 }
 
 void Player::Update() {
-    InputMove();
+    // コントローラーが接続されていたらコントローラーで移動
+    if (Input::IsXBoxConnected(0)) {
+        InputJoystickMove();
+    } else {
+        InputKeyboardMove();
+    }
     InputRotate();
     Move();
     Rotate();
@@ -65,6 +70,77 @@ void Player::Update() {
 void Player::Draw() {
     // モデルを描画
     model_->Draw(*worldTransform_.get());
+}
+
+void Player::InputKeyboardMove() {
+    InputMove();
+
+    // 移動速度上限
+    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
+    // 1フレームあたりの移動速度
+    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
+
+    // 横方向
+    if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
+        velocity_.x -= kMoveSpeed;
+    } else if (moveDirectionLR_ == MoveDirectionLR::kMoveRight) {
+        velocity_.x += kMoveSpeed;
+    } else {
+        velocity_.x *= (1.0f - kMoveSpeed);
+    }
+    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
+
+    // 縦方向
+    if (moveDirectionUD_ == MoveDirectionUD::kMoveUp) {
+        velocity_.y += kMoveSpeed;
+    } else if (moveDirectionUD_ == MoveDirectionUD::kMoveDown) {
+        velocity_.y -= kMoveSpeed;
+    } else {
+        velocity_.y *= (1.0f - kMoveSpeed);
+    }
+    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
+}
+
+void Player::InputJoystickMove() {
+    // 移動速度上限
+    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
+    // 1フレームあたりの移動速度
+    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
+
+    Vector2 joystickInput;
+    joystickInput.x = Input::GetXBoxLeftStickRatioX();
+    joystickInput.y = Input::GetXBoxLeftStickRatioY();
+
+    // 横方向
+    velocity_.x += joystickInput.x * kMoveSpeed;
+    if (joystickInput.x == 0.0f) {
+        velocity_.x *= (1.0f - kMoveSpeed);
+    }
+    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
+
+    // 縦方向
+    velocity_.y += joystickInput.y * kMoveSpeed;
+    if (joystickInput.y == 0.0f) {
+        velocity_.y *= (1.0f - kMoveSpeed);
+    }
+    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
+
+    // 入力方向に応じて移動方向を設定
+    if (joystickInput.x < 0.0f) {
+        moveDirectionLR_ = MoveDirectionLR::kMoveLeft;
+    } else if (joystickInput.x > 0.0f) {
+        moveDirectionLR_ = MoveDirectionLR::kMoveRight;
+    } else {
+        moveDirectionLR_ = MoveDirectionLR::kMoveNone;
+    }
+
+    if (joystickInput.y < 0.0f) {
+        moveDirectionUD_ = MoveDirectionUD::kMoveDown;
+    } else if (joystickInput.y > 0.0f) {
+        moveDirectionUD_ = MoveDirectionUD::kMoveUp;
+    } else {
+        moveDirectionUD_ = MoveDirectionUD::kMoveNone;
+    }
 }
 
 void Player::InputMove() {
@@ -112,31 +188,6 @@ void Player::InputRotate() {
 }
 
 void Player::Move() {
-    // 移動速度上限
-    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
-    // 1フレームあたりの移動速度
-    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
-
-    // 横方向
-    if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
-        velocity_.x -= kMoveSpeed;
-    } else if (moveDirectionLR_ == MoveDirectionLR::kMoveRight) {
-        velocity_.x += kMoveSpeed;
-    } else {
-        velocity_.x *= (1.0f - kMoveSpeed);
-    }
-    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
-
-    // 縦方向
-    if (moveDirectionUD_ == MoveDirectionUD::kMoveUp) {
-        velocity_.y += kMoveSpeed;
-    } else if (moveDirectionUD_ == MoveDirectionUD::kMoveDown) {
-        velocity_.y -= kMoveSpeed;
-    } else {
-        velocity_.y *= (1.0f - kMoveSpeed);
-    }
-    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
-
     worldTransform_->translate_ += velocity_;
 
     // カメラのワールド変換データを更新
@@ -197,7 +248,9 @@ void Player::LimitPosition() {
 
 void Player::Attack() {
     // 弾の発射
-    if (IsAction(Action::kShootBullet)) {
+    if (IsAction(Action::kShootBullet) ||
+        Input::IsXBoxButtonTrigger(XBoxButtonCode::LEFT_SHOULDER) ||
+        Input::IsXBoxButtonTrigger(XBoxButtonCode::RIGHT_SHOULDER)) {
         ShootBullet();
     }
 }

@@ -57,6 +57,11 @@ public:
     void Draw();
 
 private:
+    // キーボードでの移動関数
+    void InputKeyboardMove();
+    // ジョイスティックでの移動関数
+    void InputJoystickMove();
+
     // 移動入力関数
     void InputMove();
     // 回転入力関数

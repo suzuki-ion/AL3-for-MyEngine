@@ -20,7 +20,7 @@ public:
 
 private:
     void MovePos();
-    void MoveToController();
+    void GetPos2DFromPos3D();
 
     // エンジンへのポインタ
     Engine *kashipanEngine_ = nullptr;
@@ -29,6 +29,8 @@ private:
 
     // 照準のスプライト
     std::unique_ptr<KashipanEngine::Sprite> reticle_;
+    // 照準の2D上の座標
+    KashipanEngine::Vector2 pos2D_;
     // 照準の3D上の座標
     KashipanEngine::Vector3 pos3D_;
     // 照準のワールド変換データ

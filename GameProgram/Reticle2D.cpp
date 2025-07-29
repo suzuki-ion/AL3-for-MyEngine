@@ -24,14 +24,6 @@ Reticle2D::Reticle2D(Engine *kashipanEngine, KashipanEngine::Camera *camera,
 void Reticle2D::Update() {
     MovePos();
 
-    camera_->CalculateMatrix();
-
-    Vector3 clipSpacePos = pos3D_.Transform(camera_->GetViewMatrix() * camera_->GetProjectionMatrix());
-    worldTransform_->translate_.x = (clipSpacePos.x + 1.0f) * 0.5f * 1920.0f;
-    worldTransform_->translate_.y = (1.0f - clipSpacePos.y) * 0.5f * 1080.0f;
-
-    worldTransform_->translate_.x -= anchor_.x;
-    worldTransform_->translate_.y -= anchor_.y;
 }
 
 void Reticle2D::Draw() {
@@ -39,10 +31,40 @@ void Reticle2D::Draw() {
 }
 
 void Reticle2D::MovePos() {
-    MoveToController();
+    GetPos2DFromPos3D();
+
+    worldTransform_->translate_.x = pos2D_.x - anchor_.x;
+    worldTransform_->translate_.y = pos2D_.y - anchor_.y;
+
+    camera_->CalculateMatrix();
+
+    // スクリーン → NDC
+    Vector3 ndcNear;
+    ndcNear.x = (pos2D_.x / 1920.0f) * 2.0f - 1.0f;
+    ndcNear.y = 1.0f - (pos2D_.y / 1080.0f) * 2.0f;
+    ndcNear.z = -1.0f;
+
+    Vector3 ndcFar = ndcNear;
+    ndcFar.z = 1.0f;
+
+    // 逆投影
+    Matrix4x4 invViewProj = (camera_->GetProjectionMatrix() * camera_->GetViewMatrix()).Inverse();
+    Vector3 worldNear = ndcNear.Transform(invViewProj);
+    Vector3 worldFar = ndcFar.Transform(invViewProj);
+
+    // レイ方向
+    Vector3 rayDir = (worldFar - worldNear).Normalize();
+    float kDistance = 80.0f;
+    pos3D_ = worldNear + rayDir * kDistance;
 }
 
-void Reticle2D::MoveToController() {
-    pos3D_.x += Input::GetXBoxRightStickRatioX();
-    pos3D_.y += Input::GetXBoxRightStickRatioY();
+void Reticle2D::GetPos2DFromPos3D() {
+    // コントローラーが接続されている場合はコントローラーで位置を更新
+    if (Input::IsXBoxConnected(0)) {
+        pos2D_.x += Input::GetXBoxRightStickRatioX() * 16.0f;
+        pos2D_.y -= Input::GetXBoxRightStickRatioY() * 16.0f;
+    } else {
+        pos2D_.x = static_cast<float>(Input::GetMouseX());
+        pos2D_.y = static_cast<float>(Input::GetMouseY());
+    }
 }
