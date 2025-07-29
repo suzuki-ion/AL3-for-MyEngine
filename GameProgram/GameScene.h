@@ -14,6 +14,7 @@
 #include "Skydome.h"
 #include "Ground.h"
 #include "RailCameraController.h"
+#include "Reticle2D.h"
 
 class GameScene {
 public:
@@ -51,6 +52,8 @@ private:
     std::unique_ptr<Skydome> skydome_;
     // 地面
     std::unique_ptr<Ground> ground_;
+    // 照準
+    std::unique_ptr<Reticle2D> reticle_;
 
     // プレイヤーの弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;

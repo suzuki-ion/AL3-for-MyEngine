@@ -203,7 +203,7 @@ void Player::Attack() {
 }
 
 void Player::ShootBullet() {
-    const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
+    const Vector3 kBulletVelocity(shootDirection_ * 16.0f);
     const Vector3 kShootPos = GetWorldPosition();
 
     std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(

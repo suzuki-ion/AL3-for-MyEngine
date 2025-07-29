@@ -42,6 +42,11 @@ GameScene::GameScene(Engine *engine) {
     skydome_ = std::make_unique<Skydome>(sKashipanEngine);
     // 地面のインスタンスを作成
     ground_ = std::make_unique<Ground>(sKashipanEngine);
+    // 照準の生成
+    Vector3 playerPos = player_->GetWorldPosition();
+    playerPos.z += 80.0f;
+    reticle_ = std::make_unique<Reticle2D>(sKashipanEngine, camera_.get(),
+        playerPos);
 
     // ライトの設定
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
@@ -53,6 +58,9 @@ GameScene::GameScene(Engine *engine) {
 }
 
 void GameScene::Update() {
+    reticle_->Update();
+    Vector3 playerBulletShootPos = (reticle_->GetPos3D() - player_->GetLocalPosition()).Normalize();
+    player_->SetShootDirection(playerBulletShootPos);
     player_->Update();
     EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
     for (auto &enemy : enemies_) {
@@ -82,7 +90,6 @@ void GameScene::Update() {
     CheckAllCollisions();
     //railCameraController_->Update();
     UpdateEnemyPopCommands();
-    
 
 #ifdef _DEBUG
     if (Input::IsKeyTrigger(DIK_F1)) {
@@ -124,6 +131,7 @@ void GameScene::Draw() {
     for (auto &bullet : enemyBullets_) {
         bullet->Draw();
     }
+    reticle_->Draw();
 
     sRenderer->PostDraw();
 }

@@ -33,6 +33,9 @@ public:
     void SetGameScene(GameScene *gameScene) {
         gameScene_ = gameScene;
     }
+    void SetShootDirection(const KashipanEngine::Vector3 &shootDirection) {
+        shootDirection_ = shootDirection;
+    }
 
     KashipanEngine::Vector3 GetWorldPosition() override {
         return {
@@ -40,6 +43,9 @@ public:
             worldTransform_->worldMatrix_.m[3][1],
             worldTransform_->worldMatrix_.m[3][2]
         };
+    }
+    KashipanEngine::Vector3 GetLocalPosition() {
+        return worldTransform_->translate_;
     }
 
     // 衝突を検知したら呼び出されるコールバック関数
@@ -91,4 +97,7 @@ private:
     MoveDirectionLR moveDirectionLR_ = MoveDirectionLR::kMoveNone;
     // 移動方向(上下)
     MoveDirectionUD moveDirectionUD_ = MoveDirectionUD::kMoveNone;
+
+    // 弾の発射方向
+    KashipanEngine::Vector3 shootDirection_;
 };

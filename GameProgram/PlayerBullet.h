@@ -27,6 +27,8 @@ public:
     void Draw();
 
 private:
+    void RotateFromVelocity();
+    
     // 弾が消えるまでの時間
     const float kLifeTime;
     // 弾が消えるまでのカウンター

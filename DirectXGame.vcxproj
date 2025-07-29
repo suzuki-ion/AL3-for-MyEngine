@@ -186,6 +186,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\WorldTransform.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GameProgram\RailCameraController.cpp" />
+    <ClCompile Include="GameProgram\Reticle2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameProgram\Collider.h" />
@@ -285,6 +286,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\Triangle.h" />
     <ClInclude Include="KashipanEngine\Objects\WorldTransform.h" />
     <ClInclude Include="GameProgram\RailCameraController.h" />
+    <ClInclude Include="GameProgram\Reticle2D.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">

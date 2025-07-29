@@ -32,6 +32,9 @@ private:
     /// @brief テクスチャのロード
     /// @param textureData テクスチャデータ
     void LoadTexture(const TextureData &textureData);
+
+    /// @brief テクスチャの左上を(0, 0)、右下を(1, 1)とするアンカーポイント
+    Vector2 anchor_ = { 0.0f, 0.0f };
 };
 
 } // namespace KashipanEngine
