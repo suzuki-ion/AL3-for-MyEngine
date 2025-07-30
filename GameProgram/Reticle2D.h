@@ -10,10 +10,10 @@ public:
 
     void SetPos2D(const KashipanEngine::Vector2 &pos2D) {
         pos2D_ = pos2D;
-        worldTransform_->translate_ = KashipanEngine::Vector3(pos2D_);
-        worldTransform_->translate_.x = pos2D_.x - anchor_.x;
-        worldTransform_->translate_.y = pos2D_.y - anchor_.y;
     }
+    void SetReticleTo2D(const KashipanEngine::Vector2 &pos2D);
+    void SetReticleTo3D(const KashipanEngine::Vector3 &pos3D);
+
     const KashipanEngine::Vector3 &GetPos3D() {
         return pos3D_;
     }

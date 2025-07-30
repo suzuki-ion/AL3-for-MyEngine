@@ -125,6 +125,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="GameProgram\Easings.cpp" />
     <ClCompile Include="GameProgram\GameScene.cpp" />
     <ClCompile Include="GameProgram\KeyConfig.cpp" />
+    <ClCompile Include="GameProgram\LockOn.cpp" />
     <ClCompile Include="GameProgram\Player.cpp" />
     <ClCompile Include="GameProgram\PlayerBullet.cpp" />
     <ClCompile Include="GameProgram\Skydome.cpp" />
@@ -208,6 +209,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="GameProgram\Easings.h" />
     <ClInclude Include="GameProgram\GameScene.h" />
     <ClInclude Include="GameProgram\KeyConfig.h" />
+    <ClInclude Include="GameProgram\LockOn.h" />
     <ClInclude Include="GameProgram\Player.h" />
     <ClInclude Include="GameProgram\PlayerBullet.h" />
     <ClInclude Include="GameProgram\Skydome.h" />

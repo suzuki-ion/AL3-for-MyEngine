@@ -39,7 +39,7 @@ GameScene::GameScene(Engine *engine) {
     sRenderer->SetCamera(thirdPersonCamera_.get());
 
     // カメラコントローラーのインスタンスを作成
-    //railCameraController_ = std::make_unique<RailCameraController>(camera_.get(), sRenderer);
+    railCameraController_ = std::make_unique<RailCameraController>(thirdPersonCamera_.get(), sRenderer);
 
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine, thirdPersonCamera_.get());
@@ -53,8 +53,10 @@ GameScene::GameScene(Engine *engine) {
     // 照準の生成
     Vector3 playerPos = player_->GetWorldPosition();
     playerPos.z += 80.0f;
-    reticle_ = std::make_unique<Reticle2D>(sKashipanEngine, thirdPersonCamera_.get(),
-        playerPos);
+    /*reticle_ = std::make_unique<Reticle2D>(sKashipanEngine, thirdPersonCamera_.get(),
+        playerPos);*/
+    // ロックオンの生成
+    lockOn_ = std::make_unique<LockOn>(sKashipanEngine, thirdPersonCamera_.get());
 
     // ライトの設定
     light_.direction = Vector3(-0.5f, 0.75f, -0.5f);
@@ -78,11 +80,13 @@ void GameScene::Update() {
     }
 
     Vector3 playerBulletShootPos;
+    lockOn_->SetReferencePoint(player_->GetWorldPosition());
+    lockOn_->Update(enemies_);
     if (perspectiveType_ == PerspectiveType::FirstPerson) {
         Vector2 screenCenterPos;
         screenCenterPos.x = static_cast<float>(sWinApp->GetClientWidth()) / 2.0f;
         screenCenterPos.y = static_cast<float>(sWinApp->GetClientHeight()) / 2.0f;
-        reticle_->SetPos2D(screenCenterPos);
+        //reticle_->SetReticleTo2D(screenCenterPos);
 
         Vector2 mousePosDelta;
         mousePosDelta.x = static_cast<float>(Input::GetMouseDeltaX()) / 1000.0f;
@@ -97,9 +101,15 @@ void GameScene::Update() {
         playerBulletShootPos.z = std::cos(-cameraRotate.x) * std::cos(cameraRotate.y);
 
     } else {
-        reticle_->Update();
-        playerBulletShootPos = (reticle_->GetPos3D() - player_->GetLocalPosition());
-        playerBulletShootPos = playerBulletShootPos.Normalize();
+        //reticle_->Update();
+        auto targetEnemy = lockOn_->GetTargetEnemy(enemies_);
+        if (targetEnemy) {
+            playerBulletShootPos = targetEnemy->GetWorldPosition();
+            playerBulletShootPos -= player_->GetLocalPosition();
+            playerBulletShootPos = playerBulletShootPos.Normalize();
+        } else {
+            playerBulletShootPos = Vector3(0.0f, 0.0f, 1.0f);
+        }
     }
     
     player_->SetShootDirection(playerBulletShootPos);
@@ -154,7 +164,7 @@ void GameScene::Draw() {
 
     sKashipanEngine->SetFrameRate(frameRate);
 
-    //railCameraController_->DebugDraw();
+    railCameraController_->DebugDraw();
 #endif // _DEBUG
     
     sRenderer->SetLight(&light_);
@@ -176,7 +186,8 @@ void GameScene::Draw() {
     for (auto &bullet : enemyBullets_) {
         bullet->Draw();
     }
-    reticle_->Draw();
+    //reticle_->Draw();
+    lockOn_->Draw();
 
     sRenderer->PostDraw();
 }
@@ -210,6 +221,12 @@ void GameScene::LoadEnemyPopData() {
 }
 
 void GameScene::UpdateEnemyPopCommands() {
+    // コマンドが終端まで行ってたら最初に戻す
+    if (enemyPopCommands_.eof()) {
+        enemyPopCommands_.clear();
+        enemyPopCommands_.seekg(0, std::ios::beg);
+    }
+
     // 待機処理
     if (isEnemyPopWait_) {
         enemyPopWaitTimer_--;

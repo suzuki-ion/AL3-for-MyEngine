@@ -15,6 +15,7 @@
 #include "Ground.h"
 #include "RailCameraController.h"
 #include "Reticle2D.h"
+#include "LockOn.h"
 
 enum class PerspectiveType {
     ThirdPerson,    // 三人称視点
@@ -58,7 +59,9 @@ private:
     // 地面
     std::unique_ptr<Ground> ground_;
     // 照準
-    std::unique_ptr<Reticle2D> reticle_;
+    //std::unique_ptr<Reticle2D> reticle_;
+    // ロックオン
+    std::unique_ptr<LockOn> lockOn_;
 
     // プレイヤーの弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;

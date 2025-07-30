@@ -21,9 +21,26 @@ Reticle2D::Reticle2D(Engine *kashipanEngine, KashipanEngine::Camera *camera,
     anchor_.y = static_cast<float>(textureData.height) / 2.0f;
 }
 
+void Reticle2D::SetReticleTo2D(const KashipanEngine::Vector2 &pos2D) {
+    pos2D_ = pos2D;
+    worldTransform_->translate_ = KashipanEngine::Vector3(pos2D_);
+    worldTransform_->translate_.x = pos2D_.x - anchor_.x;
+    worldTransform_->translate_.y = pos2D_.y - anchor_.y;
+}
+
+void Reticle2D::SetReticleTo3D(const KashipanEngine::Vector3 &pos3D) {
+    pos3D_ = pos3D;
+
+    Vector3 clipSpacePos = pos3D_.Transform(camera_->GetViewMatrix() * camera_->GetProjectionMatrix());
+    worldTransform_->translate_.x = (clipSpacePos.x + 1.0f) * 0.5f * 1920.0f;
+    worldTransform_->translate_.y = (1.0f - clipSpacePos.y) * 0.5f * 1080.0f;
+
+    worldTransform_->translate_.x -= anchor_.x;
+    worldTransform_->translate_.y -= anchor_.y;
+}
+
 void Reticle2D::Update() {
     MovePos();
-
 }
 
 void Reticle2D::Draw() {
