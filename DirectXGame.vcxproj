@@ -108,12 +108,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameProgram\BasePlayerBulletState.cpp" />
     <ClCompile Include="GameProgram\Collider.cpp" />
     <ClCompile Include="GameProgram\CollisionManager.cpp" />
     <ClCompile Include="GameProgram\EnemyBullet.cpp" />
     <ClCompile Include="GameProgram\EnemyStateLeave.cpp" />
     <ClCompile Include="GameProgram\EnemyStateApproach.cpp" />
-    <ClCompile Include="GameProgram\BaseEnemyState.cpp" />
     <ClCompile Include="GameProgram\Enemy.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />
     <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
@@ -188,8 +188,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GameProgram\RailCameraController.cpp" />
     <ClCompile Include="GameProgram\Reticle2D.cpp" />
+    <ClCompile Include="GameProgram\PlayerBulletStateNormal.cpp" />
+    <ClCompile Include="GameProgram\PlayerBulletStateHoming.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameProgram\BasePlayerBulletState.h" />
     <ClInclude Include="GameProgram\Collider.h" />
     <ClInclude Include="GameProgram\CollisionConfig.h" />
     <ClInclude Include="GameProgram\CollisionManager.h" />
@@ -289,6 +292,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\WorldTransform.h" />
     <ClInclude Include="GameProgram\RailCameraController.h" />
     <ClInclude Include="GameProgram\Reticle2D.h" />
+    <ClInclude Include="GameProgram\PlayerBulletStateNormal.h" />
+    <ClInclude Include="GameProgram\PlayerBulletStateHoming.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">

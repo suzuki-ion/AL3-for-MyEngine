@@ -14,18 +14,11 @@ public:
         referencePoint_ = point;
     }
 
-    Enemy *GetTargetEnemy(std::list<std::unique_ptr<Enemy>> &enemies) {
-        if (!currentTarget_) {
-            return nullptr;
-        }
-
-        for (const auto &enemy : enemies) {
-            if (enemy.get() == currentTarget_) {
-                return currentTarget_;
-            }
-        }
-        return nullptr;
+    Enemy *GetTargetEnemy() {
+        return currentTarget_;
     }
+
+    void CheckTargetExist();
 
     void Update(std::list<std::unique_ptr<Enemy>> &enemies);
     void Draw();

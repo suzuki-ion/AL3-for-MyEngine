@@ -41,6 +41,10 @@ GameScene::GameScene(Engine *engine) {
     // カメラコントローラーのインスタンスを作成
     railCameraController_ = std::make_unique<RailCameraController>(thirdPersonCamera_.get(), sRenderer);
 
+    // 敵の弾初期化
+    enemyBulletModel_ = std::make_unique<Model>("Resources/Bullet", "bullet.obj");
+    enemyBulletModel_->SetRenderer(sRenderer);
+    EnemyBullet::Initialize(enemyBulletModel_.get());
     // プレイヤーのインスタンスを作成
     player_ = std::make_unique<Player>(sKashipanEngine, thirdPersonCamera_.get());
     player_->SetGameScene(this);
@@ -102,7 +106,7 @@ void GameScene::Update() {
 
     } else {
         //reticle_->Update();
-        auto targetEnemy = lockOn_->GetTargetEnemy(enemies_);
+        auto targetEnemy = lockOn_->GetTargetEnemy();
         if (targetEnemy) {
             playerBulletShootPos = targetEnemy->GetWorldPosition();
             playerBulletShootPos -= player_->GetLocalPosition();
@@ -113,11 +117,16 @@ void GameScene::Update() {
     }
     
     player_->SetShootDirection(playerBulletShootPos);
+    player_->SetTargetEnemy(lockOn_->GetTargetEnemy());
     player_->Update();
     EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
     for (auto &enemy : enemies_) {
         enemy->SetPlayerPosition(player_->GetWorldPosition());
         enemy->Update();
+    }
+    lockOn_->CheckTargetExist();
+    for (auto &playerBullet : playerBullets_) {
+        playerBullet->CheckTargetEnemyExist();
     }
     enemies_.remove_if([](const std::unique_ptr<Enemy> &enemy) {
         return !enemy->IsAlive();

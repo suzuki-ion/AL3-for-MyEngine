@@ -12,22 +12,20 @@ LockOn::LockOn(Engine *kashipanEngine, KashipanEngine::Camera *camera) {
     reticle_ = std::make_unique<Reticle2D>(kashipanEngine_, camera_, Vector3(0.0f));
 }
 
+void LockOn::CheckTargetExist() {
+    if (!currentTarget_) {
+        return;
+    }
+
+    if (!currentTarget_->IsAlive()) {
+        currentTarget_ = nullptr;
+    }
+}
+
 void LockOn::Update(std::list<std::unique_ptr<Enemy>> &enemies) {
     if (enemies.empty()) {
         currentTarget_ = nullptr;
         return;
-    }
-
-    // 現在の敵の中にロックオンしている敵が存在するかを確認
-    bool isFound = false;
-    for (const auto &enemy : enemies) {
-        if (enemy.get() == currentTarget_) {
-            isFound = true;
-            break;
-        }
-    }
-    if (!isFound) {
-        currentTarget_ = nullptr;
     }
 
     std::vector<std::pair<Enemy *, float>> candidates;

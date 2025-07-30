@@ -67,6 +67,8 @@ private:
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
     // 敵の弾
     std::list<std::unique_ptr<EnemyBullet>> enemyBullets_;
+    // 敵の弾のモデル
+    std::unique_ptr<KashipanEngine::Model> enemyBulletModel_;
 
     // カメラコントローラー
     std::unique_ptr<RailCameraController> railCameraController_;

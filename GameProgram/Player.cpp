@@ -36,9 +36,6 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
     model_ = std::make_unique<Model>("Resources/Player", "player.obj");
     model_->SetRenderer(renderer);
 
-    bulletModel_ = std::make_unique<Model>("Resources/Bullet", "bullet.obj");
-    bulletModel_->SetRenderer(renderer);
-
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
     cameraWorldTransform_ = std::make_unique<WorldTransform>();
@@ -261,10 +258,10 @@ void Player::ShootBullet() {
 
     std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
         sKashipanEngine,
-        bulletModel_.get(),
         kShootPos,
         TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-        5.0f
+        5.0f,
+        targetEnemy_
     );
 
     gameScene_->AddPlayerBullet(

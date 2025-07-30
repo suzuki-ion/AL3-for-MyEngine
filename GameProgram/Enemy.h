@@ -77,8 +77,6 @@ private:
 
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
-    // 弾のモデル
-    std::unique_ptr<KashipanEngine::Model> bulletModel_;
 
     // 状態管理
     std::unique_ptr<BaseEnemyState> state_;

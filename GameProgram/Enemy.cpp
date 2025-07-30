@@ -38,9 +38,6 @@ Enemy::Enemy(Engine *kashipanEngine, GameScene *gameScene,
     model_ = std::make_unique<Model>("Resources/Enemy", "enemy.obj");
     model_->SetRenderer(renderer);
 
-    bulletModel_ = std::make_unique<Model>("Resources/Bullet", "bullet.obj");
-    bulletModel_->SetRenderer(renderer);
-
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
 
@@ -126,7 +123,6 @@ void Enemy::Fire() {
 
     std::unique_ptr<EnemyBullet> bullet = std::make_unique<EnemyBullet>(
         sKashipanEngine,
-        bulletModel_.get(),
         worldTransform_->translate_,
         TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
         5.0f,

@@ -11,20 +11,23 @@ Engine *sKashipanEngine = nullptr;
 Vector3 sTargetPosition = Vector3(0.0f, 0.0f, 0.0f);
 }
 
+void EnemyBullet::Initialize(KashipanEngine::Model *bulletModel) {
+    bulletModel_ = bulletModel;
+}
+
 void EnemyBullet::SetTargetPosition(const KashipanEngine::Vector3 &targetPosition) {
     sTargetPosition = targetPosition;
 }
 
-EnemyBullet::EnemyBullet(Engine *kashipanEngine, Model *model, const Vector3 &position,
-    const Vector3 &velocity, float lifeTime, float speed) : kLifeTime(lifeTime) {
-    if (model == nullptr) {
+EnemyBullet::EnemyBullet(Engine *kashipanEngine, const KashipanEngine::Vector3 &position,
+    const KashipanEngine::Vector3 &velocity, float lifeTime, float speed) : kLifeTime(lifeTime) {
+    if (bulletModel_ == nullptr) {
         throw std::invalid_argument("Model pointer cannot be null");
     }
     if (kashipanEngine == nullptr) {
         throw std::invalid_argument("Engine pointer cannot be null");
     }
     sKashipanEngine = kashipanEngine;
-    model_ = model;
     worldTransform_ = std::make_unique<WorldTransform>();
     worldTransform_->translate_ = position;
     worldTransform_->scale_ = Vector3(1.0f, 1.0f, 3.0f);
@@ -70,7 +73,7 @@ void EnemyBullet::Draw() {
         return;
     }
 
-    model_->Draw(*worldTransform_);
+    bulletModel_->Draw(*worldTransform_);
 }
 
 void EnemyBullet::RotateFromVelocity() {

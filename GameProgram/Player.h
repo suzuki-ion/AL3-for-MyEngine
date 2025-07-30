@@ -9,6 +9,7 @@
 #include "PlayerBullet.h"
 
 class GameScene;
+class Enemy;
 
 class Player : public Collider {
 public:
@@ -35,6 +36,9 @@ public:
     }
     void SetShootDirection(const KashipanEngine::Vector3 &shootDirection) {
         shootDirection_ = shootDirection;
+    }
+    void SetTargetEnemy(Enemy *targetEnemy) {
+        targetEnemy_ = targetEnemy;
     }
 
     KashipanEngine::Vector3 GetWorldPosition() override {
@@ -93,8 +97,6 @@ private:
 
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
-    // 弾のモデル
-    std::unique_ptr<KashipanEngine::Model> bulletModel_;
 
     // 速度
     KashipanEngine::Vector3 velocity_;
@@ -105,4 +107,6 @@ private:
 
     // 弾の発射方向
     KashipanEngine::Vector3 shootDirection_;
+    // ターゲット
+    Enemy *targetEnemy_ = nullptr;
 };
