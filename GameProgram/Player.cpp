@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿#include <Base/Renderer.h>
+=======
+#include <Base/Renderer.h>
+>>>>>>> chaptor3のマージ
 #include <Base/Input.h>
 #include <Math/Camera.h>
 #include <numbers>

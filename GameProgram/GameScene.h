@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿#pragma once
+=======
+#pragma once
+>>>>>>> chaptor3のマージ
 #include <sstream>
 #include <KashipanEngine.h>
 #include <Objects.h>

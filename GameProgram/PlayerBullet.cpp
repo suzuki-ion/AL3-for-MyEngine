@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿#include "CollisionConfig.h"
+=======
+#include "CollisionConfig.h"
+>>>>>>> chaptor3のマージ
 #include "PlayerBullet.h"
 #include "PlayerBulletStateNormal.h"
 #include "PlayerBulletStateHoming.h"

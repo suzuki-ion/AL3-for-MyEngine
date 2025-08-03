@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿#pragma once
+=======
+#pragma once
+>>>>>>> chaptor3のマージ
 #include <KashipanEngine.h>
 #include <Objects.h>
 #include <Objects/WorldTransform.h>
