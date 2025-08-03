@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <KashipanEngine.h>
 #include <Objects.h>
 #include <Objects/WorldTransform.h>
@@ -7,6 +7,9 @@
 
 #include "Collider.h"
 #include "PlayerBullet.h"
+
+class GameScene;
+class Enemy;
 
 class Player : public Collider {
 public:
@@ -28,6 +31,16 @@ public:
 
     Player(Engine *kashipanEngine, KashipanEngine::Camera *camera);
 
+    void SetGameScene(GameScene *gameScene) {
+        gameScene_ = gameScene;
+    }
+    void SetShootDirection(const KashipanEngine::Vector3 &shootDirection) {
+        shootDirection_ = shootDirection;
+    }
+    void SetTargetEnemies(const std::list<Enemy *> &targetEnemies) {
+        targetEnemies_ = targetEnemies;
+    }
+
     KashipanEngine::Vector3 GetWorldPosition() override {
         return {
             worldTransform_->worldMatrix_.m[3][0],
@@ -35,8 +48,8 @@ public:
             worldTransform_->worldMatrix_.m[3][2]
         };
     }
-    const std::list<std::unique_ptr<PlayerBullet>> &GetBullets() const {
-        return bullets_;
+    KashipanEngine::Vector3 GetLocalPosition() {
+        return worldTransform_->translate_;
     }
 
     // 衝突を検知したら呼び出されるコールバック関数
@@ -48,6 +61,11 @@ public:
     void Draw();
 
 private:
+    // キーボードでの移動関数
+    void InputKeyboardMove();
+    // ジョイスティックでの移動関数
+    void InputJoystickMove();
+
     // 移動入力関数
     void InputMove();
     // 回転入力関数
@@ -65,17 +83,20 @@ private:
     // 弾発射用関数
     void ShootBullet();
 
+    // ゲームシーンへのポインタ
+    GameScene *gameScene_ = nullptr;
+
     // カメラへのポインタ
     KashipanEngine::Camera *camera_;
     // ワールド変換データ
     std::unique_ptr<KashipanEngine::WorldTransform> worldTransform_;
+    // カメラのワールド変換データ
+    std::unique_ptr<KashipanEngine::WorldTransform> cameraWorldTransform_;
     // 回転専用ベクトル
     KashipanEngine::Vector3 rotateVector_;
 
     // モデル
     std::unique_ptr<KashipanEngine::Model> model_;
-    // 弾のモデル
-    std::unique_ptr<KashipanEngine::Model> bulletModel_;
 
     // 速度
     KashipanEngine::Vector3 velocity_;
@@ -84,6 +105,8 @@ private:
     // 移動方向(上下)
     MoveDirectionUD moveDirectionUD_ = MoveDirectionUD::kMoveNone;
 
-    // 弾のリスト
-    std::list<std::unique_ptr<PlayerBullet>> bullets_;
+    // 弾の発射方向
+    KashipanEngine::Vector3 shootDirection_;
+    // ターゲット
+    std::list<Enemy *> targetEnemies_;
 };

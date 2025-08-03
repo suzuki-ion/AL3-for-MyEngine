@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <KashipanEngine.h>
 #include <Objects.h>
 #include <memory>
@@ -7,10 +7,11 @@
 
 class EnemyBullet : public Collider {
 public:
+    static void Initialize(KashipanEngine::Model *bulletModel);
     static void SetTargetPosition(const KashipanEngine::Vector3 &targetPosition);
 
-    EnemyBullet(Engine *kashipanEngine, KashipanEngine::Model *model,
-        const KashipanEngine::Vector3 &position, const KashipanEngine::Vector3 &velocity, float lifeTime, float speed);
+    EnemyBullet(Engine *kashipanEngine, const KashipanEngine::Vector3 &position,
+        const KashipanEngine::Vector3 &velocity, float lifeTime, float speed);
 
     bool IsAlive() const { return isAlive_; }
 
@@ -29,6 +30,8 @@ public:
     void Draw();
 
 private:
+    static inline KashipanEngine::Model *bulletModel_ = nullptr;
+
     // ターゲットの方向を向く
     void RotateFromVelocity();
 

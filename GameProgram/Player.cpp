@@ -1,8 +1,10 @@
-#include <Base/Renderer.h>
+﻿#include <Base/Renderer.h>
 #include <Base/Input.h>
 #include <Math/Camera.h>
 #include <numbers>
 
+#include "GameScene.h"
+#include "CollisionConfig.h"
 #include "KeyConfig.h"
 #include "Player.h"
 
@@ -22,7 +24,7 @@ Vector3 TransformNormal(const Vector3 &v, const Matrix4x4 &m) {
     return result;
 }
 
-}
+} // namespace
 
 Player::Player(Engine *kashipanEngine, Camera *camera) {
     sKashipanEngine = kashipanEngine;
@@ -34,12 +36,14 @@ Player::Player(Engine *kashipanEngine, Camera *camera) {
     model_ = std::make_unique<Model>("Resources/Player", "player.obj");
     model_->SetRenderer(renderer);
 
-    bulletModel_ = std::make_unique<Model>("Resources/Bullet", "bullet.obj");
-    bulletModel_->SetRenderer(renderer);
-
     // ワールド変換データの設定
     worldTransform_ = std::make_unique<WorldTransform>();
+    cameraWorldTransform_ = std::make_unique<WorldTransform>();
+    worldTransform_->parentTransform_ = cameraWorldTransform_.get();
+    worldTransform_->translate_.z = 64.0f; // カメラからの距離を設定
 
+    SetCollisionAttribute(kCollisionAttributePlayer);
+    SetCollisionMask(std::bitset<8>(kCollisionAttributePlayer).flip());
     SetRadius(1.0f);
 }
 
@@ -47,30 +51,92 @@ void Player::OnCollision() {
 }
 
 void Player::Update() {
-    InputMove();
+    // コントローラーが接続されていたらコントローラーで移動
+    if (Input::IsXBoxConnected(0)) {
+        InputJoystickMove();
+    } else {
+        InputKeyboardMove();
+    }
     InputRotate();
     Move();
     Rotate();
     LimitPosition();
     Attack();
-
-    // 弾の更新
-    for (auto &bullet : bullets_) {
-        bullet->Update();
-    }
-    // 弾の削除処理
-    bullets_.remove_if([](const std::unique_ptr<PlayerBullet> &bullet) {
-        return !bullet->IsAlive();
-    });
 }
 
 void Player::Draw() {
     // モデルを描画
     model_->Draw(*worldTransform_.get());
+}
 
-    // 弾を描画
-    for (auto &bullet : bullets_) {
-        bullet->Draw();
+void Player::InputKeyboardMove() {
+    InputMove();
+
+    // 移動速度上限
+    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
+    // 1フレームあたりの移動速度
+    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
+
+    // 横方向
+    if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
+        velocity_.x -= kMoveSpeed;
+    } else if (moveDirectionLR_ == MoveDirectionLR::kMoveRight) {
+        velocity_.x += kMoveSpeed;
+    } else {
+        velocity_.x *= (1.0f - kMoveSpeed);
+    }
+    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
+
+    // 縦方向
+    if (moveDirectionUD_ == MoveDirectionUD::kMoveUp) {
+        velocity_.y += kMoveSpeed;
+    } else if (moveDirectionUD_ == MoveDirectionUD::kMoveDown) {
+        velocity_.y -= kMoveSpeed;
+    } else {
+        velocity_.y *= (1.0f - kMoveSpeed);
+    }
+    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
+}
+
+void Player::InputJoystickMove() {
+    // 移動速度上限
+    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
+    // 1フレームあたりの移動速度
+    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
+
+    Vector2 joystickInput;
+    joystickInput.x = Input::GetXBoxLeftStickRatioX();
+    joystickInput.y = Input::GetXBoxLeftStickRatioY();
+
+    // 横方向
+    velocity_.x += joystickInput.x * kMoveSpeed;
+    if (joystickInput.x == 0.0f) {
+        velocity_.x *= (1.0f - kMoveSpeed);
+    }
+    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
+
+    // 縦方向
+    velocity_.y += joystickInput.y * kMoveSpeed;
+    if (joystickInput.y == 0.0f) {
+        velocity_.y *= (1.0f - kMoveSpeed);
+    }
+    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
+
+    // 入力方向に応じて移動方向を設定
+    if (joystickInput.x < 0.0f) {
+        moveDirectionLR_ = MoveDirectionLR::kMoveLeft;
+    } else if (joystickInput.x > 0.0f) {
+        moveDirectionLR_ = MoveDirectionLR::kMoveRight;
+    } else {
+        moveDirectionLR_ = MoveDirectionLR::kMoveNone;
+    }
+
+    if (joystickInput.y < 0.0f) {
+        moveDirectionUD_ = MoveDirectionUD::kMoveDown;
+    } else if (joystickInput.y > 0.0f) {
+        moveDirectionUD_ = MoveDirectionUD::kMoveUp;
+    } else {
+        moveDirectionUD_ = MoveDirectionUD::kMoveNone;
     }
 }
 
@@ -119,32 +185,13 @@ void Player::InputRotate() {
 }
 
 void Player::Move() {
-    // 移動速度上限
-    const float kSpeedLimit = 30.0f * Engine::GetDeltaTime();
-    // 1フレームあたりの移動速度
-    const float kMoveSpeed = kMoveSpeedSecond * Engine::GetDeltaTime();
-
-    // 横方向
-    if (moveDirectionLR_ == MoveDirectionLR::kMoveLeft) {
-        velocity_.x -= kMoveSpeed;
-    } else if (moveDirectionLR_ == MoveDirectionLR::kMoveRight) {
-        velocity_.x += kMoveSpeed;
-    } else {
-        velocity_.x *= (1.0f - kMoveSpeed);
-    }
-    velocity_.x = std::clamp(velocity_.x, -kSpeedLimit, kSpeedLimit);
-
-    // 縦方向
-    if (moveDirectionUD_ == MoveDirectionUD::kMoveUp) {
-        velocity_.y += kMoveSpeed;
-    } else if (moveDirectionUD_ == MoveDirectionUD::kMoveDown) {
-        velocity_.y -= kMoveSpeed;
-    } else {
-        velocity_.y *= (1.0f - kMoveSpeed);
-    }
-    velocity_.y = std::clamp(velocity_.y, -kSpeedLimit, kSpeedLimit);
-
     worldTransform_->translate_ += velocity_;
+
+    // カメラのワールド変換データを更新
+    cameraWorldTransform_->translate_ = camera_->GetTranslate();
+    cameraWorldTransform_->rotate_ = camera_->GetRotate();
+    cameraWorldTransform_->scale_ = camera_->GetScale();
+    cameraWorldTransform_->TransferMatrix();
 
     // ワールド変換データを更新
     worldTransform_->TransferMatrix();
@@ -176,7 +223,12 @@ void Player::Rotate() {
 }
 
 void Player::LimitPosition() {
-    const float length = (camera_->GetTranslate() - worldTransform_->translate_).Length();
+    const Vector3 cameraTranslate(
+        cameraWorldTransform_->worldMatrix_.m[3][0],
+        cameraWorldTransform_->worldMatrix_.m[3][1],
+        cameraWorldTransform_->worldMatrix_.m[3][2]
+    );
+    const float length = (cameraTranslate - GetWorldPosition()).Length();
     const float kMoveLimitX = length * 16.0f / 48.0f;
     const float kMoveLimitY = length * 9.0f / 48.0f;
     
@@ -193,21 +245,43 @@ void Player::LimitPosition() {
 
 void Player::Attack() {
     // 弾の発射
-    if (IsAction(Action::kShootBullet)) {
+    if (IsAction(Action::kShootBullet) ||
+        Input::IsXBoxButtonTrigger(XBoxButtonCode::LEFT_SHOULDER) ||
+        Input::IsXBoxButtonTrigger(XBoxButtonCode::RIGHT_SHOULDER)) {
         ShootBullet();
     }
 }
 
 void Player::ShootBullet() {
-    const Vector3 kBulletVelocity(0.0f, 0.0f, 6.0f);
+    const Vector3 kBulletVelocity(shootDirection_ * 32.0f);
+    const Vector3 kShootPos = GetWorldPosition();
 
-    bullets_.push_back(
-        std::make_unique<PlayerBullet>(
+    if (targetEnemies_.empty()) {
+        std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
             sKashipanEngine,
-            bulletModel_.get(),
-            worldTransform_->translate_,
+            kShootPos,
             TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-            5.0f
-        )
-    );
+            5.0f,
+            nullptr
+        );
+
+        gameScene_->AddPlayerBullet(
+            bullet
+        );
+        return;
+    }
+
+    for (auto &targetEnemy : targetEnemies_) {
+        std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
+            sKashipanEngine,
+            kShootPos,
+            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+            5.0f,
+            targetEnemy
+        );
+
+        gameScene_->AddPlayerBullet(
+            bullet
+        );
+    }
 }

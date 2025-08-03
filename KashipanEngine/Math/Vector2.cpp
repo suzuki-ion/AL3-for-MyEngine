@@ -2,7 +2,8 @@
 #include "Vector3.h"
 #include "Matrix3x3.h"
 #include "MathObjects/Lines.h"
-#include <cmath>
+#include <cassert>
+#include <algorithm>
 
 namespace KashipanEngine {
 
@@ -21,6 +22,58 @@ Vector2 Vector2::Slerp(const Vector2 &start, const Vector2 &end, float t) noexce
 
     Vector2 result = (normalizedStart * t1 + normalizedEnd * t2) / sinTheta;
     return result.Normalize();
+}
+
+Vector2 Vector2::Bezier(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, float t) noexcept {
+    Vector2 p01 = Vector2::Lerp(p0, p1, t);
+    Vector2 p12 = Vector2::Lerp(p1, p2, t);
+    return Vector2::Lerp(p01, p12, t);
+}
+
+Vector2 Vector2::CatmullRomInterpolation(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, const Vector2 &p3, float t) noexcept {
+    const float s = 0.5f;
+
+    float t2 = t * t;
+    float t3 = t2 * t;
+
+    auto e3 = (-p0 + (3.0f * p1) - (3.0f * p2) + p3) * t3;
+    auto e2 = ((2.0f * p0) - (5.0f * p1) + (4.0f * p2) - p3) * t2;
+    auto e1 = (-p0 + p2) * t;
+    auto e0 = 2.0f * p1;
+
+    return s * (e3 + e2 + e1 + e0);
+}
+
+Vector2 Vector2::CatmullRomPosition(const std::vector<Vector2> &points, float t, bool isLoop) {
+    assert(points.size() >= 4);
+
+    size_t division = isLoop ? points.size() : points.size() - 1;
+    float areaWidth = 1.0f / static_cast<float>(division);
+    size_t index    = static_cast<size_t>(t / areaWidth);
+    index           = std::min(index, division - 1);
+    float t2        = (t - areaWidth * static_cast<float>(index)) / areaWidth;
+    t2              = std::clamp(t2, 0.0f, 1.0f);
+
+    // インデックス取得関数（ループ対応）
+    auto GetIndex = [&](int i) -> size_t {
+        if (isLoop) {
+            return (i + points.size()) % points.size();
+        } else {
+            return std::clamp(i, 0, static_cast<int>(points.size()) - 1);
+        }
+        };
+
+    size_t index0 = GetIndex(static_cast<int>(index) - 1);
+    size_t index1 = GetIndex(static_cast<int>(index));
+    size_t index2 = GetIndex(static_cast<int>(index) + 1);
+    size_t index3 = GetIndex(static_cast<int>(index) + 2);
+
+    const auto &p0 = points[index0];
+    const auto &p1 = points[index1];
+    const auto &p2 = points[index2];
+    const auto &p3 = points[index3];
+
+    return CatmullRomInterpolation(p0, p1, p2, p3, t2);
 }
 
 Vector2::Vector2(const Vector3 &vector) {

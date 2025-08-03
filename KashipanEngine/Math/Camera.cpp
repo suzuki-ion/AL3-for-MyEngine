@@ -94,6 +94,9 @@ void Camera::SetCoordinateSystem(CoordinateSystem cameraType) noexcept {
 }
 
 void Camera::SetCamera(const Vector3 &cameraTranslate, const Vector3 &cameraRotate, const Vector3 &cameraScale) noexcept {
+    cameraTranslate_ = cameraTranslate;
+    cameraRotate_ = cameraRotate;
+    cameraScale_ = cameraScale;
     cameraMatrix_.SetTranslate(cameraTranslate);
     cameraMatrix_.SetRotate(cameraRotate);
     cameraMatrix_.SetScale(cameraScale);
@@ -146,9 +149,11 @@ void Camera::CalculateMatrixForDecart() noexcept {
     // ターゲットが設定されている場合はカメラの向きをターゲットに向ける
     if (targetPos_) {
         Vector3 target = *targetPos_;
-        Vector3 direction = target - cameraTranslate_;
-        cameraRotate_.x = atan2f(direction.y, sqrtf(direction.x * direction.x + direction.z * direction.z));
-        cameraRotate_.y = atan2f(direction.x, direction.z);
+        Vector3 direction = (cameraTranslate_ - target).Normalize();
+        float yaw = atan2f(direction.x, -direction.z);
+        float pitch = atan2f(direction.y, sqrtf(direction.x * direction.x + direction.z * direction.z));
+        cameraRotate_.x = pitch;
+        cameraRotate_.y = -yaw;
     }
     cameraMatrix_.SetTranslate(cameraTranslate_);
     cameraMatrix_.SetRotate(cameraRotate_);

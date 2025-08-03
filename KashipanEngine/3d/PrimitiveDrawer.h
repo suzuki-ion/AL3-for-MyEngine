@@ -32,6 +32,11 @@ enum FillMode {
     kFillModeWireframe,
 };
 
+enum LineType {
+    kLineNormal,
+    kLineThickness
+};
+
 // 前方宣言
 class DirectXCommon;
 
@@ -88,12 +93,15 @@ public:
     /// @brief グラフィックパイプライン生成
     /// @param topologyType トポロジータイプ
     /// @param blendMode ブレンドモード
+    /// @param isDepthEnable 深度バッファを有効にするか
+    /// @param isBackCulling バックカリングを有効にするか
     /// @return パイプラインセット
-    static PipeLineSet CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode, const bool isDepthEnable = true, const std::source_location &location = std::source_location::current());
+    static PipeLineSet CreateGraphicsPipeline(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, BlendMode blendMode,
+        const bool isDepthEnable = true, const bool isBackCulling = false, const std::source_location &location = std::source_location::current());
 
     /// @brief 線用のパイプライン生成
     /// @return 線用のパイプラインセット
-    static PipeLineSet CreateLinePipeline(const std::source_location &location = std::source_location::current());
+    static PipeLineSet CreateLinePipeline(LineType lineType, const std::source_location &location = std::source_location::current());
 
 private:
     PrimitiveDrawer() = default;

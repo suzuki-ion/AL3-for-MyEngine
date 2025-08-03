@@ -108,11 +108,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameProgram\BasePlayerBulletState.cpp" />
     <ClCompile Include="GameProgram\Collider.cpp" />
+    <ClCompile Include="GameProgram\CollisionManager.cpp" />
     <ClCompile Include="GameProgram\EnemyBullet.cpp" />
     <ClCompile Include="GameProgram\EnemyStateLeave.cpp" />
     <ClCompile Include="GameProgram\EnemyStateApproach.cpp" />
-    <ClCompile Include="GameProgram\BaseEnemyState.cpp" />
     <ClCompile Include="GameProgram\Enemy.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />
     <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
@@ -124,9 +125,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="GameProgram\Easings.cpp" />
     <ClCompile Include="GameProgram\GameScene.cpp" />
     <ClCompile Include="GameProgram\KeyConfig.cpp" />
+    <ClCompile Include="GameProgram\LockOn.cpp" />
     <ClCompile Include="GameProgram\Player.cpp" />
     <ClCompile Include="GameProgram\PlayerBullet.cpp" />
+    <ClCompile Include="GameProgram\Skydome.cpp" />
     <ClCompile Include="GameProgram\TimedCall.cpp" />
+    <ClCompile Include="GameProgram\Ground.cpp" />
     <ClCompile Include="KashipanEngine\2d\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\2d\UIManager.cpp" />
     <ClCompile Include="KashipanEngine\2d\UI\BaseUI.cpp" />
@@ -172,6 +176,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
     <ClCompile Include="KashipanEngine\Objects\BillBoard.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Lines.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Object.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Plane.cpp" />
@@ -181,9 +186,16 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\Triangle.cpp" />
     <ClCompile Include="KashipanEngine\Objects\WorldTransform.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GameProgram\RailCameraController.cpp" />
+    <ClCompile Include="GameProgram\Reticle2D.cpp" />
+    <ClCompile Include="GameProgram\PlayerBulletStateNormal.cpp" />
+    <ClCompile Include="GameProgram\PlayerBulletStateHoming.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameProgram\BasePlayerBulletState.h" />
     <ClInclude Include="GameProgram\Collider.h" />
+    <ClInclude Include="GameProgram\CollisionConfig.h" />
+    <ClInclude Include="GameProgram\CollisionManager.h" />
     <ClInclude Include="GameProgram\EnemyBullet.h" />
     <ClInclude Include="GameProgram\EnemyStateLeave.h" />
     <ClInclude Include="GameProgram\EnemyStateApproach.h" />
@@ -200,9 +212,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="GameProgram\Easings.h" />
     <ClInclude Include="GameProgram\GameScene.h" />
     <ClInclude Include="GameProgram\KeyConfig.h" />
+    <ClInclude Include="GameProgram\LockOn.h" />
     <ClInclude Include="GameProgram\Player.h" />
     <ClInclude Include="GameProgram\PlayerBullet.h" />
+    <ClInclude Include="GameProgram\Skydome.h" />
     <ClInclude Include="GameProgram\TimedCall.h" />
+    <ClInclude Include="GameProgram\Ground.h" />
     <ClInclude Include="KashipanEngine\2d\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\2d\UIManager.h" />
     <ClInclude Include="KashipanEngine\2d\UI\BaseUI.h" />
@@ -231,6 +246,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Common\Easings.h" />
     <ClInclude Include="KashipanEngine\Common\GridLine.h" />
     <ClInclude Include="KashipanEngine\Common\KeyFrameAnimation.h" />
+    <ClInclude Include="KashipanEngine\Common\LineOption.h" />
     <ClInclude Include="KashipanEngine\Common\Logs.h" />
     <ClInclude Include="KashipanEngine\Common\Material.h" />
     <ClInclude Include="KashipanEngine\Common\Mesh.h" />
@@ -265,6 +281,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
     <ClInclude Include="KashipanEngine\Objects.h" />
     <ClInclude Include="KashipanEngine\Objects\BillBoard.h" />
+    <ClInclude Include="KashipanEngine\Objects\Lines.h" />
     <ClInclude Include="KashipanEngine\Objects\Model.h" />
     <ClInclude Include="KashipanEngine\Objects\Object.h" />
     <ClInclude Include="KashipanEngine\Objects\Plane.h" />
@@ -273,6 +290,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\Tetrahedron.h" />
     <ClInclude Include="KashipanEngine\Objects\Triangle.h" />
     <ClInclude Include="KashipanEngine\Objects\WorldTransform.h" />
+    <ClInclude Include="GameProgram\RailCameraController.h" />
+    <ClInclude Include="GameProgram\Reticle2D.h" />
+    <ClInclude Include="GameProgram\PlayerBulletStateNormal.h" />
+    <ClInclude Include="GameProgram\PlayerBulletStateHoming.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Engine\Shader\Object3d.PS.hlsl">
