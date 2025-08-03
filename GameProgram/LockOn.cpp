@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include <numbers>
+#include <algorithm>
 #include "LockOn.h"
 #include "Enemy.h"
 
@@ -9,26 +10,26 @@ LockOn::LockOn(Engine *kashipanEngine, KashipanEngine::Camera *camera) {
     kashipanEngine_ = kashipanEngine;
     camera_ = camera;
 
-    reticle_ = std::make_unique<Reticle2D>(kashipanEngine_, camera_, Vector3(0.0f));
+    reticles_.resize(maxLockOnCount_);
+    for (auto &reticle : reticles_) {
+        reticle = std::make_unique<Reticle2D>(kashipanEngine_, camera_, Vector3(0.0f),
+            "Resources/target_reticle.png");
+    }
 }
 
 void LockOn::CheckTargetExist() {
-    if (!currentTarget_) {
-        return;
-    }
-
-    if (!currentTarget_->IsAlive()) {
-        currentTarget_ = nullptr;
-    }
+    currentTargetEnemies_.remove_if([](Enemy *enemy) {
+        return enemy == nullptr || !enemy->IsAlive();
+        });
 }
 
 void LockOn::Update(std::list<std::unique_ptr<Enemy>> &enemies) {
+    currentTargetEnemies_.clear();
     if (enemies.empty()) {
-        currentTarget_ = nullptr;
         return;
     }
 
-    std::vector<std::pair<Enemy *, float>> candidates;
+    std::vector<std::pair<Enemy*, float>> candidates;
     for (auto &enemy : enemies) {
         float distance = referencePoint_.Distance(enemy->GetWorldPosition());
         if (distance <= lockOnRange_) {
@@ -36,21 +37,19 @@ void LockOn::Update(std::list<std::unique_ptr<Enemy>> &enemies) {
         }
     }
 
-    if (candidates.empty()) {
-        currentTarget_ = nullptr;
-    } else {
-        std::sort(candidates.begin(), candidates.end(),
-            [](const auto &a, const auto &b) {
-                return a.second < b.second;
-            });
-        currentTarget_ = candidates.front().first;
-        reticle_->SetReticleTo3D(currentTarget_->GetWorldPosition());
+    std::sort(candidates.begin(), candidates.end(),
+        [](const std::pair<Enemy*, float> &a, const std::pair<Enemy*, float> &b) {
+            return a.second < b.second; // 距離が近い順にソート
+        });
+
+    for (int i = 0; i < std::min(static_cast<int>(candidates.size()), maxLockOnCount_); ++i) {
+        currentTargetEnemies_.push_back(candidates[i].first);
+        reticles_[i]->SetReticleTo3D(candidates[i].first->GetWorldPosition());
     }
 }
 
 void LockOn::Draw() {
-    if (!currentTarget_) {
-        return;
+    for (size_t i = 0; i < currentTargetEnemies_.size(); ++i) {
+        reticles_[i]->Draw();
     }
-    reticle_->Draw();
 }

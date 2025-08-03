@@ -14,8 +14,8 @@ public:
         referencePoint_ = point;
     }
 
-    Enemy *GetTargetEnemy() {
-        return currentTarget_;
+    std::list<Enemy *> GetTargetEnemies() {
+        return currentTargetEnemies_;
     }
 
     void CheckTargetExist();
@@ -32,9 +32,10 @@ private:
     // どこから距離を求めるかの基準点
     KashipanEngine::Vector3 referencePoint_;
 
-    std::unique_ptr<Reticle2D> reticle_;
-    Enemy *currentTarget_ = nullptr;
+    std::vector<std::unique_ptr<Reticle2D>> reticles_;
+    std::list<Enemy *> currentTargetEnemies_;
 
     float lockOnRange_ = 50.0f;
+    int maxLockOnCount_ = 3;
 };
 

@@ -37,8 +37,8 @@ public:
     void SetShootDirection(const KashipanEngine::Vector3 &shootDirection) {
         shootDirection_ = shootDirection;
     }
-    void SetTargetEnemy(Enemy *targetEnemy) {
-        targetEnemy_ = targetEnemy;
+    void SetTargetEnemies(const std::list<Enemy *> &targetEnemies) {
+        targetEnemies_ = targetEnemies;
     }
 
     KashipanEngine::Vector3 GetWorldPosition() override {
@@ -108,5 +108,5 @@ private:
     // 弾の発射方向
     KashipanEngine::Vector3 shootDirection_;
     // ターゲット
-    Enemy *targetEnemy_ = nullptr;
+    std::list<Enemy *> targetEnemies_;
 };

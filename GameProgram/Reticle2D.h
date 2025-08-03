@@ -6,7 +6,7 @@
 class Reticle2D {
 public:
     Reticle2D(Engine *kashipanEngine, KashipanEngine::Camera *camera,
-        const KashipanEngine::Vector3 &pos3D);
+        const KashipanEngine::Vector3 &pos3D, const std::string &textureName);
 
     void SetPos2D(const KashipanEngine::Vector2 &pos2D) {
         pos2D_ = pos2D;

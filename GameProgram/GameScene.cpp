@@ -106,18 +106,14 @@ void GameScene::Update() {
 
     } else {
         //reticle_->Update();
-        auto targetEnemy = lockOn_->GetTargetEnemy();
-        if (targetEnemy) {
-            playerBulletShootPos = targetEnemy->GetWorldPosition();
-            playerBulletShootPos -= player_->GetLocalPosition();
-            playerBulletShootPos = playerBulletShootPos.Normalize();
-        } else {
+        auto targetEnemies = lockOn_->GetTargetEnemies();
+        if (targetEnemies.empty()) {
             playerBulletShootPos = Vector3(0.0f, 0.0f, 1.0f);
         }
     }
     
     player_->SetShootDirection(playerBulletShootPos);
-    player_->SetTargetEnemy(lockOn_->GetTargetEnemy());
+    player_->SetTargetEnemies(lockOn_->GetTargetEnemies());
     player_->Update();
     EnemyBullet::SetTargetPosition(player_->GetWorldPosition());
     for (auto &enemy : enemies_) {

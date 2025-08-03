@@ -5,13 +5,13 @@
 using namespace KashipanEngine;
 
 Reticle2D::Reticle2D(Engine *kashipanEngine, KashipanEngine::Camera *camera,
-    const KashipanEngine::Vector3 &pos3D) {
+    const KashipanEngine::Vector3 &pos3D, const std::string &textureName) {
 
     kashipanEngine_ = kashipanEngine;
     camera_ = camera;
     worldTransform_ = std::make_unique<WorldTransform>();
 
-    textureHandle_ = Texture::Load("Resources/reticle.png");
+    textureHandle_ = Texture::Load(textureName);
     reticle_ = std::make_unique<Sprite>(textureHandle_);
     reticle_->SetRenderer(kashipanEngine_->GetRenderer());
     pos3D_ = pos3D;

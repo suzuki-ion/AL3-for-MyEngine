@@ -253,18 +253,35 @@ void Player::Attack() {
 }
 
 void Player::ShootBullet() {
-    const Vector3 kBulletVelocity(shootDirection_ * 16.0f);
+    const Vector3 kBulletVelocity(shootDirection_ * 32.0f);
     const Vector3 kShootPos = GetWorldPosition();
 
-    std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
-        sKashipanEngine,
-        kShootPos,
-        TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
-        5.0f,
-        targetEnemy_
-    );
+    if (targetEnemies_.empty()) {
+        std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
+            sKashipanEngine,
+            kShootPos,
+            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+            5.0f,
+            nullptr
+        );
 
-    gameScene_->AddPlayerBullet(
-        bullet
-    );
+        gameScene_->AddPlayerBullet(
+            bullet
+        );
+        return;
+    }
+
+    for (auto &targetEnemy : targetEnemies_) {
+        std::unique_ptr<PlayerBullet> bullet = std::make_unique<PlayerBullet>(
+            sKashipanEngine,
+            kShootPos,
+            TransformNormal(kBulletVelocity, worldTransform_->worldMatrix_),
+            5.0f,
+            targetEnemy
+        );
+
+        gameScene_->AddPlayerBullet(
+            bullet
+        );
+    }
 }
